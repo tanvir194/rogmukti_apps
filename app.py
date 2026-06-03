@@ -8,8 +8,8 @@ st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", la
 st.markdown("<h2 style='text-align: center; color: red;'>ROGMUKTI DIAGNOSTIC CENTRE</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Auliapur, Patuakhali<br>Phone: 01711867637</p>", unsafe_allow_html=True)
 
-# ট্যাব সিস্টেম (১টি বিল তৈরি করার জন্য, ১টি ম্যানেজার ড্যাশবোর্ড)
-tab1, tab2 = st.tabs(["📑 Billing / Cash Memo", "📊 Admin Dashboard (হিসাব-নিকাশ)"])
+# ট্যাব সিস্টেম
+tab1, tab2 = st.tabs(["📑 Billing / Cash Memo", "📊 Admin Dashboard"])
 
 # গুগল শিট থেকে ডেটা লোড করার লিংক
 SHEET_ID = "1BwMbaLP4koABhxaxrGGBq8I5AYmn9BDAu7evJ6TiUl4"
@@ -44,7 +44,6 @@ def load_data_from_excel():
 
 test_directory, doctors_list = load_data_from_excel()
 
-# সেশন স্টেট (ডাটাবেজ না আসা পর্যন্ত সাময়িকভাবে বিল সেভ রাখার জন্য)
 if 'sales_data' not in st.session_state:
     st.session_state['sales_data'] = pd.DataFrame(columns=["Date", "Patient", "Doctor", "Total", "Discount", "Paid"])
 
@@ -64,11 +63,13 @@ with tab1:
     st.divider()
     st.subheader("Services / Test Selection")
     total_amount = 0
+    selected_tests_list = []
     for i in range(1, 6):
         test_name = st.selectbox(f"Select Test {i}:", list(test_directory.keys()), key=f"test_{i}")
         if test_name != "Select Test":
             price = test_directory[test_name]
             st.text(f"Price: {price} TK")
+            selected_tests_list.append(f"<li>{test_name}: {price} TK</li>")
             total_amount += price
 
     st.divider()
@@ -86,64 +87,62 @@ with tab1:
         elif ref_dr == "Select Doctor":
             st.error("দয়া করে ডাক্তার সিলেক্ট করুন!")
         else:
-            # নতুন বিল ড্যাশবোর্ডে যোগ করা
             new_bill = pd.DataFrame([{
-                "Date": date_today,
-                "Patient": patient_name,
-                "Doctor": ref_dr,
-                "Total": total_amount,
-                "Discount": discount,
-                "Paid": total_paid
+                "Date": date_today, "Patient": patient_name, "Doctor": ref_dr,
+                "Total": total_amount, "Discount": discount, "Paid": total_paid
             }])
             st.session_state['sales_data'] = pd.concat([st.session_state['sales_data'], new_bill], ignore_index=True)
-            st.success(f"Invoice successfully generated and saved for {patient_name}!")
+            st.success(f"Invoice generated and saved successfully!")
+            
+            # প্রিন্ট করার জন্য জাভাস্ক্রিপ্ট বাটন ট্রিকস
+            st.markdown("<br><hr><h4 style='text-align:center;'>--- PRINT PREVIEW ---</h4>", unsafe_allow_html=True)
+            memo_html = f"""
+            <div style="border: 2px solid #000; padding: 15px; border-radius: 5px; font-family: Arial;">
+                <h2 style="text-align: center; color: red; margin:0;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
+                <p style="text-align: center; margin: 2px;">Mollah Bazar, Auliapur, Patuakhali</p>
+                <hr>
+                <p><b>Patient Name:</b> {patient_name} &nbsp;&nbsp;&nbsp;&nbsp; <b>Age:</b> {age}</p>
+                <p><b>Ref. Doctor:</b> {ref_dr} &nbsp;&nbsp;&nbsp;&nbsp; <b>Date:</b> {date_today}</p>
+                <hr>
+                <h4>Tests:</h4>
+                <ul>{"".join(selected_tests_list)}</ul>
+                <hr>
+                <p align="right"><b>Total Amount:</b> {total_amount} TK</p>
+                <p align="right" style="color:red;"><b>Discount:</b> {discount} TK</p>
+                <p align="right" style="color:green; font-size:18px;"><b>Total PAID:</b> {total_paid} TK</p>
+            </div>
+            <br>
+            <button onclick="window.print()" style="background-color: #4CAF50; color: white; padding: 10px 24px; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; width: 100%;">🖨️ Click Here to Print / Save PDF</button>
+            """
+            st.components.v1.html(memo_html, height=450, scrolling=True)
 
-# --- ট্যাব ২: অ্যাডমিন ড্যাশবোর্ড (হিসাব-নিকাশ) ---
+# --- ট্যাব ২: অ্যাডমিন ড্যাশবোর্ড ---
 with tab2:
     st.header("📊 Clinic Accounts Summary")
     df_sales = st.session_state['sales_data']
-    
-    # তারিখ ফরম্যাট ঠিক করা
     if not df_sales.empty:
         df_sales['Date'] = pd.to_datetime(df_sales['Date']).dt.date
-    
     today = datetime.now().date()
     start_of_week = today - timedelta(days=today.weekday())
     start_of_month = today.replace(day=1)
     
-    # ফিল্টারিং হিসাব
     daily_sales = df_sales[df_sales['Date'] == today]['Paid'].sum() if not df_sales.empty else 0
     weekly_sales = df_sales[df_sales['Date'] >= start_of_week]['Paid'].sum() if not df_sales.empty else 0
     monthly_sales = df_sales[df_sales['Date'] >= start_of_month]['Paid'].sum() if not df_sales.empty else 0
     
-    # স্ক্রিনে রিপোর্ট কার্ড দেখানো
     c1, c2, c3 = st.columns(3)
-    c1.metric("আজকের মোট ক্যাশ (Daily)", f"{daily_sales} TK")
-    c2.metric("এই সপ্তাহের ক্যাশ (Weekly)", f"{weekly_sales} TK")
-    c3.metric("এই মাসের ক্যাশ (Monthly)", f"{monthly_sales} TK")
+    c1.metric("Daily Cash", f"{daily_sales} TK")
+    c2.metric("Weekly Cash", f"{weekly_sales} TK")
+    c3.metric("Monthly Cash", f"{monthly_sales} TK")
     
     st.divider()
-    
-    # 🩺 ডাক্তারদের রেফার ফি বা কমিশন হিসাব (৩০%)
-    st.header("🩺 Doctor's Referral Fee (30% Commission)")
-    selected_doc = st.selectbox("কমিশন দেখার জন্য ডাক্তার সিলেক্ট করুন:", doctors_list[1:])
-    
+    st.header("🩺 Doctor's Referral Fee (30%)")
+    selected_doc = st.selectbox("Select Doctor to see Fee:", doctors_list[1:])
     if not df_sales.empty:
         doc_bills = df_sales[df_sales['Doctor'] == selected_doc]
         total_doc_business = doc_bills['Paid'].sum()
         total_commission = total_doc_business * 0.30
-        
         col_d1, col_d2 = st.columns(2)
-        col_d1.subheader(f"মোট বিল এনেছেন: {total_doc_business} TK")
-        col_d2.markdown(f"<h3>ডাক্তারের প্রাপ্য ফি (৩০%): <span style='color:orange;'>{total_commission} TK</span></h3>", unsafe_allow_html=True)
+        col_d1.subheader(f"Total Bill: {total_doc_business} TK")
+        col_d2.markdown(f"<h3>Doctor Fee: <span style='color:orange;'>{total_commission} TK</span></h3>", unsafe_allow_html=True)
         
-        if not doc_bills.empty:
-            st.write("রোগীদের তালিকা:")
-            st.dataframe(doc_bills[["Date", "Patient", "Paid"]])
-    else:
-        st.info("এখনো কোনো বিল তৈরি করা হয়নি। বিল তৈরি করলে এখানে ডাক্তারদের ফি অটোমেটিক দেখাবে।")
-        
-    st.divider()
-    st.subheader("📜 অল বিল হিস্ট্রি (All Bill History)")
-    st.dataframe(df_sales)
-    
