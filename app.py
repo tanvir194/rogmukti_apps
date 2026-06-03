@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import requests
 
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="centered")
 
@@ -8,38 +9,36 @@ st.markdown("<h2 style='text-align: center; color: red;'>ROGMUKTI DIAGNOSTIC CEN
 st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Auliapur, Patuakhali<br>Phone: 01711867637</p>", unsafe_allow_html=True)
 st.markdown("<h3 style='text-align: center; background-color: #007ff5; color: white; padding: 5px; border-radius: 5px;'>CASH MEMO</h3>", unsafe_allow_html=True)
 
-# গুগল শিট থেকে সরাসরি লিংক
+# ডাটাবেজ এক্সেস মেথড ২ (সরাসরি গুগল ড্রাইভের এক্সপোর্ট লিংক)
 SHEET_ID = "1BwMbaLP4koABhxaxrGGBq8I5AYmn9BDAu7evJ6TiUl4"
-SHEET_NAME = "Services"
-csv_url = f"https://google.com{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={SHEET_NAME}"
+csv_url = f"https://google.com{SHEET_ID}/export?format=csv&gid=1152917726" # আপনার 'Services' ট্যাবের সরাসরি আইডি যুক্ত লিংক
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=10) # প্রতি ১০ সেকেন্ড পর পর নতুন ডেটা রিফ্রেশ করবে
 def load_data_from_excel():
     test_dict = {"Select Test": 0}
     doc_list = ["Select Doctor"]
     
     try:
-        # header=None দিয়ে কলামের নাম যাই হোক না কেন পজিশন দিয়ে রিড করার ব্যবস্থা
+        # কোনো হেডার ছাড়া পজিশন অনুযায়ী রিড করার জন্য
         df = pd.read_csv(csv_url, header=None)
         
         for idx, row in df.iterrows():
-            # ১ম সারি (কলামের নামগুলো) বাদ দেওয়ার জন্য
-            if idx == 0:
+            if idx == 0: # প্রথম হেডার লাইন স্কিপ করার জন্য
                 continue
                 
-            # ২য় কলামে টেস্টের নাম (Index 1) এবং ৩য় কলামে রেট (Index 2)
+            # ২ নম্বর কলামে টেস্টের নাম এবং ৩ নম্বর কলামে প্রাইস
             if len(row) > 2:
                 test_name = str(row[1]).strip()
                 price_val = row[2]
                 
-                if test_name and test_name != "nan" and test_name != "" and "Column" not in test_name:
+                if test_name and test_name != "nan" and test_name != "" and "Column" not in test_name and "Category" not in test_name:
                     try:
                         price = int(float(price_val))
                     except:
                         price = 0
                     test_dict[test_name] = price
             
-            # ৬ষ্ঠ কলামে ডাক্তারদের নাম (Index 5)
+            # ৬ নম্বর কলামে ডাক্তারদের নাম
             if len(row) > 5:
                 doc_name = str(row[5]).strip()
                 if doc_name and doc_name != "nan" and doc_name != "" and "Column" not in doc_name and "Self" not in doc_name:
@@ -47,17 +46,42 @@ def load_data_from_excel():
                         doc_list.append(doc_name)
                         
     except Exception as e:
-        # ব্যাকআপ ডেটা
-        test_dict = {"Select Test": 0, "CBC + ESR": 600, "Widal Test": 450}
-        doc_list = ["Select Doctor"]
+        pass
         
-    # ডাক্তারদের তালিকায় যদি কিছু না আসে তবে ম্যানুয়াল ব্যাকআপ
+    # যদি গুগল কানেকশনে কোনো সমস্যা থাকে তবে ব্যাকআপ হিসেবে বড় রিয়েল লিস্ট আসবে
+    if len(test_dict) <= 1:
+        test_dict = {
+            "Select Test": 0,
+            "(CBC) + ESR": 600,
+            "Widal Test": 450,
+            "T.A Test": 1050,
+            "Platelet Count": 300,
+            "MP": 500,
+            "BT/CT": 350,
+            "C/E Count": 250,
+            "T3": 1200,
+            "T4": 1200,
+            "FT3": 900,
+            "FT4": 900,
+            "TSH": 1100,
+            "HbA1c": 1500,
+            "Prolactin": 1200,
+            "Random Blood Sugar": 200,
+            "Fasting Blood Sugar": 200,
+            "Lipid Profile": 1000,
+            "Serum Creatinine": 300,
+            "Uric Acid": 400,
+            "Chest X-Ray": 500,
+            "USG of Whole Abdomen": 800,
+            "ECG": 300,
+            "Urine R/E": 250
+        }
+    
     if len(doc_list) <= 1:
         doc_list.extend(["Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS", "Self"])
         
     return test_dict, doc_list
 
-# ডেটা লোড করা
 test_directory, doctors_list = load_data_from_excel()
 
 st.subheader("Patient Information")
@@ -71,10 +95,10 @@ with col2:
 
 st.divider()
 
-# ৫টি টেস্ট সিলেক্ট করার ঘর (সব টেস্ট এখানে দেখাবে)
 st.subheader("Services / Test Selection")
 total_amount = 0
 
+# এখানে ৫টি টেস্টের ইনপুট তৈরি করা হয়েছে
 for i in range(1, 6):
     test_name = st.selectbox(f"Select Test {i}:", list(test_directory.keys()), key=f"test_{i}")
     if test_name != "Select Test":
