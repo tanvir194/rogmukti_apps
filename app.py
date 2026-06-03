@@ -8,44 +8,51 @@ st.markdown("<h2 style='text-align: center; color: red;'>ROGMUKTI DIAGNOSTIC CEN
 st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Auliapur, Patuakhali<br>Phone: 01711867637</p>", unsafe_allow_html=True)
 st.markdown("<h3 style='text-align: center; background-color: #007ff5; color: white; padding: 5px; border-radius: 5px;'>CASH MEMO</h3>", unsafe_allow_html=True)
 
-# গুগল শিট থেকে অটোমেটিক ডেটা রিড করার লিংক
+# গুগল শিট থেকে সরাসরি লিংক
 SHEET_ID = "1BwMbaLP4koABhxaxrGGBq8I5AYmn9BDAu7evJ6TiUl4"
 SHEET_NAME = "Services"
 csv_url = f"https://google.com{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={SHEET_NAME}"
 
-@st.cache_data(ttl=60) # প্রতি ১ মিনিট পর পর এক্সেল থেকে নতুন ডেটা আপডেট করবে
+@st.cache_data(ttl=30)
 def load_data_from_excel():
     test_dict = {"Select Test": 0}
     doc_list = ["Select Doctor"]
     
     try:
-        df = pd.read_csv(csv_url)
+        # header=None দিয়ে কলামের নাম যাই হোক না কেন পজিশন দিয়ে রিড করার ব্যবস্থা
+        df = pd.read_csv(csv_url, header=None)
         
-        # ১. টেস্ট এবং প্রাইস লিস্ট তৈরি (Column2 এবং Column3 থেকে)
-        for _, row in df.iterrows():
-            test_name = str(row.get('Column2', '')).strip()
-            price_val = row.get('Column3', 0)
-            
-            if test_name and test_name != "nan" and test_name != "Category":
-                try:
-                    price = int(float(price_val))
-                except:
-                    price = 0
-                test_dict[test_name] = price
+        for idx, row in df.iterrows():
+            # ১ম সারি (কলামের নামগুলো) বাদ দেওয়ার জন্য
+            if idx == 0:
+                continue
                 
-        # ২. ডাক্তারদের তালিকা তৈরি (Column6 থেকে)
-        for _, row in df.iterrows():
-            doc_name = str(row.get('Column6', '')).strip()
-            if doc_name and doc_name != "nan" and doc_name != "":
-                if doc_name not in doc_list:
-                    doc_list.append(doc_name)
-                    
+            # ২য় কলামে টেস্টের নাম (Index 1) এবং ৩য় কলামে রেট (Index 2)
+            if len(row) > 2:
+                test_name = str(row[1]).strip()
+                price_val = row[2]
+                
+                if test_name and test_name != "nan" and test_name != "" and "Column" not in test_name:
+                    try:
+                        price = int(float(price_val))
+                    except:
+                        price = 0
+                    test_dict[test_name] = price
+            
+            # ৬ষ্ঠ কলামে ডাক্তারদের নাম (Index 5)
+            if len(row) > 5:
+                doc_name = str(row[5]).strip()
+                if doc_name and doc_name != "nan" and doc_name != "" and "Column" not in doc_name and "Self" not in doc_name:
+                    if doc_name not in doc_list:
+                        doc_list.append(doc_name)
+                        
     except Exception as e:
-        # কোনো কারণে এরর আসলে ব্যাকআপ
+        # ব্যাকআপ ডেটা
         test_dict = {"Select Test": 0, "CBC + ESR": 600, "Widal Test": 450}
-        doc_list = ["Select Doctor", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F"]
+        doc_list = ["Select Doctor"]
         
-    if len(doc_list) == 1:
+    # ডাক্তারদের তালিকায় যদি কিছু না আসে তবে ম্যানুয়াল ব্যাকআপ
+    if len(doc_list) <= 1:
         doc_list.extend(["Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS", "Self"])
         
     return test_dict, doc_list
