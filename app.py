@@ -11,38 +11,32 @@ st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Aul
 # ট্যাব সিস্টেম
 tab1, tab2 = st.tabs(["📑 Billing / Cash Memo", "📊 Admin Dashboard"])
 
-# গুগল শিট থেকে ডেটা লোড করার লিংক
-SHEET_ID = "1BwMbaLP4koABhxaxrGGBq8I5AYmn9BDAu7evJ6TiUl4"
-csv_url = f"https://google.com{SHEET_ID}/export?format=csv&gid=1152917726"
+# --- ১00% ফিক্সড ডেটাবেজ (সরাসরি কোডের ভেতর আপনার শিটের সব প্রধান টেস্ট ও ডাক্তার) ---
+doctors_list = [
+    "Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", 
+    "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"
+]
 
-@st.cache_data(ttl=10)
-def load_data_from_excel():
-    test_dict = {"Select Test": 0}
-    doc_list = ["Select Doctor"]
-    try:
-        df = pd.read_csv(csv_url, header=None)
-        for idx, row in df.iterrows():
-            if idx == 0: continue
-            if len(row) > 2:
-                test_name = str(row[1]).strip()
-                price_val = row[2]
-                if test_name and test_name != "nan" and test_name != "" and "Column" not in test_name and "Category" not in test_name:
-                    try: price = int(float(price_val))
-                    except: price = 0
-                    test_dict[test_name] = price
-            if len(row) > 5:
-                doc_name = str(row[5]).strip()
-                if doc_name and doc_name != "nan" and doc_name != "" and "Column" not in doc_name and "Self" not in doc_name:
-                    if doc_name not in doc_list: doc_list.append(doc_name)
-    except: pass
-    if len(test_dict) <= 1:
-        test_dict = {"Select Test": 0, "(CBC) + ESR": 600, "Widal Test": 450, "T3": 1200, "Urine R/E": 250, "USG": 800}
-    if len(doc_list) <= 1:
-        doc_list.extend(["Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"])
-    if "Self / Direct" not in doc_list: doc_list.append("Self / Direct")
-    return test_dict, doc_list
-
-test_directory, doctors_list = load_data_from_excel()
+test_directory = {
+    "Select Test": 0,
+    "(CBC) + ESR": 600, "Widal Test": 450, "T.A Test": 1050, "Platelet Count": 300,
+    "MP": 500, "BT/CT": 350, "C/E Count": 250, "T3": 1200, "T4": 1200, "FT3": 900,
+    "FT4": 900, "TSH": 1100, "HbA1c": 1500, "Prolactin": 1200, "S. IgE": 1500,
+    "Aso Titre": 450, "CRP": 450, "RA/RF": 450, "HBs Ag (Screen Test)": 450,
+    "TPHA": 450, "VDRL": 400, "Group & Rh Factor": 200, "Mantoux-Test (M.T)": 350,
+    "Triple Antigen": 1050, "R.Fever": 650, "HIV": 600, "HCV": 600, "TB (ICT)": 750,
+    "Malaria p/l/p/v": 700, "H. Pylori": 850, "Filaria (ICT)": 750, "Dengue NS1, IgG/IgM": 300,
+    "Random Blood Sugar": 200, "Fasting Blood Sugar": 200, "2hr After Breakfast": 200,
+    "2hr After 75gm Glucose": 200, "O.G.T.T": 500, "Blood Urea": 400, "Cholesterol": 350,
+    "HDL": 400, "TG": 350, "LDL": 300, "S.GPT(ALT)": 500, "S.GOT(AST)": 500,
+    "Bilirubin Total": 350, "Lipid Profile": 1000, "Bilirubin Direct/Indirect": 450,
+    "Serum Creatinine": 300, "Uric Acid": 400, "Amylase": 700, "Calcium": 500,
+    "X-Ray Chest": 500, "X-Ray PNS": 500, "X-Ray Maxila": 500, "X-Ray Nasopharynx": 550,
+    "X-Ray Abdomen A/P": 500, "X-Ray Cervical Spine": 600, "Plane X-Ray Abdomen": 500,
+    "X-Ray Skull": 600, "X-Ray Pelvic": 500, "X-Ray Mandible A/P": 550, "X-Ray KUB": 500,
+    "USG of Whole Abdomen": 800, "ECG": 300, "Urine Pregnancy Test (PT)": 200,
+    "Urine R/E": 250, "Stool R/E": 400, "Stool OBT": 400
+}
 
 if 'sales_data' not in st.session_state:
     st.session_state['sales_data'] = pd.DataFrame(columns=["Date", "Patient", "Doctor", "Total", "Discount", "Paid"])
@@ -64,12 +58,13 @@ with tab1:
     st.subheader("Services / Test Selection")
     total_amount = 0
     selected_tests_list = []
+    
     for i in range(1, 6):
         test_name = st.selectbox(f"Select Test {i}:", list(test_directory.keys()), key=f"test_{i}")
         if test_name != "Select Test":
             price = test_directory[test_name]
             st.text(f"Price: {price} TK")
-            selected_tests_list.append(f"<li>{test_name}: {price} TK</li>")
+            selected_tests_list.append(f"<tr style='border-bottom: 1px solid #ddd;'><td style='padding: 8px;'>{test_name}</td><td style='padding: 8px; text-align: right;'>{price} TK</td></tr>")
             total_amount += price
 
     st.divider()
@@ -94,27 +89,35 @@ with tab1:
             st.session_state['sales_data'] = pd.concat([st.session_state['sales_data'], new_bill], ignore_index=True)
             st.success(f"Invoice generated and saved successfully!")
             
-            # প্রিন্ট করার জন্য জাভাস্ক্রিপ্ট বাটন ট্রিকস
             st.markdown("<br><hr><h4 style='text-align:center;'>--- PRINT PREVIEW ---</h4>", unsafe_allow_html=True)
+            
+            # একদম ঝকঝকে সাদা প্রফেশনাল মেমো ডিজাইন (ডার্ক মোডেও কালো হবে না)
             memo_html = f"""
-            <div style="border: 2px solid #000; padding: 15px; border-radius: 5px; font-family: Arial;">
-                <h2 style="text-align: center; color: red; margin:0;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
-                <p style="text-align: center; margin: 2px;">Mollah Bazar, Auliapur, Patuakhali</p>
-                <hr>
-                <p><b>Patient Name:</b> {patient_name} &nbsp;&nbsp;&nbsp;&nbsp; <b>Age:</b> {age}</p>
-                <p><b>Ref. Doctor:</b> {ref_dr} &nbsp;&nbsp;&nbsp;&nbsp; <b>Date:</b> {date_today}</p>
-                <hr>
-                <h4>Tests:</h4>
-                <ul>{"".join(selected_tests_list)}</ul>
-                <hr>
-                <p align="right"><b>Total Amount:</b> {total_amount} TK</p>
-                <p align="right" style="color:red;"><b>Discount:</b> {discount} TK</p>
-                <p align="right" style="color:green; font-size:18px;"><b>Total PAID:</b> {total_paid} TK</p>
+            <div style="background-color: white; color: black; border: 2px solid #000; padding: 20px; border-radius: 5px; font-family: Arial, sans-serif; max-width: 500px; margin: auto;">
+                <h2 style="text-align: center; color: red; margin:0; font-size: 22px; font-weight: bold;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
+                <p style="text-align: center; margin: 4px; font-size: 14px; font-weight: bold; color: #333;">Mollah Bazar, Auliapur, Patuakhali<br>Phone: 01711867637</p>
+                <div style="background-color: #007ff5; color: white; text-align: center; padding: 5px; margin: 10px 0; font-weight: bold; font-size: 16px; border-radius: 3px;">CASH MEMO</div>
+                <table style="width: 100%; font-size: 14px; border-collapse: collapse; color: black;">
+                    <tr><td style="padding: 3px;"><b>Patient Name:</b> {patient_name}</td><td style="padding: 3px; text-align: right;"><b>Age:</b> {age}</td></tr>
+                    <tr><td style="padding: 3px;"><b>Ref. Doctor:</b> {ref_dr}</td><td style="padding: 3px; text-align: right;"><b>Date:</b> {date_today}</td></tr>
+                </table>
+                <hr style="border-top: 1px solid black;">
+                <table style="width: 100%; font-size: 14px; border-collapse: collapse; color: black;">
+                    <tr style="background-color: #f2f2f2; font-weight: bold;"><td style="padding: 8px;">Test Description</td><td style="padding: 8px; text-align: right;">Amount</td></tr>
+                    {"".join(selected_tests_list)}
+                </table>
+                <hr style="border-top: 1px solid black; margin-top: 20px;">
+                <table style="width: 100%; font-size: 15px; color: black; font-weight: bold;">
+                    <tr><td style="text-align: right; padding: 3px;">Total Amount:</td><td style="text-align: right; width: 100px; padding: 3px;">{total_amount} TK</td></tr>
+                    <tr><td style="text-align: right; padding: 3px; color: red;">Discount:</td><td style="text-align: right; padding: 3px; color: red;">{discount} TK</td></tr>
+                    <tr style="font-size: 18px; color: green;"><td style="text-align: right; padding: 5px;">Total PAID:</td><td style="text-align: right; padding: 5px; border-top: 2px double green;">{total_paid} TK</td></tr>
+                </table>
+                <p style="text-align: center; font-size: 12px; margin-top: 3px; color: #555;"><i>Thank you for choosing us!</i></p>
             </div>
             <br>
-            <button onclick="window.print()" style="background-color: #4CAF50; color: white; padding: 10px 24px; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; width: 100%;">🖨️ Click Here to Print / Save PDF</button>
+            <button onclick="window.print()" style="background-color: #4CAF50; color: white; padding: 12px 24px; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">🖨️ Click Here to Print / Save PDF</button>
             """
-            st.components.v1.html(memo_html, height=450, scrolling=True)
+            st.components.v1.html(memo_html, height=520, scrolling=True)
 
 # --- ট্যাব ২: অ্যাডমিন ড্যাশবোর্ড ---
 with tab2:
@@ -145,4 +148,7 @@ with tab2:
         col_d1, col_d2 = st.columns(2)
         col_d1.subheader(f"Total Bill: {total_doc_business} TK")
         col_d2.markdown(f"<h3>Doctor Fee: <span style='color:orange;'>{total_commission} TK</span></h3>", unsafe_allow_html=True)
-        
+        if not doc_bills.empty:
+            st.write("Patient List:")
+            st.dataframe(doc_bills[["Date", "Patient", "Paid"]])
+            
