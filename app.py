@@ -8,42 +8,50 @@ st.markdown("<h2 style='text-align: center; color: red;'>ROGMUKTI DIAGNOSTIC CEN
 st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Auliapur, Patuakhali<br>Phone: 01711867637</p>", unsafe_allow_html=True)
 st.markdown("<h3 style='text-align: center; background-color: #007ff5; color: white; padding: 5px; border-radius: 5px;'>CASH MEMO</h3>", unsafe_allow_html=True)
 
-# ১. গুগল শিট থেকে অটোমেটিক টেস্ট ও দামের তালিকা নিয়ে আসা
+# গুগল শিট থেকে অটোমেটিক ডেটা রিড করার লিংক
 SHEET_ID = "1BwMbaLP4koABhxaxrGGBq8I5AYmn9BDAu7evJ6TiUl4"
-SHEET_NAME = "Services"  # আপনার এক্সেলের 'Services' ট্যাব
+SHEET_NAME = "Services"
 csv_url = f"https://google.com{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={SHEET_NAME}"
 
-@st.cache_data
-def load_services():
+@st.cache_data(ttl=60) # প্রতি ১ মিনিট পর পর এক্সেল থেকে নতুন ডেটা আপডেট করবে
+def load_data_from_excel():
+    test_dict = {"Select Test": 0}
+    doc_list = ["Select Doctor"]
+    
     try:
         df = pd.read_csv(csv_url)
-        # আপনার শিটের কলাম অনুযায়ী টেস্টের নাম ও রেট ঠিক করা
-        # এখানে 'Test Name' এবং 'Rate' কলাম আছে ধরে নেওয়া হয়েছে
-        services = {"Select Test": 0}
+        
+        # ১. টেস্ট এবং প্রাইস লিস্ট তৈরি (Column2 এবং Column3 থেকে)
         for _, row in df.iterrows():
-            test = str(row.iloc[0]).strip()   # ১ম কলামে টেস্টের নাম
-            try:
-                price = int(row.iloc[1])       # ২য় কলামে দাম
-            except:
-                price = 0
-            if test and test != "nan":
-                services[test] = price
-        return services
-    except:
-        # কোনো কারণে শিট লোড না হলে ব্যাকআপ তালিকা
-        return {"Select Test": 0, "CBC + ESR": 400, "T3": 1200, "Blood Sugar": 150}
+            test_name = str(row.get('Column2', '')).strip()
+            price_val = row.get('Column3', 0)
+            
+            if test_name and test_name != "nan" and test_name != "Category":
+                try:
+                    price = int(float(price_val))
+                except:
+                    price = 0
+                test_dict[test_name] = price
+                
+        # ২. ডাক্তারদের তালিকা তৈরি (Column6 থেকে)
+        for _, row in df.iterrows():
+            doc_name = str(row.get('Column6', '')).strip()
+            if doc_name and doc_name != "nan" and doc_name != "":
+                if doc_name not in doc_list:
+                    doc_list.append(doc_name)
+                    
+    except Exception as e:
+        # কোনো কারণে এরর আসলে ব্যাকআপ
+        test_dict = {"Select Test": 0, "CBC + ESR": 600, "Widal Test": 450}
+        doc_list = ["Select Doctor", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F"]
+        
+    if len(doc_list) == 1:
+        doc_list.extend(["Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS", "Self"])
+        
+    return test_dict, doc_list
 
-test_directory = load_services()
-
-# ২. ডাক্তারদের ড্রপডাউন তালিকা
-doctors_list = [
-    "Select Doctor",
-    "Self / Direct",
-    "Dr. Abdur Rahman (RMP)",
-    "Dr. Moshiur Rahman (MBBS, BCS, PGT)",
-    "Dr. MD. Kamrul Hasan",
-    "Dr. Fahmida Akter"
-]
+# ডেটা লোড করা
+test_directory, doctors_list = load_data_from_excel()
 
 st.subheader("Patient Information")
 col1, col2 = st.columns(2)
@@ -56,9 +64,8 @@ with col2:
 
 st.divider()
 
-# ৩. ৫টি টেস্ট সিলেক্ট করার ঘর (আপনার আসল এক্সেল তালিকার সব টেস্ট এখানে দেখাবে)
+# ৫টি টেস্ট সিলেক্ট করার ঘর (সব টেস্ট এখানে দেখাবে)
 st.subheader("Services / Test Selection")
-selected_tests = []
 total_amount = 0
 
 for i in range(1, 6):
@@ -80,8 +87,6 @@ st.markdown(f"### **Total PAID:** <span style='color:green;'>{total_paid} TK</sp
 if st.button("Generate & Save Invoice", type="primary"):
     if patient_name == "":
         st.error("দয়া করে রোগীর নাম লিখুন!")
-    elif ref_dr == "Select Doctor":
-        st.error("দয়া করে রেফারেন্স ডাক্তার সিলেক্ট করুন!")
     else:
         st.success(f"Invoice generated successfully for {patient_name}!")
         
