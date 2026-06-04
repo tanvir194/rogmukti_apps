@@ -9,11 +9,81 @@ st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Aul
 
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"]
 
+# ====================== সম্পূর্ণ টেস্ট লিস্ট (আরও বেশি টেস্ট যোগ করা হয়েছে) ======================
 test_directory = {
-    "Select Test": 0, "(CBC) + ESR": 600, "Widal Test": 450, "T.A Test": 1050, "Platelet Count": 300,
-    "MP": 500, "BT/CT": 350, "T3": 1200, "T4": 1200, "TSH": 1100, "HbA1c": 1500,
-    "Random Blood Sugar": 200, "Fasting Blood Sugar": 200, "Lipid Profile": 1000,
-    "USG of Whole Abdomen": 800, "X-Ray Chest": 500, "Urine R/E": 250, "ECG": 300
+    "Select Test": 0,
+    
+    # === Blood Tests ===
+    "(CBC) + ESR": 600,
+    "CBC": 350,
+    "ESR": 250,
+    "Platelet Count": 300,
+    "Blood Group & Rh": 200,
+    "MP / Malaria": 500,
+    
+    # === Sugar & Diabetes ===
+    "Random Blood Sugar": 200,
+    "Fasting Blood Sugar": 200,
+    "2hr After 75gm Glucose": 200,
+    "HbA1c": 1500,
+    
+    # === Thyroid ===
+    "T3": 1200,
+    "T4": 1200,
+    "TSH": 1100,
+    "FT3": 900,
+    "FT4": 900,
+    
+    # === Lipid Profile ===
+    "Lipid Profile": 1000,
+    "Cholesterol": 350,
+    "Triglyceride": 350,
+    "HDL": 400,
+    "LDL": 300,
+    
+    # === Liver Function ===
+    "S.GPT (ALT)": 500,
+    "S.GOT (AST)": 500,
+    "Bilirubin Total": 350,
+    "Bilirubin Direct/Indirect": 450,
+    
+    # === Kidney Function ===
+    "Serum Creatinine": 300,
+    "Blood Urea": 400,
+    "Uric Acid": 400,
+    
+    # === Other Blood Tests ===
+    "Widal Test": 450,
+    "Dengue NS1 + IgG/IgM": 300,
+    "HBsAg": 450,
+    "HCV": 600,
+    "HIV": 600,
+    "CRP": 450,
+    
+    # === Ultrasonography (USG) - অনেক ধরন যোগ করা হয়েছে ===
+    "USG of Whole Abdomen": 800,
+    "USG Upper Abdomen": 750,
+    "USG Lower Abdomen": 750,
+    "USG Pelvis": 700,
+    "USG KUB": 750,
+    "USG Breast": 800,
+    "USG Thyroid": 700,
+    "USG Scrotum": 700,
+    "USG Follicular Study": 800,
+    
+    # === X-Ray ===
+    "X-Ray Chest": 500,
+    "X-Ray PNS": 500,
+    "X-Ray Abdomen": 500,
+    "X-Ray KUB": 500,
+    "X-Ray Cervical Spine": 600,
+    "X-Ray Lumbar Spine": 600,
+    
+    # === Others ===
+    "ECG": 300,
+    "Urine R/E": 250,
+    "Stool R/E": 400,
+    "Urine Pregnancy Test": 200,
 }
 
 if 'sales_data' not in st.session_state:
@@ -74,12 +144,12 @@ with tab1:
             
             st.success(f"✅ Invoice Saved! Invoice No: **{invoice_no}**")
             
-            # প্রিন্টেবল মেমো (ইনভয়েস নাম্বারের সাইজ ছোট করা)
+            # প্রিন্টেবল মেমো
             memo_html = f"""
             <div style="font-family: Arial; max-width: 500px; margin: auto; padding: 25px; border: 3px solid black; background: white; color: black;">
                 <h2 style="text-align: center; color: red;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
                 <p style="text-align: center;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
-                <p style="text-align: center; font-size: 15px; font-weight: bold; margin: 8px 0;">Invoice No: {invoice_no}</p>
+                <p style="text-align: center; font-size: 10px; font-weight: bold; margin: 8px 0;">Invoice No: {invoice_no}</p>
                 <hr>
                 <table style="width:100%; font-size:14px;">
                     <tr><td>Patient: <b>{patient_name}</b></td><td style="text-align:right;">Date: {date_today}</td></tr>
@@ -99,7 +169,6 @@ with tab1:
             </div>
             """
             st.components.v1.html(memo_html, height=520)
-            
             st.markdown('<button onclick="window.print()" style="background:#28a745;color:white;padding:12px 30px;font-size:18px;border:none;border-radius:5px;width:100%;margin-top:10px;">🖨️ Print / Save as PDF</button>', unsafe_allow_html=True)
             
         else:
