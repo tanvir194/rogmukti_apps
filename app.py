@@ -130,7 +130,20 @@ with tab2:
         c3.metric("This Month", f"৳ {monthly:,.0f}")
         c4.metric("This Year", f"৳ {yearly:,.0f}")
         
-        st.dataframe(df.sort_values(by="Date", ascending=False), use_container_width=True)
+        st.divider()
+        st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
+        selected_doc = st.selectbox("Select Doctor", doctors_list[1:])
+        
+        if selected_doc:
+            doc_df = df[df['Doctor'] == selected_doc]
+            if not doc_df.empty:
+                total_business = doc_df['Paid'].sum()
+                commission = total_business * 0.30
+                st.success(f"**Total Business:** ৳ {total_business:,.0f}")
+                st.info(f"**Doctor's Referral Fee (30%):** ৳ {commission:,.0f}")
+                st.dataframe(doc_df[["Invoice_No", "Date", "Patient", "Paid"]], use_container_width=True)
+            else:
+                st.info("এই ডাক্তারের কোনো বিল পাওয়া যায়নি।")
     else:
         st.info("এখনো কোনো বিল তৈরি হয়নি।")
 
