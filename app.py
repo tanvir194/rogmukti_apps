@@ -10,40 +10,27 @@ st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Aul
 
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"]
 
-# ৫৮টি নিয়মিত ব্যবহৃত টেস্টের পূর্ণাঙ্গ তালিকা ও মূল্য তালিকা
+# ৫৮টি নিয়মিত ব্যবহৃত টেস্টের তালিকা
 test_directory = {
     "Select Test": 0,
-    # --- Hematology (রক্ত রোগ সংক্রান্ত) ---
     "(CBC) + ESR": 600, "CBC (Complete Blood Count)": 350, "ESR": 150, "Platelet Count": 250,
     "Hemoglobin (Hb%)": 150, "Blood Group & Rh Factor": 150, "BT / CT (Bleeding & Clotting Time)": 200,
     "MP (Malarial Parasite)": 250, "ASO Titre": 400, "RA Test": 400, "CRP (C-Reactive Protein)": 500,
-    
-    # --- Biochemistry (জৈব রাসায়নিক) ---
     "Random Blood Sugar (RBS)": 150, "Fasting Blood Sugar (FBS)": 150, "2 Hours After Breakfast (2HABF)": 150,
     "HbA1c": 1200, "Serum Creatinine": 300, "Serum Urea": 300, "Serum Uric Acid": 350,
     "Serum Bilirubin (Total)": 250, "SGPT (ALT)": 350, "SGOT (AST)": 350, "Serum Alkaline Phosphatase": 350,
     "Lipid Profile": 900, "Serum Cholesterol": 250, "Serum Triglycerides (TG)": 300,
     "Serum Calcium": 450, "Serum Electrolytes": 1000,
-    
-    # --- Serology & Immunology (ভাইরাস ও প্রতিরোধী ক্ষমতা) ---
     "HBsAg (Screening)": 300, "HBsAg (ELISA)": 600, "Anti HCV": 600, "HIV I & II": 500,
     "VDRL (Qualitative)": 250, "TPHA": 400, "Widal Test (Typhoid)": 350, "Dengue NS1 Antigen": 600,
     "Dengue IgG / IgM": 600, "Chikungunya IgM": 800, "Troponin-I": 1200,
-    
-    # --- Hormones (হরমোন সংক্রান্ত) ---
     "Serum T3": 600, "Serum T4": 600, "Serum TSH": 700, "FT3 (Free T3)": 700, "FT4 (Free T4)": 700,
     "Serum Prolactin": 800, "Serum Testosterone": 1000, "Beta hCG (Pregnancy)": 900,
-    
-    # --- Clinical Pathology (ইউরিন ও স্টুল) ---
     "Urine R/E (Routine & Examination)": 200, "Urine Pregnancy Test (UPT)": 150,
     "Stool R/E": 200, "Stool for OBT (Occult Blood Test)": 250,
-    
-    # --- Ultrasonography (USG) ---
     "USG of Whole Abdomen": 800, "USG of Upper Abdomen": 500, "USG of Lower Abdomen": 500,
     "USG of Pregnancy / Obs": 500, "USG of Pelvis": 500, "USG of KUB (Kidney, Ureter, Bladder)": 600,
     "USG of KUB with Prostate": 700,
-    
-    # --- X-Ray & Cardiology ---
     "X-Ray Chest P/A View": 400, "X-Ray Chest A/P View": 400, "X-Ray Lumbar Spine B/V": 700,
     "X-Ray Cervical Spine B/V": 600, "ECG (Digital)": 300
 }
@@ -178,9 +165,16 @@ with tab1:
 with tab2:
     st.header("📊 Dashboard")
     df_db = pd.read_sql_query("SELECT * FROM bills", conn)
+    
     if not df_db.empty:
         df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
-        df = df_db.rename(columns={
-            'invoice_no': 'Invoice_No', 'patient': 'Patient', 'age': 'Age',
-            'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total',
-            'discount': 'Discount', 'paid': 'Paid'
+        # ত্রুটি এড়াতে কলাম রিনেম করার ডিকশনারিটি এক লাইনে নিখুঁতভাবে লেখা হয়েছে
+        cols_mapping = {'invoice_no': 'Invoice_No', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
+        df = df_db.rename(columns=cols_mapping)
+    else:
+        df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
+
+    if not df.empty:
+        today = datetime.now().date()
+        
+        st.subheader("🔍 Month / Date Filter")
