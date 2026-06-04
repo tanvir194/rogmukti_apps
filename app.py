@@ -92,15 +92,23 @@ with tab1:
             st.error("দয়া করে রোগীর নাম লিখুন!")
         elif ref_dr == "Select Doctor":
             st.error("দয়া করে ডাক্তার সিলেক্ট করুন!")
-        else:
+                else:
             new_bill = pd.DataFrame([{
-                "Date": date_today, "Patient": patient_name, "Doctor": ref_dr,
-                "Total": total_amount, "Discount": discount, "Paid": total_paid
+                "Date": date_today, "Patient": patient_name,
+                "Total": total_amount, "Discount": discount
             }])
             st.session_state['sales_data'] = pd.concat([st.session_state['sales_data'], new_bill], ignore_index=True)
-            st.success(f"Invoice generated and saved successfully!")
+            st.success(f"Invoice generated and saved successfully for {patient_name}!")
             
-            st.markdown("<br><hr><h4 style='text-align:center;'>--- PRINT PREVIEW ---</h4>", unsafe_allow_html=True)
+            # 📱 এখানে অটোমেটিক SMS পাঠানোর কোড যুক্ত করা হলো
+            if patient_phone:  
+                sms_text = f"প্রিয় {patient_name}, রোগমুক্তি ডায়াগনস্টিক সেন্টারে আপনার ইনভয়েস তৈরি হয়েছে। মোট বিল: {total_paid} টাকা। ধন্যবাদ।"
+                sms_status = send_sms(patient_phone, sms_text)
+                if sms_status:
+                    st.info("রোগীর মোবাইলে কনফার্মেশন SMS পাঠানো হয়েছে।")
+                else:
+                    st.warning("বিল সেভ হয়েছে, কিন্তু SMS পাঠানো যায়নি (টোকেন চেক করুন)।")
+        
             
             # একদম ঝকঝকে সাদা প্রফেশনাল মেমো ডিজাইন (ডার্ক মোডেও কালো হবে না)
             memo_html = f"""
@@ -123,7 +131,7 @@ with tab1:
                     <tr><td style="text-align: right; padding: 3px; color: red;">Discount:</td><td style="text-align: right; padding: 3px; color: red;">{discount} TK</td></tr>
                     <tr style="font-size: 18px; color: green;"><td style="text-align: right; padding: 5px;">Total PAID:</td><td style="text-align: right; padding: 5px; border-top: 2px double green;">{total_paid} TK</td></tr>
                 </table>
-                <p style="text-align: center; font-size: 12px; margin-top: 3px; color: #555;"><i>Thank you for choosing us!</i></p>
+                <p style="else: center; font-size: 12px; margin-top: 3px; color: #555;"><i>Thank you for choosing us!</i></p>
             </div>
             <br>
             <button onclick="window.print()" style="background-color: #4CAF50; color: white; padding: 12px 24px; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">🖨️ Click Here to Print / Save PDF</button>
