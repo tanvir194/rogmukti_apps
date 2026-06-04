@@ -131,9 +131,18 @@ with tab2:
     st.header("📊 Dashboard")
     df_db = pd.read_sql_query("SELECT * FROM bills", conn)
     if not df_db.empty:
-        # এখানে নিশ্চিত করা হচ্ছে যে ডাটাবেসের তারিখ ডেট-টাইপ অবজেক্টে রূপান্তর হচ্ছে
         df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
-        df = df_db.rename(columns={'paid': 'Paid', 'total': 'Total', 'discount': 'Discount'})
+        # ডাটাবেসের সবগুলো কলাম সঠিকভাবে বড় হাতের অক্ষরে রিনেম করা হয়েছে
+        df = df_db.rename(columns={
+            'invoice_no': 'Invoice_No',
+            'patient': 'Patient',
+            'age': 'Age',
+            'phone': 'Phone',
+            'doctor': 'Doctor',
+            'total': 'Total',
+            'discount': 'Discount',
+            'paid': 'Paid'
+        })
     else:
         df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
 
@@ -147,7 +156,6 @@ with tab2:
         with col2:
             end_date = st.date_input("To Date", value=today)
         
-        # ফিল্টার করার আগে নিশ্চিত হওয়া যে দুটিই একই ফরম্যাটে আছে
         filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
         
         total = filtered_df['Paid'].sum()
