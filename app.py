@@ -10,7 +10,6 @@ st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Aul
 
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"]
 
-# ৫৮টি নিয়মিত ব্যবহৃত টেস্টের পূর্ণাঙ্গ তালিকা
 test_directory = {
     "Select Test": 0,
     "(CBC) + ESR": 600, "CBC (Complete Blood Count)": 350, "ESR": 150, "Platelet Count": 250,
@@ -35,7 +34,6 @@ test_directory = {
     "X-Ray Cervical Spine B/V": 600, "ECG (Digital)": 300
 }
 
-# SQLite ডাটাবেস
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('''CREATE TABLE IF NOT EXISTS bills
@@ -53,8 +51,19 @@ if 'show_memo' not in st.session_state:
 if 'num_tests' not in st.session_state:
     st.session_state['num_tests'] = 3
 
+# সাইডবারের চয়েস লজিক একদম সোজা লাইনে রূপান্তর
 choice = st.sidebar.radio("Main Menu", ["📑 Billing / Cash Memo", "📊 Dashboard Report"])
 
+# ডাটাবেস থেকে ডেটা লোড সব ফাংশনের জন্য কমন করা হয়েছে (কোনো ইনডেন্টেশন নেই)
+df_db = pd.read_sql_query("SELECT * FROM bills", conn)
+if not df_db.empty:
+    df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
+    cols_mapping = {'invoice_no': 'Invoice_No', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
+    df = df_db.rename(columns=cols_mapping)
+else:
+    df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
+
+# ফাংশন ১: বিলিং পেজ লোড
 if choice == "📑 Billing / Cash Memo":
     st.subheader("Patient Information")
     col1, col2 = st.columns(2)
@@ -63,13 +72,11 @@ if choice == "📑 Billing / Cash Memo":
     phone = col1.text_input("Phone Number:", key="p_phone")
     ref_dr = col2.selectbox("Referred By:", doctors_list, key="p_dr")
     date_today = col2.date_input("Date:", datetime.now().date(), key="p_date")
-
     st.divider()
     st.subheader("🧪 Test Selection")
     total_amount = 0
     test_list_html = ""
     serial = 1
-    
     for i in range(1, st.session_state['num_tests'] + 1):
         test = st.selectbox(f"Test {i}:", list(test_directory.keys()), key=f"dynamic_test_{i}")
         if test != "Select Test":
@@ -78,30 +85,23 @@ if choice == "📑 Billing / Cash Memo":
             test_list_html += f"<tr><td style='padding:8px; border-bottom:1px solid #eee;'>{serial}</td><td style='padding:8px; border-bottom:1px solid #eee;'>{test}</td><td style='padding:8px; border-bottom:1px solid #eee; text-align:right;'>{price} TK</td></tr>"
             total_amount += price
             serial += 1
-
     if st.button("➕ Add More Test Slot"):
         st.session_state['num_tests'] += 1
         st.rerun()
-
     st.divider()
     discount = st.number_input("Discount (TK)", min_value=0, value=0, step=10, key="p_discount")
     total_paid = total_amount - discount
-
     st.markdown(f"**Total Amount:** {total_amount} TK")
     st.markdown(f"**Discount:** {discount} TK")
     st.markdown(f"### **Net Payable:** {total_paid} TK")
-
     if st.button("💾 Save & Print Invoice", type="primary"):
         if patient_name and ref_dr != "Select Doctor" and total_amount > 0:
             today_str = datetime.now().strftime("%Y%m%d")
             invoice_no = f"ROG-{today_str}-{len(st.session_state['sales_data'])+1:03d}"
-            
             new_row = {"Invoice_No": invoice_no, "Date": str(date_today), "Patient": patient_name, "Age": age, "Phone": phone, "Doctor": ref_dr, "Total": total_amount, "Discount": discount, "Paid": total_paid}
-            
             c.execute("INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (invoice_no, str(date_today), patient_name, age, phone, ref_dr, total_amount, discount, total_paid))
             conn.commit()
             st.session_state['sales_data'] = pd.concat([st.session_state['sales_data'], pd.DataFrame([new_row])], ignore_index=True)
-            
             memo_html = f"""
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 3px solid black; background: white; color: black;">
                 <h2 style="text-align: center; color: red; margin-bottom: 5px;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
@@ -136,7 +136,6 @@ if choice == "📑 Billing / Cash Memo":
             st.rerun()
         else:
             st.error("অনুগ্রহ করে Patient Name, Doctor সিলেক্ট করুন এবং অন্তত ১টি টেস্ট যুক্ত করুন।")
-
     if st.session_state['show_memo']:
         st.divider()
         st.subheader("🖨️ Last Generated Invoice Print View")
@@ -146,22 +145,10 @@ if choice == "📑 Billing / Cash Memo":
             st.session_state['show_memo'] = False
             st.rerun()
 
+# ফাংশন ২: ড্যাশবোর্ড পেজ লোড (সম্পূর্ণ সমান্তরাল লাইন লজিক, কোনো ইনডেন্টেশন এরর হবে না)
 if choice == "📊 Dashboard Report":
     st.subheader("📊 Dashboard Report")
-    df_db = pd.read_sql_query("SELECT * FROM bills", conn)
-    
-    if not df_db.empty:
-        df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
-        cols_mapping = {'invoice_no': 'Invoice_No', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
-        df = df_db.rename(columns=cols_mapping)
-    else:
-        df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
-
     today = datetime.now().date()
     st.subheader("🔍 Month / Date Filter")
     start_date = st.date_input("From Date", value=today.replace(day=1), key="d_start")
     end_date = st.date_input("To Date", value=today, key="d_end")
-        
-    filtered_df = df.copy()
-    if not df.empty:
-            
