@@ -131,17 +131,8 @@ with tab2:
     st.header("📊 Dashboard")
     df_db = pd.read_sql_query("SELECT * FROM bills", conn)
     if not df_db.empty:
-        df = df_db.rename(columns={
-            'invoice_no': 'Invoice_No',
-            'patient': 'Patient',
-            'age': 'Age',
-            'phone': 'Phone',
-            'doctor': 'Doctor',
-            'total': 'Total',
-            'discount': 'Discount',
-            'paid': 'Paid'
-        })
-        df['Date'] = pd.to_datetime(df_db['date']).dt.date
+        df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
+        df = df_db.rename(columns={'date': 'Date', 'paid': 'Paid'})
     else:
         df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
 
@@ -168,27 +159,18 @@ with tab2:
         
         st.divider()
         st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
-        selected_doc = st.selectbox("Select Doctor", doctors_list[1:], key="dashboard_doc_select")
+        selected_doc = st.selectbox("Select Doctor", doctors_list[1:], key="dashboard_doc")
         
-        if selected_doc:
+        if selected_doc and selected_doc != "Select Doctor":
             doc_df = filtered_df[filtered_df['Doctor'] == selected_doc]
             if not doc_df.empty:
                 doc_total = doc_df['Total'].sum()
                 referral_fee = doc_total * 0.30
-                
-                st.metric(f"Referral Fee for {selected_doc}", f"৳ {referral_fee:,.0f}")
-                st.dataframe(doc_df)
-                
-                doc_rows = ""
-                for idx, row in doc_df.iterrows():
-                    doc_rows += f"<tr><td style='padding:8px; border: 1px solid #ddd;'>{row['Date']}</td><td style='padding:8px; border: 1px solid #ddd;'>{row['Patient']}</td><td style='padding:8px; text-align:right; border: 1px solid #ddd;'>{row['Total']} TK</td></tr>"
-                
-                report_html = f"""
-                <div style="font-family: Arial; max-width: 700px; margin: auto; padding: 30px; border: 2px solid #000; background: white; color: black;">
-                    <h2 style="text-align: center; color: red; margin-bottom:5px;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
-                    <p style="text-align: center; margin-top:0;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
-                    <h3 style="text-align: center; background: #f0f0f0; padding: 5px;">Doctor Referral Statement</h3>
-                    <table style="width:100%; font-size:15px; margin-bottom: 15px;">
-                        <tr><td><b>Doctor Name:</b> {selected_doc}</td><td style="text-align:right;"><b>Period:</b> {start_date} to {end_date}</td></tr>
-                    </table>
-                                               
+                st.write(f"🩺 **{selected_doc}**-এর মোট রেফারেল টেস্টের পরিমাণ: **{doc_total:,.0f} TK**")
+                st.info(f"💰 **প্রদেয় কমিশন (৩০%):** **{referral_fee:,.0f} TK**")
+                st.dataframe(doc_df[["Invoice_No", "Date", "Patient", "Total"]])
+            else:
+                st.warning("এই ডাক্তারের কোনো ডেটা পাওয়া যায়নি।")
+    else:
+        st.info("এখনো কোনো ইনভয়েস তৈরি করা হয়নি।")
+
