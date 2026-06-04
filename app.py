@@ -79,19 +79,19 @@ with tab1:
             
             st.success(f"✅ Invoice Saved! Invoice No: **{invoice_no}**")
 
-            # প্রিন্ট মেমো (সিরিয়াল নাম্বার সহ হেডার)
+            # উন্নত প্রিন্ট মেমো
             memo_html = f"""
-            <div style="font-family: Arial; max-width: 500px; margin: auto; padding: 30px; border: 3px solid black; background: white; color: black;">
-                <h2 style="text-align: center; color: red;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
-                <p style="text-align: center;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
-                <p style="text-align: center; font-size: 10px; font-weight: bold; margin: 10px 0;">Invoice No: {invoice_no}</p>
-                <hr>
-                <table style="width:100%; font-size:14px;">
+            <div style="font-family: Arial; max-width: 600px; margin: auto; padding: 40px; border: 4px solid black; background: white; color: black; line-height: 1.5;">
+                <h2 style="text-align: center; color: red; margin: 0 0 5px 0;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
+                <p style="text-align: center; margin: 0 0 15px 0; font-size: 14px;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
+                <p style="text-align: center; font-size: 13px; font-weight: bold; margin: 10px 0;">Invoice No: {invoice_no}</p>
+                <hr style="border: 1px solid black; margin: 15px 0;">
+                <table style="width:100%; font-size: 15px;">
                     <tr><td><b>Patient:</b> {patient_name}</td><td style="text-align:right;"><b>Date:</b> {date_today}</td></tr>
                     <tr><td><b>Age:</b> {age}</td><td style="text-align:right;"><b>Doctor:</b> {ref_dr}</td></tr>
                 </table>
-                <hr>
-                <table style="width:100%; border-collapse:collapse; font-size:15px;">
+                <hr style="border: 1px solid black; margin: 15px 0;">
+                <table style="width:100%; border-collapse:collapse; font-size: 15px;">
                     <tr style="background:#f0f0f0; font-weight:bold;">
                         <td style="padding:8px; width:40px;">Sl.</td>
                         <td style="padding:8px;">Test Name</td>
@@ -99,16 +99,16 @@ with tab1:
                     </tr>
                     {test_list_html}
                 </table>
-                <hr>
-                <table style="width:100%; font-weight:bold; font-size:16px;">
+                <hr style="border: 1px solid black; margin: 15px 0;">
+                <table style="width:100%; font-weight:bold; font-size: 16px;">
                     <tr><td style="text-align:right;">Total Amount:</td><td style="text-align:right;">{total_amount} TK</td></tr>
                     <tr><td style="text-align:right; color:red;">Discount:</td><td style="text-align:right; color:red;">{discount} TK</td></tr>
-                    <tr style="font-size:18px; color:green;"><td style="text-align:right;">Net Payable:</td><td style="text-align:right;">{total_paid} TK</td></tr>
+                    <tr style="font-size:19px; color:green;"><td style="text-align:right;">Net Payable:</td><td style="text-align:right;">{total_paid} TK</td></tr>
                 </table>
-                <p style="text-align:center; margin-top:30px;">Thank You!</p>
+                <p style="text-align:center; margin-top:30px; font-size:14px;">Thank You! Come Again.</p>
             </div>
             """
-            st.components.v1.html(memo_html, height=550)
+            st.components.v1.html(memo_html, height=580)
             st.markdown('<button onclick="window.print()" style="background:#28a745;color:white;padding:12px 30px;font-size:18px;border:none;border-radius:5px;width:100%;margin-top:15px;">🖨️ Print / Save as PDF</button>', unsafe_allow_html=True)
             
         else:
