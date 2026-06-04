@@ -21,7 +21,7 @@ test_directory = {
     "X-Ray Chest": 500, "ECG": 300, "Urine R/E": 250, "Stool R/E": 400
 }
 
-# SQLite ডাটাবেস সেটআপ
+# SQLite ডাটাবেস
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('''CREATE TABLE IF NOT EXISTS bills
@@ -86,7 +86,7 @@ with tab1:
             }
             
             # ডাটাবেসে সেভ
-            c.execute("""INSERT INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            c.execute("""INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                       (invoice_no, str(date_today), patient_name, age, phone, ref_dr, total_amount, discount, total_paid))
             conn.commit()
             
@@ -131,7 +131,6 @@ with tab1:
 
 with tab2:
     st.header("📊 Dashboard")
-    # ডাটাবেস থেকে লোড
     df_db = pd.read_sql_query("SELECT * FROM bills", conn)
     if not df_db.empty:
         df_db['Date'] = pd.to_datetime(df_db['Date']).dt.date
