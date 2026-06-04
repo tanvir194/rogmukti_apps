@@ -10,7 +10,6 @@ st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Aul
 
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"]
 
-# ৫৮টি ফ্রেশ টেস্টের পূর্ণাঙ্গ তালিকা
 test_directory = {
     "Select Test": 0,
     "(CBC) + ESR": 600, "CBC (Complete Blood Count)": 350, "ESR": 150, "Platelet Count": 250,
@@ -52,7 +51,9 @@ if 'show_memo' not in st.session_state:
 if 'num_tests' not in st.session_state:
     st.session_state['num_tests'] = 3
 
-# ডাটাবেস গ্লোবাল রিড (কোনো স্পেস ঝামেলা নেই)
+choice = st.sidebar.radio("Main Menu", ["📑 Billing / Cash Memo", "📊 Dashboard Report"])
+
+# ডাটাবেস রিড
 df_db = pd.read_sql_query("SELECT * FROM bills", conn)
 if not df_db.empty:
     df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
@@ -62,76 +63,78 @@ if not df_db.empty:
 else:
     df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
 
-# --- ১. বিলিং সেকশন শুরু ---
-st.header("📑 Billing / Cash Memo")
-col1, col2 = st.columns(2)
-patient_name = col1.text_input("Patient Name:", key="p_name")
-age = col1.text_input("Age:", key="p_age")
-phone = col1.text_input("Phone Number:", key="p_phone")
-ref_dr = col2.selectbox("Referred By:", doctors_list, key="p_dr")
-date_today = col2.date_input("Date:", datetime.now().date(), key="p_date")
+if choice == "📑 Billing / Cash Memo":
+    st.header("📑 Billing / Cash Memo")
+    col1, col2 = st.columns(2)
+    patient_name = col1.text_input("Patient Name:", key="p_name")
+    age = col1.text_input("Age:", key="p_age")
+    phone = col1.text_input("Phone Number:", key="p_phone")
+    ref_dr = col2.selectbox("Referred By:", doctors_list, key="p_dr")
+    # ইনভয়েস ডেট ডিফল্টভাবে আজকের লাইভ কারেন্ট ডেট নিয়ে নেবে
+    date_today = col2.date_input("Date:", datetime.now().date(), key="p_date")
 
-st.write("🧪 **Test Selection**")
-total_amount = 0
-test_list_html = ""
-serial = 1
+    st.write("🧪 **Test Selection**")
+    total_amount = 0
+    test_list_html = ""
+    serial = 1
 
-for i in range(1, st.session_state['num_tests'] + 1):
-    test = st.selectbox(f"Test {i}:", list(test_directory.keys()), key=f"fr_test_{i}")
-    if test != "Select Test":
-        price = test_directory[test]
-        st.write(f"✅ {test} = **{price} TK**")
-        test_list_html += f"<tr><td style='padding:8px; border-bottom:1px solid #eee;'>{serial}</td><td style='padding:8px; border-bottom:1px solid #eee;'>{test}</td><td style='padding:8px; border-bottom:1px solid #eee; text-align:right;'>{price} TK</td></tr>"
-        total_amount += price
-        serial += 1
-        
-if st.button("➕ Add More Test Slot"):
-    st.session_state['num_tests'] += 1
-    st.rerun()
-
-discount = st.number_input("Discount (TK)", min_value=0, value=0, step=10, key="p_discount")
-total_paid = total_amount - discount
-st.markdown(f"**Total:** {total_amount} TK | **Discount:** {discount} TK")
-st.markdown(f"### **Net Payable:** {total_paid} TK")
-
-if st.button("💾 Save & Print Invoice", type="primary"):
-    if patient_name and ref_dr != "Select Doctor" and total_amount > 0:
-        today_str = datetime.now().strftime("%Y%m%d")
-        invoice_no = f"ROG-{today_str}-{len(df)+1:03d}"
-        c.execute("INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (invoice_no, str(date_today), patient_name, age, phone, ref_dr.strip(), total_amount, discount, total_paid))
-        conn.commit()
-        memo_html = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 3px solid black; background: white; color: black;">
-            <h2 style="text-align: center; color: red; margin-bottom: 5px;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
-            <p style="text-align: center; margin-top: 0; font-size: 14px;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
-            <p style="text-align: center; font-size: 12px; font-weight: bold; margin: 10px 0;">Invoice No: {invoice_no}</p>
-            <hr style="border: 1px solid black;">
-            <table style="width:100%; font-size:14px; margin-bottom: 10px;">
-                <tr><td><b>Patient:</b> {patient_name}</td><td style="text-align:right;"><b>Date:</b> {date_today}</td></tr>
-                <tr><td><b>Age/Phone:</b> {age} / {phone}</td><td style="text-align:right;"><b>Ref. By:</b> {ref_dr}</td></tr>
-            </table>
-            <table style="width:100%; border-collapse:collapse; font-size:14px; margin-top: 15px;">
-                <tr style="background:#f0f0f0; font-weight:bold; border-top: 2px solid black; border-bottom: 2px solid black;">
-                    <td style="padding:8px; width:40px;">Sl.</td><td>Test Name</td><td style="text-align:right;">Price</td>
-                </tr>
-                {test_list_html}
-            </table>
-            <hr style="border-top: 1px dashed black; margin-top: 20px;">
-            <table style="width:100%; font-weight:bold; font-size:15px; line-height: 1.6;">
-                <tr><td style="text-align:right; width:70%;">Total Amount:</td><td style="text-align:right;">{total_amount} TK</td></tr>
-                <tr><td style="text-align:right; color:red;">Discount:</td><td style="text-align:right; color:red;">{discount} TK</td></tr>
-                <tr style="font-size:17px; color:green; border-top: 1px solid black;"><td style="text-align:right;">Net Payable:</td><td style="text-align:right;">{total_paid} TK</td></tr>
-            </table>
-        </div>
-        """
-        st.session_state['last_memo_html'] = memo_html
-        st.session_state['show_memo'] = True
-        st.session_state['num_tests'] = 3
-        st.success(f"✅ Invoice Saved! No: {invoice_no}")
+    for i in range(1, st.session_state['num_tests'] + 1):
+        test = st.selectbox(f"Test {i}:", list(test_directory.keys()), key=f"fr_test_{i}")
+        if test != "Select Test":
+            price = test_directory[test]
+            st.write(f"✅ {test} = **{price} TK**")
+            test_list_html += f"<tr><td style='padding:8px; border-bottom:1px solid #eee;'>{serial}</td><td style='padding:8px; border-bottom:1px solid #eee;'>{test}</td><td style='padding:8px; border-bottom:1px solid #eee; text-align:right;'>{price} TK</td></tr>"
+            total_amount += price
+            serial += 1
+            
+    if st.button("➕ Add More Test Slot"):
+        st.session_state['num_tests'] += 1
         st.rerun()
-    else:
-        st.error("রোগীর নাম ও ডাক্তার সিলেক্ট করুন।")
-        
+
+    discount = st.number_input("Discount (TK)", min_value=0, value=0, step=10, key="p_discount")
+    total_paid = total_amount - discount
+    st.markdown(f"**Total:** {total_amount} TK | **Discount:** {discount} TK")
+    st.markdown(f"### **Net Payable:** {total_paid} TK")
+
+    if st.button("💾 Save & Print Invoice", type="primary"):
+        if patient_name and ref_dr != "Select Doctor" and total_amount > 0:
+            today_str = datetime.now().strftime("%Y%m%d")
+            invoice_no = f"ROG-{today_str}-{len(df)+1:03d}"
+            # ডাটাবেসে ইনপুট ডেটের পরিবর্তে অলওয়েজ লাইভ কারেন্ট ডেট এন্ট্রি হবে
+            c.execute("INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (invoice_no, str(datetime.now().date()), patient_name, age, phone, ref_dr.strip(), total_amount, discount, total_paid))
+            conn.commit()
+            memo_html = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 3px solid black; background: white; color: black;">
+                <h2 style="text-align: center; color: red; margin-bottom: 5px;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
+                <p style="text-align: center; margin-top: 0; font-size: 14px;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
+                <p style="text-align: center; font-size: 12px; font-weight: bold; margin: 10px 0;">Invoice No: {invoice_no}</p>
+                <hr style="border: 1px solid black;">
+                <table style="width:100%; font-size:14px; margin-bottom: 10px;">
+                    <tr><td><b>Patient:</b> {patient_name}</td><td style="text-align:right;"><b>Date:</b> {datetime.now().date()}</td></tr>
+                    <tr><td><b>Age/Phone:</b> {age} / {phone}</td><td style="text-align:right;"><b>Ref. By:</b> {ref_dr}</td></tr>
+                </table>
+                <table style="width:100%; border-collapse:collapse; font-size:14px; margin-top: 15px;">
+                    <tr style="background:#f0f0f0; font-weight:bold; border-top: 2px solid black; border-bottom: 2px solid black;">
+                        <td style="padding:8px; width:40px;">Sl.</td><td>Test Name</td><td style="text-align:right;">Price</td>
+                    </tr>
+                    {test_list_html}
+                </table>
+                <hr style="border-top: 1px dashed black; margin-top: 20px;">
+                <table style="width:100%; font-weight:bold; font-size:15px; line-height: 1.6;">
+                    <tr><td style="text-align:right; width:70%;">Total Amount:</td><td style="text-align:right;">{total_amount} TK</td></tr>
+                    <tr><td style="text-align:right; color:red;">Discount:</td><td style="text-align:right; color:red;">{discount} TK</td></tr>
+                    <tr style="font-size:17px; color:green; border-top: 1px solid black;"><td style="text-align:right;">Net Payable:</td><td style="text-align:right;">{total_paid} TK</td></tr>
+                </table>
+            </div>
+            """
+            st.session_state['last_memo_html'] = memo_html
+            st.session_state['show_memo'] = True
+            st.session_state['num_tests'] = 3
+            st.success(f"✅ Invoice Saved! No: {invoice_no}")
+            st.rerun()
+        else:
+            st.error("রোগীর নাম ও ডাক্তার সিলেক্ট করুন।")
+            
 if st.session_state['show_memo']:
     st.components.v1.html(st.session_state['last_memo_html'], height=500, scrolling=True)
     st.markdown('<button onclick="window.print()" style="background:#28a745;color:white;padding:12px;font-size:16px;border:none;border-radius:5px;width:100%;font-weight:bold;">🖨️ Print / Save PDF</button>', unsafe_allow_html=True)
@@ -139,41 +142,27 @@ if st.session_state['show_memo']:
         st.session_state['show_memo'] = False
         st.rerun()
 
-# --- ২. ড্যাশবোর্ড সেকশন শুরু (একদম ফ্ল্যাট লাইন, কোনো কন্ডিশনাল স্পেস নেই) ---
-st.divider()
-st.header("📊 Dashboard Report")
-today = datetime.now().date()
-start_date = st.date_input("From Date", value=today.replace(day=1), key="d_start")
-end_date = st.date_input("To Date", value=today, key="d_end")
+if choice == "📊 Dashboard Report":
+    st.header("📊 Dashboard Report")
+    today = datetime.now().date()
+    st.subheader("🔍 Month / Date Filter")
+    start_date = st.date_input("From Date", value=today.replace(day=1), key="d_start")
+    # To Date ফিল্টারটি ডিফল্টভাবে আজকের লাইভ কারেন্ট ডেট নিয়ে রাখবে
+    end_date = st.date_input("To Date", value=today, key="d_end")
 
-filtered_df = df.copy()
-if not df.empty:
-    filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
-    
-total = 0.0
-if not filtered_df.empty:
-    total = filtered_df['Paid'].sum()
-st.success(f"**Total Collection:** ৳ {total:,.0f}")
-
-today_paid = last_7_paid = month_paid = year_paid = 0.0
-if not filtered_df.empty:
-    today_paid = filtered_df[filtered_df['Date'] == today]['Paid'].sum()
-    last_7_paid = filtered_df[filtered_df['Date'] >= (today - timedelta(days=7))]['Paid'].sum()
-    month_paid = filtered_df[filtered_df['Date'] >= today.replace(day=1)]['Paid'].sum()
-    year_paid = filtered_df[filtered_df['Date'].apply(lambda x: x.year) == today.year]['Paid'].sum()
-    
-st.metric("Today's Collection", f"৳ {today_paid:,.0f}")
-st.metric("This Month Collection", f"৳ {month_paid:,.0f}")
-st.metric("This Year Collection", f"৳ {year_paid:,.0f}")
-
-st.divider()
-st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
-selected_doc = st.selectbox("Select Doctor", doctors_list[1:], key="dashboard_doc")
-
-if selected_doc and selected_doc != "Select Doctor":
-    doc_df = pd.DataFrame()
+    filtered_df = df.copy()
+    if not df.empty:
+        filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+        
+    total = 0.0
     if not filtered_df.empty:
-        doc_df = filtered_df[filtered_df['Doctor'].str.lower() == selected_doc.strip().lower()]
-    if not doc_df.empty:
-        doc_total = doc_df['Total'].sum()
-        referral_fee = doc_total * 0.30
+        total = filtered_df['Paid'].sum()
+    st.success(f"**Total Collection:** ৳ {total:,.0f}")
+
+    today_paid = last_7_paid = month_paid = year_paid = 0.0
+    if not filtered_df.empty:
+        today_paid = filtered_df[filtered_df['Date'] == today]['Paid'].sum()
+        last_7_paid = filtered_df[filtered_df['Date'] >= (today - timedelta(days=7))]['Paid'].sum()
+        month_paid = filtered_df[filtered_df['Date'] >= today.replace(day=1)]['Paid'].sum()
+        year_paid = filtered_df[filtered_df['Date'].apply(lambda x: x.year) == today.year]['Paid'].sum()
+        
