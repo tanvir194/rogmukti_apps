@@ -90,7 +90,6 @@ with tab1:
                       (invoice_no, str(date_today), patient_name, age, phone, ref_dr, total_amount, discount, total_paid))
             conn.commit()
             
-            # session_state এও সেভ
             st.session_state['sales_data'] = pd.concat([st.session_state['sales_data'], pd.DataFrame([new_row])], ignore_index=True)
             
             st.success(f"✅ Invoice Saved! Invoice No: **{invoice_no}**")
@@ -133,7 +132,7 @@ with tab2:
     st.header("📊 Dashboard")
     df_db = pd.read_sql_query("SELECT * FROM bills", conn)
     if not df_db.empty:
-        df_db['Date'] = pd.to_datetime(df_db['Date']).dt.date
+        df_db['Date'] = pd.to_datetime(df_db['date']).dt.date   # এখানে 'date' ব্যবহার করা হয়েছে
         df = df_db
     else:
         df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
