@@ -4,42 +4,8 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="centered")
 
-# ====================== লগইন সিস্টেম ======================
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.role = None
-    st.session_state.username = None
-
-users = {
-    "reception": {"password": "1234", "role": "Receptionist"},
-    "doctor": {"password": "1234", "role": "Doctor"},
-    "admin": {"password": "admin123", "role": "Admin"}
-}
-
-if not st.session_state.logged_in:
-    st.title("🔐 Rogmukti Diagnostic Centre - Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    
-    if st.button("Login"):
-        if username in users and users[username]["password"] == password:
-            st.session_state.logged_in = True
-            st.session_state.role = users[username]["role"]
-            st.session_state.username = username
-            st.success(f"Welcome {username}!")
-            st.rerun()
-        else:
-            st.error("Invalid username or password")
-    st.stop()
-
-# ====================== মেইন অ্যাপ ======================
-st.sidebar.success(f"Logged in as: {st.session_state.username} ({st.session_state.role})")
-
-if st.sidebar.button("Logout"):
-    st.session_state.logged_in = False
-    st.rerun()
-
-st.title("ROGMUKTI DIAGNOSTIC CENTRE")
+st.markdown("<h1 style='text-align: center; color: red;'>ROGMUKTI DIAGNOSTIC CENTRE</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Auliapur, Patuakhali<br>Phone: 01711-867637</p>", unsafe_allow_html=True)
 
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"]
 
@@ -168,4 +134,4 @@ with tab2:
     else:
         st.info("এখনো কোনো বিল তৈরি হয়নি।")
 
-st.caption("Developed for Rogmukti Diagnostic
+st.caption("Developed for Rogmukti Diagnostic Centre")
