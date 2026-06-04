@@ -165,16 +165,17 @@ with tab1:
 with tab2:
     st.header("🔒 Admin Dashboard Lock")
     
-    # পাসওয়ার্ড ইনপুট বক্স (টাইপ করার সময় পাসওয়ার্ড দেখা যাবে না)
     input_password = st.text_input("এডমিন পাসওয়ার্ড দিন:", type="password", key="admin_password_input")
     
-    # পাসওয়ার্ড ম্যাচিং লজিক (পাসওয়ার্ড পরিবর্তন করতে নিচের 'rogmukti123' লেখাটি বদলে দিন)
     if input_password == "rogmukti123":
         st.success("🔓 এক্সেস গ্র্যান্টেড! ড্যাশবোর্ড ওপেন হয়েছে।")
         st.divider()
         
-        # --- ড্যাশবোর্ড কন্টেন্ট শুরু ---
+        # ডাটাবেস থেকে ডেটা রিড করা
         df_db = pd.read_sql_query("SELECT * FROM bills", conn)
         
         if not df_db.empty:
             df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
+            cols_mapping = {'invoice_no': 'Invoice_No', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
+            df = df_db.rename(columns=cols_mapping)
+        else:
