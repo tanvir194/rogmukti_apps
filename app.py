@@ -10,7 +10,6 @@ st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Aul
 
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"]
 
-# ৫৮টি নিয়মিত ব্যবহৃত টেস্টের তালিকা
 test_directory = {
     "Select Test": 0,
     "(CBC) + ESR": 600, "CBC (Complete Blood Count)": 350, "ESR": 150, "Platelet Count": 250,
@@ -35,7 +34,6 @@ test_directory = {
     "X-Ray Cervical Spine B/V": 600, "ECG (Digital)": 300
 }
 
-# SQLite ডাটাবেস
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('''CREATE TABLE IF NOT EXISTS bills
@@ -166,15 +164,18 @@ with tab2:
     st.header("🔒 Admin Dashboard Lock")
     input_password = st.text_input("এডমিন পাসওয়ার্ড দিন:", type="password", key="admin_password_input")
     
-    if input_password == "rogmukti123":
-        st.success("🔓 এক্সেস গ্র্যান্টেড! ড্যাশবোর্ড ওপেন হয়েছে।")
-        st.divider()
-        
-        df_db = pd.read_sql_query("SELECT * FROM bills", conn)
-        
-        if not df_db.empty:
-            df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
-            cols_mapping = {'invoice_no': 'Invoice_No', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
-            df = df_db.rename(columns=cols_mapping)
-        else:
-            
+    if input_password != "rogmukti123":
+        if input_password != "":
+            st.error("❌ ভুল পাসওয়ার্ড! অনুগ্রহ করে সঠিক পাসওয়ার্ড দিন।")
+        st.stop()
+
+    st.success("🔓 এক্সেস গ্র্যান্টেড! ড্যাশবোর্ড ওপেন হয়েছে।")
+    st.divider()
+    
+    df_db = pd.read_sql_query("SELECT * FROM bills", conn)
+    
+    if not df_db.empty:
+        df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
+        cols_mapping = {'invoice_no': 'Invoice_No', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
+        df = df_db.rename(columns=cols_mapping)
+    else:
