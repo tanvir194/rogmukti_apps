@@ -53,7 +53,6 @@ if 'show_memo' not in st.session_state:
 if 'num_tests' not in st.session_state:
     st.session_state['num_tests'] = 3
 
-# জটিল with tab ব্লক সরিয়ে মেনু বার সহজ করা হয়েছে
 choice = st.sidebar.radio("Main Menu", ["📑 Billing / Cash Memo", "📊 Dashboard Report"])
 
 if choice == "📑 Billing / Cash Memo":
@@ -104,7 +103,7 @@ if choice == "📑 Billing / Cash Memo":
             st.session_state['sales_data'] = pd.concat([st.session_state['sales_data'], pd.DataFrame([new_row])], ignore_index=True)
             
             memo_html = f"""
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 3px solid black; background: white; color: black;">
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 3px solid black; background: white; color: black;">
                 <h2 style="text-align: center; color: red; margin-bottom: 5px;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
                 <p style="text-align: center; margin-top: 0; font-size: 14px;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
                 <p style="text-align: center; font-size: 12px; font-weight: bold; margin: 10px 0;">Invoice No: {invoice_no}</p>
@@ -160,5 +159,9 @@ if choice == "📊 Dashboard Report":
 
     today = datetime.now().date()
     st.subheader("🔍 Month / Date Filter")
-    col1, col2 = st.columns(2)
-    start_date = col1.date_input("From Date", value=today.replace(day=1), key="d_start")
+    start_date = st.date_input("From Date", value=today.replace(day=1), key="d_start")
+    end_date = st.date_input("To Date", value=today, key="d_end")
+        
+    filtered_df = df.copy()
+    if not df.empty:
+            
