@@ -174,4 +174,4 @@ with tab2:
     else:
         st.info("এখনো কোনো বিল তৈরি হয়নি।")
 
-st.caption("Developed for Rogmukti Diagnostic Centre")
+st.caption("Developed for Rogmukti Diagnostic
