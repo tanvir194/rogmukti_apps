@@ -10,6 +10,7 @@ st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Aul
 
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"]
 
+# ৫৮টি নিয়মিত ব্যবহৃত টেস্টের পূর্ণাঙ্গ তালিকা
 test_directory = {
     "Select Test": 0,
     "(CBC) + ESR": 600, "CBC (Complete Blood Count)": 350, "ESR": 150, "Platelet Count": 250,
@@ -34,15 +35,13 @@ test_directory = {
     "X-Ray Cervical Spine B/V": 600, "ECG (Digital)": 300
 }
 
+# SQLite ডাটাবেস ও টেবিল তৈরি
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('''CREATE TABLE IF NOT EXISTS bills
              (invoice_no TEXT PRIMARY KEY, date TEXT, patient TEXT, age TEXT, phone TEXT, 
               doctor TEXT, total REAL, discount REAL, paid REAL)''')
 conn.commit()
-
-if 'sales_data' not in st.session_state:
-    st.session_state['sales_data'] = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
 
 if 'show_memo' not in st.session_state:
     st.session_state['show_memo'] = False
@@ -53,6 +52,7 @@ if 'num_tests' not in st.session_state:
 
 choice = st.sidebar.radio("Main Menu", ["📑 Billing / Cash Memo", "📊 Dashboard Report"])
 
+# ডাটাবেস থেকে ডেটা লোড ও নাম সুবিন্যস্ত করা
 df_db = pd.read_sql_query("SELECT * FROM bills", conn)
 if not df_db.empty:
     cols_mapping = {'invoice_no': 'Invoice_No', 'date': 'Date', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
@@ -61,6 +61,7 @@ if not df_db.empty:
 else:
     df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
 
+# --- ১. বিলিং সেকশন ---
 if choice == "📑 Billing / Cash Memo":
     st.subheader("Patient Information")
     col1, col2 = st.columns(2)
@@ -102,8 +103,9 @@ if choice == "📑 Billing / Cash Memo":
             today_str = datetime.now().strftime("%Y%m%d")
             invoice_no = f"ROG-{today_str}-{len(df)+1:03d}"
             
-            c.execute("INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-                      (invoice_no, str(date_today), patient_name, age, phone, ref_dr.strip(), total_amount, discount, total_paid))
+            # ডেটাবেস সেভিং মেথড একদম সহজ ও এরর-মুক্ত করা হয়েছে
+            c.execute("INSERT OR REPLACE INTO bills (invoice_no, date, patient, age, phone, doctor, total, discount, paid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                      (invoice_no, str(date_today), patient_name, age, phone, ref_dr.strip(), float(total_amount), float(discount), float(total_paid)))
             conn.commit()
             
             memo_html = f"""
@@ -146,11 +148,13 @@ if choice == "📑 Billing / Cash Memo":
             st.session_state['show_memo'] = False
             st.rerun()
 
+# --- ২. ড্যাশবোর্ড সেকশন ---
 if choice == "📊 Dashboard Report":
     st.subheader("📊 Dashboard Report")
+    
     total = 0.0
     if not df.empty:
-        total = df['Paid'].sum()
+        total = pd.to_numeric(df['Paid'], errors='coerce').sum()
     st.success(f"**Total Lifetime Collection:** ৳ {total:,.0f}")
     
     st.divider()
@@ -163,11 +167,8 @@ if choice == "📊 Dashboard Report":
             doc_df = df[df['Doctor'].str.lower() == selected_doc.strip().lower()]
             
         if not doc_df.empty:
-            doc_total = doc_df['Total'].sum()
+            doc_total = pd.to_numeric(doc_df['Total'], errors='coerce').sum()
             referral_fee = doc_total * 0.30
             st.write(f"🩺 **{selected_doc}**-এর মোট রেফারেল টেস্টের পরিমাণ: **{doc_total:,.0f} TK**")
             st.info(f"💰 **প্রদেয় কমিশন (৩০%):** **{referral_fee:,.0f} TK**")
-            st.dataframe(doc_df[["Invoice_No", "Patient", "Total"]])
             
-            table_rows = ""
-            for idx, row in doc_df.iterrows():
