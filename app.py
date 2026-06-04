@@ -10,6 +10,7 @@ st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Aul
 
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"]
 
+# ৫৮টি নিয়মিত ব্যবহৃত টেস্টের তালিকা
 test_directory = {
     "Select Test": 0,
     "(CBC) + ESR": 600, "CBC (Complete Blood Count)": 350, "ESR": 150, "Platelet Count": 250,
@@ -177,5 +178,4 @@ with tab2:
     if not df_db.empty:
         df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
         cols_mapping = {'invoice_no': 'Invoice_No', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
-        df = df_db.rename(columns=cols_mapping)
-    else:
+        
