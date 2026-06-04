@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 import sqlite3
 
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="centered")
@@ -10,7 +10,6 @@ st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Aul
 
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"]
 
-# ৫৮টি নিয়মিত ব্যবহৃত টেস্টের পূর্ণাঙ্গ তালিকা
 test_directory = {
     "Select Test": 0,
     "(CBC) + ESR": 600, "CBC (Complete Blood Count)": 350, "ESR": 150, "Platelet Count": 250,
@@ -54,16 +53,13 @@ if 'num_tests' not in st.session_state:
 
 choice = st.sidebar.radio("Main Menu", ["📑 Billing / Cash Memo", "📊 Dashboard Report"])
 
-# ডাটাবেস গ্লোবাল রিড (কোনো কন্ডিশন ছাড়া)
 df_db = pd.read_sql_query("SELECT * FROM bills", conn)
 if not df_db.empty:
     cols_mapping = {'invoice_no': 'Invoice_No', 'date': 'Date', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
     df = df_db.rename(columns=cols_mapping)
-    df['Date'] = pd.to_datetime(df['Date']).dt.date
     df['Doctor'] = df['Doctor'].astype(str).str.strip()
 else:
     df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
-    df['Date'] = pd.to_datetime(df['Date']).dt.date
 
 if choice == "📑 Billing / Cash Memo":
     st.subheader("Patient Information")
@@ -122,9 +118,7 @@ if choice == "📑 Billing / Cash Memo":
                 </table>
                 <table style="width:100%; border-collapse:collapse; font-size:14px; margin-top: 15px;">
                     <tr style="background:#f0f0f0; font-weight:bold; border-top: 2px solid black; border-bottom: 2px solid black;">
-                        <td style="padding:8px; width:40px;">Sl.</td>
-                        <td style="padding:8px;">Test Name</td>
-                        <td style="padding:8px; text-align:right;">Price</td>
+                        <td style="padding:8px; width:40px;">Sl.</td><td>Test Name</td><td style="text-align:right;">Price</td>
                     </tr>
                     {test_list_html}
                 </table>
@@ -134,7 +128,6 @@ if choice == "📑 Billing / Cash Memo":
                     <tr><td style="text-align:right; color:red;">Discount:</td><td style="text-align:right; color:red;">{discount} TK</td></tr>
                     <tr style="font-size:17px; color:green; border-top: 1px solid black;"><td style="text-align:right;">Net Payable:</td><td style="text-align:right;">{total_paid} TK</td></tr>
                 </table>
-                <p style="text-align:center; margin-top:40px; font-style: italic; font-size: 13px;">Thank You for choosing us!</p>
             </div>
             """
             st.session_state['last_memo_html'] = memo_html
@@ -147,29 +140,34 @@ if choice == "📑 Billing / Cash Memo":
 
     if st.session_state['show_memo']:
         st.divider()
-        st.subheader("🖨️ Last Generated Invoice Print View")
         st.components.v1.html(st.session_state['last_memo_html'], height=520, scrolling=True)
-        st.markdown('<button onclick="window.print()" style="background:#28a745;color:white;padding:15px 30px;font-size:19px;border:none;border-radius:5px;width:100%;margin-top:15px;font-weight:bold;">🖨️ Print / Save Memo as PDF</button>', unsafe_allow_html=True)
+        st.markdown('<button onclick="window.print()" style="background:#28a745;color:white;padding:15px 30px;font-size:19px;border:none;border-radius:5px;width:100%;font-weight:bold;">🖨️ Print / Save Memo as PDF</button>', unsafe_allow_html=True)
         if st.button("🧹 Clear Memo Preview"):
             st.session_state['show_memo'] = False
             st.rerun()
 
 if choice == "📊 Dashboard Report":
     st.subheader("📊 Dashboard Report")
-    today = datetime.now().date()
-    
-    st.subheader("🔍 Month / Date Filter")
-    start_date = st.date_input("From Date", value=today.replace(day=1), key="d_start")
-    end_date = st.date_input("To Date", value=today, key="d_end")
-        
-    filtered_df = df.copy()
-    if not df.empty:
-        filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
-        
     total = 0.0
-    if not filtered_df.empty:
-        total = filtered_df['Paid'].sum()
-    st.success(f"**Total Collection (Selected Period):** ৳ {total:,.0f}")
+    if not df.empty:
+        total = df['Paid'].sum()
+    st.success(f"**Total Lifetime Collection:** ৳ {total:,.0f}")
     
-    today_paid = last_7_paid = month_paid = year_paid = 0.0
+    st.divider()
+    st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
+    selected_doc = st.selectbox("Select Doctor", doctors_list[1:], key="dashboard_doc")
     
+    if selected_doc and selected_doc != "Select Doctor":
+        doc_df = pd.DataFrame()
+        if not df.empty:
+            doc_df = df[df['Doctor'].str.lower() == selected_doc.strip().lower()]
+            
+        if not doc_df.empty:
+            doc_total = doc_df['Total'].sum()
+            referral_fee = doc_total * 0.30
+            st.write(f"🩺 **{selected_doc}**-এর মোট রেফারেল টেস্টের পরিমাণ: **{doc_total:,.0f} TK**")
+            st.info(f"💰 **প্রদেয় কমিশন (৩০%):** **{referral_fee:,.0f} TK**")
+            st.dataframe(doc_df[["Invoice_No", "Patient", "Total"]])
+            
+            table_rows = ""
+            for idx, row in doc_df.iterrows():
