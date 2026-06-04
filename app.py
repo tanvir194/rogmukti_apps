@@ -85,7 +85,6 @@ with tab1:
                 "Paid": total_paid
             }
             
-            # ডাটাবেসে সেভ
             c.execute("""INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                       (invoice_no, str(date_today), patient_name, age, phone, ref_dr, total_amount, discount, total_paid))
             conn.commit()
@@ -132,7 +131,7 @@ with tab2:
     st.header("📊 Dashboard")
     df_db = pd.read_sql_query("SELECT * FROM bills", conn)
     if not df_db.empty:
-        df_db['Date'] = pd.to_datetime(df_db['date']).dt.date   # এখানে 'date' ব্যবহার করা হয়েছে
+        df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
         df = df_db
     else:
         df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
