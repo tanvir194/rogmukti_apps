@@ -35,7 +35,6 @@ test_directory = {
     "X-Ray Cervical Spine B/V": 600, "ECG (Digital)": 300
 }
 
-# SQLite ডাটাবেস
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('''CREATE TABLE IF NOT EXISTS bills
@@ -55,12 +54,11 @@ if 'num_tests' not in st.session_state:
 
 choice = st.sidebar.radio("Main Menu", ["📑 Billing / Cash Memo", "📊 Dashboard Report"])
 
-# ডাটাবেস রিড এবং কলাম রিনেম ও টাইপ কাস্টিং ফিক্স
+# ডাটাবেস গ্লোবাল রিড (কোনো কন্ডিশন ছাড়া)
 df_db = pd.read_sql_query("SELECT * FROM bills", conn)
 if not df_db.empty:
     cols_mapping = {'invoice_no': 'Invoice_No', 'date': 'Date', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
     df = df_db.rename(columns=cols_mapping)
-    # টাইপ এরর দূর করতে ডাটাবেসের তারিখ কলামকে পিওর ডেট অবজেক্টে নিখুঁত রূপান্তর
     df['Date'] = pd.to_datetime(df['Date']).dt.date
     df['Doctor'] = df['Doctor'].astype(str).str.strip()
 else:
@@ -171,4 +169,7 @@ if choice == "📊 Dashboard Report":
     total = 0.0
     if not filtered_df.empty:
         total = filtered_df['Paid'].sum()
-
+    st.success(f"**Total Collection (Selected Period):** ৳ {total:,.0f}")
+    
+    today_paid = last_7_paid = month_paid = year_paid = 0.0
+    
