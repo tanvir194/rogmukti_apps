@@ -126,13 +126,23 @@ with tab1:
             
         else:
             st.error("Patient Name এবং Doctor সিলেক্ট করুন")
-
 with tab2:
     st.header("📊 Dashboard")
     df_db = pd.read_sql_query("SELECT * FROM bills", conn)
     if not df_db.empty:
-        df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
-        df = df_db.rename(columns={'date': 'Date', 'paid': 'Paid'})
+        # ডাটাবেসের ছোট হাতের কলামগুলোকে সঠিকভাবে বড় হাতের অক্ষরে রিনেম করা হলো
+        df = df_db.rename(columns={
+            'invoice_no': 'Invoice_No',
+            'patient': 'Patient',
+            'age': 'Age',
+            'phone': 'Phone',
+            'doctor': 'Doctor',
+            'total': 'Total',
+            'discount': 'Discount',
+            'paid': 'Paid'
+        })
+        # তারিখের টেক্সটকে আসল ডেট অবজেক্টে রূপান্তর করা হলো (TypeError সমাধান করবে)
+        df['Date'] = pd.to_datetime(df_db['date']).dt.date
     else:
         df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
 
@@ -146,6 +156,7 @@ with tab2:
         with col2:
             end_date = st.date_input("To Date", value=today)
         
+        # এখন এই ডেট ফিল্টারিং নির্ভুলভাবে কাজ করবে
         filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
         
         total = filtered_df['Paid'].sum()
