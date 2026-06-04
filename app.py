@@ -53,22 +53,20 @@ if 'show_memo' not in st.session_state:
 if 'num_tests' not in st.session_state:
     st.session_state['num_tests'] = 3
 
-tab1, tab2 = st.tabs(["📑 Billing / Cash Memo", "📊 Dashboard"])
+# জটিল with tab ব্লক সরিয়ে মেনু বার সহজ করা হয়েছে
+choice = st.sidebar.radio("Main Menu", ["📑 Billing / Cash Memo", "📊 Dashboard Report"])
 
-with tab1:
+if choice == "📑 Billing / Cash Memo":
     st.subheader("Patient Information")
     col1, col2 = st.columns(2)
-    with col1:
-        patient_name = st.text_input("Patient Name:", key="p_name")
-        age = st.text_input("Age:", key="p_age")
-        phone = st.text_input("Phone Number:", key="p_phone")
-    with col2:
-        ref_dr = st.selectbox("Referred By:", doctors_list, key="p_dr")
-        date_today = st.date_input("Date:", datetime.now().date(), key="p_date")
+    patient_name = col1.text_input("Patient Name:", key="p_name")
+    age = col1.text_input("Age:", key="p_age")
+    phone = col1.text_input("Phone Number:", key="p_phone")
+    ref_dr = col2.selectbox("Referred By:", doctors_list, key="p_dr")
+    date_today = col2.date_input("Date:", datetime.now().date(), key="p_date")
 
     st.divider()
     st.subheader("🧪 Test Selection")
-    
     total_amount = 0
     test_list_html = ""
     serial = 1
@@ -94,27 +92,15 @@ with tab1:
     st.markdown(f"**Discount:** {discount} TK")
     st.markdown(f"### **Net Payable:** {total_paid} TK")
 
-        if st.button("💾 Save & Print Invoice", type="primary"):
+    if st.button("💾 Save & Print Invoice", type="primary"):
         if patient_name and ref_dr != "Select Doctor" and total_amount > 0:
             today_str = datetime.now().strftime("%Y%m%d")
             invoice_no = f"ROG-{today_str}-{len(st.session_state['sales_data'])+1:03d}"
             
-            new_row = {
-                "Invoice_No": invoice_no,
-                "Date": str(date_today),
-                "Patient": patient_name,
-                "Age": age,
-                "Phone": phone,
-                "Doctor": ref_dr,
-                "Total": total_amount,
-                "Discount": discount,
-                "Paid": total_paid
-            }
+            new_row = {"Invoice_No": invoice_no, "Date": str(date_today), "Patient": patient_name, "Age": age, "Phone": phone, "Doctor": ref_dr, "Total": total_amount, "Discount": discount, "Paid": total_paid}
             
-            c.execute("""INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                      (invoice_no, str(date_today), patient_name, age, phone, ref_dr, total_amount, discount, total_paid))
+            c.execute("INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (invoice_no, str(date_today), patient_name, age, phone, ref_dr, total_amount, discount, total_paid))
             conn.commit()
-            
             st.session_state['sales_data'] = pd.concat([st.session_state['sales_data'], pd.DataFrame([new_row])], ignore_index=True)
             
             memo_html = f"""
@@ -161,7 +147,7 @@ with tab1:
             st.session_state['show_memo'] = False
             st.rerun()
 
-with tab2:
+if choice == "📊 Dashboard Report":
     st.subheader("📊 Dashboard Report")
     df_db = pd.read_sql_query("SELECT * FROM bills", conn)
     
@@ -175,84 +161,4 @@ with tab2:
     today = datetime.now().date()
     st.subheader("🔍 Month / Date Filter")
     col1, col2 = st.columns(2)
-    with col1:
-        start_date = st.date_input("From Date", value=today.replace(day=1), key="d_start")
-    with col2:
-        end_date = st.date_input("To Date", value=today, key="d_end")
-        
-    filtered_df = df.copy()
-    if not df.empty:
-        df['Date'] = pd.to_datetime(df['Date']).dt.date
-        filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
-        
-    total = 0.0
-    if not filtered_df.empty:
-        total = filtered_df['Paid'].sum()
-    st.success(f"**Total Collection (Selected Period):** ৳ {total:,.0f}")
-    
-    today_paid = 0.0
-    last_7_paid = 0.0
-    month_paid = 0.0
-    year_paid = 0.0
-    
-    if not filtered_df.empty:
-        today_paid = filtered_df[filtered_df['Date'] == today]['Paid'].sum()
-        last_7_paid = filtered_df[filtered_df['Date'] >= (today - timedelta(days=7))]['Paid'].sum()
-        month_paid = filtered_df[filtered_df['Date'] >= today.replace(day=1)]['Paid'].sum()
-        year_paid = filtered_df[filtered_df['Date'].apply(lambda x: x.year) == today.year]['Paid'].sum()
-        
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Today", f"৳ {today_paid:,.0f}")
-    c2.metric("Last 7 Days", f"৳ {last_7_paid:,.0f}")
-    c3.metric("This Month", f"৳ {month_paid:,.0f}")
-    c4.metric("This Year", f"৳ {year_paid:,.0f}")
-    
-    st.divider()
-    st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
-    selected_doc = st.selectbox("Select Doctor", doctors_list[1:], key="dashboard_doc")
-    
-    if selected_doc and selected_doc != "Select Doctor":
-        doc_df = pd.DataFrame()
-        if not filtered_df.empty:
-            doc_df = filtered_df[filtered_df['Doctor'] == selected_doc]
-        if not doc_df.empty:
-            doc_total = doc_df['Total'].sum()
-            referral_fee = doc_total * 0.30
-            st.write(f"🩺 **{selected_doc}**-এর মোট রেফারেল টেস্টের পরিমাণ: **{doc_total:,.0f} TK**")
-            st.info(f"💰 **প্রদেয় কমিশন (৩০%):** **{referral_fee:,.0f} TK**")
-            st.dataframe(doc_df[["Invoice_No", "Date", "Patient", "Total", "Paid"]])
-            
-            table_rows = ""
-            for idx, row in doc_df.iterrows():
-                table_rows += f"<tr><td style='padding:8px; border:1px solid #ddd;'>{row['Invoice_No']}</td><td style='padding:8px; border:1px solid #ddd;'>{row['Date']}</td><td style='padding:8px; border:1px solid #ddd;'>{row['Patient']}</td><td style='padding:8px; border:1px solid #ddd; text-align:right;'>{row['Total']} TK</td></tr>"
-            
-            report_html = f"""
-            <div style="font-family: Arial, sans-serif; padding: 25px; border: 2px solid black; background: white; color: black;">
-                <h2 style="text-align: center; color: red; margin-bottom:5px;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
-                <p style="text-align: center; margin-top:0; font-size: 14px;">Mollah Bazar, Patuakhali | Referral Commission Statement</p>
-                <hr style="border-top: 2px solid black;">
-                <table style="width:100%; font-size:14px; margin-bottom:15px;">
-                    <tr><td><b>Doctor Name:</b> {selected_doc}</td><td style="text-align:right;"><b>Period:</b> {start_date} to {end_date}</td></tr>
-                </table>
-                <table style="width:100%; border-collapse:collapse; margin-top:15px; font-size:13px;">
-                    <tr style="background:#f2f2f2; font-weight:bold;">
-                        <th style="padding:8px; border:1px solid #ddd; text-align:left;">Invoice No</th>
-                        <th style="padding:8px; border:1px solid #ddd; text-align:left;">Date</th>
-                        <th style="padding:8px; border:1px solid #ddd; text-align:left;">Patient Name</th>
-                        <th style="padding:8px; border:1px solid #ddd; text-align:right;">Total Amount</th>
-                    </tr>
-                    {table_rows}
-                </table>
-                <hr style="border-top: 1px solid black; margin-top:20px;">
-                <table style="width:100%; font-size:15px; font-weight:bold; line-height:1.6;">
-                    <tr><td style="text-align:right; width:75%;">Total Test Amount:</td><td style="text-align:right;">{doc_total:,.0f} TK</td></tr>
-                    <tr style="color: green;"><td style="text-align:right;">Referral Commission (30%):</td><td style="text-align:right;">{referral_fee:,.0f} TK</td></tr>
-                </table>
-                <div style="margin-top:60px; display:flex; justify-content:space-between; font-size:13px;">
-                    <span>Prepared By: __________________</span>
-                    <span>Doctor's Signature: __________________</span>
-                </div>
-            </div>
-            """
-            st.subheader("🖨️ Statement Print Preview")
-        
+    start_date = col1.date_input("From Date", value=today.replace(day=1), key="d_start")
