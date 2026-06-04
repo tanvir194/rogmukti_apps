@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import sqlite3
 
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="centered")
@@ -35,13 +35,15 @@ test_directory = {
     "X-Ray Cervical Spine B/V": 600, "ECG (Digital)": 300
 }
 
-# SQLite ডাটাবেস ও টেবিল তৈরি
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('''CREATE TABLE IF NOT EXISTS bills
              (invoice_no TEXT PRIMARY KEY, date TEXT, patient TEXT, age TEXT, phone TEXT, 
               doctor TEXT, total REAL, discount REAL, paid REAL)''')
 conn.commit()
+
+if 'sales_data' not in st.session_state:
+    st.session_state['sales_data'] = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
 
 if 'show_memo' not in st.session_state:
     st.session_state['show_memo'] = False
@@ -52,16 +54,18 @@ if 'num_tests' not in st.session_state:
 
 choice = st.sidebar.radio("Main Menu", ["📑 Billing / Cash Memo", "📊 Dashboard Report"])
 
-# ডাটাবেস থেকে ডেটা লোড ও নাম সুবিন্যস্ত করা
+# ডাটাবেস গ্লোবাল রিড ও টাইম রূপান্তর
 df_db = pd.read_sql_query("SELECT * FROM bills", conn)
 if not df_db.empty:
     cols_mapping = {'invoice_no': 'Invoice_No', 'date': 'Date', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
     df = df_db.rename(columns=cols_mapping)
+    df['Date'] = pd.to_datetime(df['Date']).dt.date
     df['Doctor'] = df['Doctor'].astype(str).str.strip()
 else:
     df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
+    df['Date'] = pd.to_datetime(df['Date']).dt.date
 
-# --- ১. বিলিং সেকশন ---
+# --- ১. বিলিং সেকশন (সার্চ সুবিধাসহ) ---
 if choice == "📑 Billing / Cash Memo":
     st.subheader("Patient Information")
     col1, col2 = st.columns(2)
@@ -78,7 +82,8 @@ if choice == "📑 Billing / Cash Memo":
     serial = 1
     
     for i in range(1, st.session_state['num_tests'] + 1):
-        test = st.selectbox(f"Test {i}:", list(test_directory.keys()), key=f"dynamic_test_{i}")
+        # ড্রপডাউন মেনুটি এখন টাইপ করে সার্চ করার সুবিধাযুক্ত
+        test = st.selectbox(f"Select Test {i} (নাম লিখে সার্চ করুন):", list(test_directory.keys()), key=f"dynamic_test_{i}")
         if test != "Select Test":
             price = test_directory[test]
             st.write(f"✅ {test} = **{price} TK**")
@@ -103,8 +108,7 @@ if choice == "📑 Billing / Cash Memo":
             today_str = datetime.now().strftime("%Y%m%d")
             invoice_no = f"ROG-{today_str}-{len(df)+1:03d}"
             
-            # ডেটাবেস সেভিং মেথড একদম সহজ ও এরর-মুক্ত করা হয়েছে
-            c.execute("INSERT OR REPLACE INTO bills (invoice_no, date, patient, age, phone, doctor, total, discount, paid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+            c.execute("INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
                       (invoice_no, str(date_today), patient_name, age, phone, ref_dr.strip(), float(total_amount), float(discount), float(total_paid)))
             conn.commit()
             
@@ -148,27 +152,25 @@ if choice == "📑 Billing / Cash Memo":
             st.session_state['show_memo'] = False
             st.rerun()
 
-# --- ২. ড্যাশবোর্ড সেকশন ---
+# --- ২. ড্যাশবোর্ড সেকশন (দৈনিক, সাপ্তাহিক ও মাসিক লাইভ কাউন্টার সহ) ---
 if choice == "📊 Dashboard Report":
     st.subheader("📊 Dashboard Report")
     
-    total = 0.0
+    today = datetime.now().date()
+    
+    # অটোমেটিক পিরিয়ড অনুযায়ী লাইভ কালেকশন ক্যালকুলেশন
+    total_lifetime = 0.0
+    today_paid = 0.0
+    last_7_paid = 0.0
+    month_paid = 0.0
+    
     if not df.empty:
-        total = pd.to_numeric(df['Paid'], errors='coerce').sum()
-    st.success(f"**Total Lifetime Collection:** ৳ {total:,.0f}")
+        total_lifetime = pd.to_numeric(df['Paid'], errors='coerce').sum()
+        today_paid = df[df['Date'] == today]['Paid'].sum()
+        last_7_paid = df[df['Date'] >= (today - timedelta(days=7))]['Paid'].sum()
+        month_paid = df[df['Date'] >= today.replace(day=1)]['Paid'].sum()
+        
+    st.success(f"**Total Lifetime Collection:** ৳ {total_lifetime:,.0f}")
     
-    st.divider()
-    st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
-    selected_doc = st.selectbox("Select Doctor", doctors_list[1:], key="dashboard_doc")
+    # দৈনিক, সাপ্তাহিক ও মাসিক হিসাবের বক্সসমূহ
     
-    if selected_doc and selected_doc != "Select Doctor":
-        doc_df = pd.DataFrame()
-        if not df.empty:
-            doc_df = df[df['Doctor'].str.lower() == selected_doc.strip().lower()]
-            
-        if not doc_df.empty:
-            doc_total = pd.to_numeric(doc_df['Total'], errors='coerce').sum()
-            referral_fee = doc_total * 0.30
-            st.write(f"🩺 **{selected_doc}**-এর মোট রেফারেল টেস্টের পরিমাণ: **{doc_total:,.0f} TK**")
-            st.info(f"💰 **প্রদেয় কমিশন (৩০%):** **{referral_fee:,.0f} TK**")
-            
