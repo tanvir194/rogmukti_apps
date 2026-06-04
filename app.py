@@ -10,15 +10,42 @@ st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Aul
 
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"]
 
+# ৫৮টি নিয়মিত ব্যবহৃত টেস্টের পূর্ণাঙ্গ তালিকা ও মূল্য তালিকা
 test_directory = {
     "Select Test": 0,
-    "(CBC) + ESR": 600, "CBC": 350, "ESR": 250, "Platelet Count": 300,
-    "MP": 500, "BT/CT": 350, "Blood Group & Rh": 200,
-    "Random Blood Sugar": 200, "Fasting Blood Sugar": 200, "HbA1c": 1500,
-    "T3": 1200, "T4": 1200, "TSH": 1100,
-    "Lipid Profile": 1000, "USG of Whole Abdomen": 800,
-    "USG Lower Abdomen": 750, "USG Pelvis": 700, "USG KUB": 750,
-    "X-Ray Chest": 500, "ECG": 300, "Urine R/E": 250, "Stool R/E": 400
+    # --- Hematology (রক্ত রোগ সংক্রান্ত) ---
+    "(CBC) + ESR": 600, "CBC (Complete Blood Count)": 350, "ESR": 150, "Platelet Count": 250,
+    "Hemoglobin (Hb%)": 150, "Blood Group & Rh Factor": 150, "BT / CT (Bleeding & Clotting Time)": 200,
+    "MP (Malarial Parasite)": 250, "ASO Titre": 400, "RA Test": 400, "CRP (C-Reactive Protein)": 500,
+    
+    # --- Biochemistry (জৈব রাসায়নিক) ---
+    "Random Blood Sugar (RBS)": 150, "Fasting Blood Sugar (FBS)": 150, "2 Hours After Breakfast (2HABF)": 150,
+    "HbA1c": 1200, "Serum Creatinine": 300, "Serum Urea": 300, "Serum Uric Acid": 350,
+    "Serum Bilirubin (Total)": 250, "SGPT (ALT)": 350, "SGOT (AST)": 350, "Serum Alkaline Phosphatase": 350,
+    "Lipid Profile": 900, "Serum Cholesterol": 250, "Serum Triglycerides (TG)": 300,
+    "Serum Calcium": 450, "Serum Electrolytes": 1000,
+    
+    # --- Serology & Immunology (ভাইরাস ও প্রতিরোধী ক্ষমতা) ---
+    "HBsAg (Screening)": 300, "HBsAg (ELISA)": 600, "Anti HCV": 600, "HIV I & II": 500,
+    "VDRL (Qualitative)": 250, "TPHA": 400, "Widal Test (Typhoid)": 350, "Dengue NS1 Antigen": 600,
+    "Dengue IgG / IgM": 600, "Chikungunya IgM": 800, "Troponin-I": 1200,
+    
+    # --- Hormones (হরমোন সংক্রান্ত) ---
+    "Serum T3": 600, "Serum T4": 600, "Serum TSH": 700, "FT3 (Free T3)": 700, "FT4 (Free T4)": 700,
+    "Serum Prolactin": 800, "Serum Testosterone": 1000, "Beta hCG (Pregnancy)": 900,
+    
+    # --- Clinical Pathology (ইউরিন ও স্টুল) ---
+    "Urine R/E (Routine & Examination)": 200, "Urine Pregnancy Test (UPT)": 150,
+    "Stool R/E": 200, "Stool for OBT (Occult Blood Test)": 250,
+    
+    # --- Ultrasonography (USG) ---
+    "USG of Whole Abdomen": 800, "USG of Upper Abdomen": 500, "USG of Lower Abdomen": 500,
+    "USG of Pregnancy / Obs": 500, "USG of Pelvis": 500, "USG of KUB (Kidney, Ureter, Bladder)": 600,
+    "USG of KUB with Prostate": 700,
+    
+    # --- X-Ray & Cardiology ---
+    "X-Ray Chest P/A View": 400, "X-Ray Chest A/P View": 400, "X-Ray Lumbar Spine B/V": 700,
+    "X-Ray Cervical Spine B/V": 600, "ECG (Digital)": 300
 }
 
 # SQLite ডাটাবেস
@@ -32,12 +59,10 @@ conn.commit()
 if 'sales_data' not in st.session_state:
     st.session_state['sales_data'] = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
 
-# প্রিন্ট ভিউ ধরে রাখার সেশন স্টেট
 if 'show_memo' not in st.session_state:
     st.session_state['show_memo'] = False
     st.session_state['last_memo_html'] = ""
 
-# আনলিমিটেড টেস্ট বক্স বাড়ানোর জন্য কাউন্টার সেশন স্টেট
 if 'num_tests' not in st.session_state:
     st.session_state['num_tests'] = 3
 
@@ -61,7 +86,6 @@ with tab1:
     test_list_html = ""
     serial = 1
     
-    # ডাইনামিক টেস্ট ড্রপডাউন জেনারেটর
     for i in range(1, st.session_state['num_tests'] + 1):
         test = st.selectbox(f"Test {i}:", list(test_directory.keys()), key=f"dynamic_test_{i}")
         if test != "Select Test":
@@ -71,7 +95,6 @@ with tab1:
             total_amount += price
             serial += 1
 
-    # আরও টেস্ট বক্স বাড়ানোর বাটন
     if st.button("➕ Add More Test Slot"):
         st.session_state['num_tests'] += 1
         st.rerun()
@@ -136,14 +159,13 @@ with tab1:
             """
             st.session_state['last_memo_html'] = memo_html
             st.session_state['show_memo'] = True
-            st.session_state['num_tests'] = 3  # সেভ হওয়ার পর টেস্ট কাউন্টার রিসেট ৩ এ নিয়ে আসা
+            st.session_state['num_tests'] = 3
             st.success(f"✅ Invoice Saved! Invoice No: **{invoice_no}**")
             st.rerun()
             
         else:
             st.error("অনুগ্রহ করে Patient Name, Doctor সিলেক্ট করুন এবং অন্তত ১টি টেস্ট যুক্ত করুন।")
 
-    # প্রিন্ট প্রিভিউ উইন্ডো
     if st.session_state['show_memo']:
         st.divider()
         st.subheader("🖨️ Last Generated Invoice Print View")
@@ -162,32 +184,3 @@ with tab2:
             'invoice_no': 'Invoice_No', 'patient': 'Patient', 'age': 'Age',
             'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total',
             'discount': 'Discount', 'paid': 'Paid'
-        })
-    else:
-        df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
-
-    if not df.empty:
-        today = datetime.now().date()
-        
-        st.subheader("🔍 Month / Date Filter")
-        col1, col2 = st.columns(2)
-        with col1:
-            start_date = st.date_input("From Date", value=today.replace(day=1), key="d_start")
-        with col2:
-            end_date = st.date_input("To Date", value=today, key="d_end")
-        
-        filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
-        
-        total = filtered_df['Paid'].sum()
-        st.success(f"**Total Collection (Selected Period):** ৳ {total:,.0f}")
-        
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Today", f"৳ {filtered_df[filtered_df['Date'] == today]['Paid'].sum():,.0f}")
-        c2.metric("Last 7 Days", f"৳ {filtered_df[filtered_df['Date'] >= (today - timedelta(days=7))]['Paid'].sum():,.0f}")
-        c3.metric("This Month", f"৳ {filtered_df[filtered_df['Date'] >= today.replace(day=1)]['Paid'].sum():,.0f}")
-        c4.metric("This Year", f"৳ {filtered_df[filtered_df['Date'].apply(lambda x: x.year) == today.year]['Paid'].sum():,.0f}")
-        
-        st.divider()
-        st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
-        selected_doc = st.selectbox("Select Doctor", doctors_list[1:], key="dashboard_doc")
-        
