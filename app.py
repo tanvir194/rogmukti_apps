@@ -35,7 +35,7 @@ test_directory = {
     "X-Ray Cervical Spine B/V": 600, "ECG (Digital)": 300
 }
 
-# SQLite ডাটাবেস (কলামের নাম এবং কন্ডিশন সম্পূর্ণ ফিক্সড)
+# SQLite ডাটাবেস
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('''CREATE TABLE IF NOT EXISTS bills
@@ -55,25 +55,17 @@ if 'num_tests' not in st.session_state:
 
 choice = st.sidebar.radio("Main Menu", ["📑 Billing / Cash Memo", "📊 Dashboard Report"])
 
-# ডাটাবেস থেকে সঠিক উপায়ে লোড করা (কোনো কলাম ক্যাশ এরর হবে না)
+# ডাটাবেস রিড এবং কলাম রিনেম ও টাইপ কাস্টিং ফিক্স
 df_db = pd.read_sql_query("SELECT * FROM bills", conn)
 if not df_db.empty:
-    df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
-    # এখানে নিশ্চিত করা হয়েছে যে ছোট হাতের কলামগুলো সব সঠিকভাবে রিনেম হচ্ছে
-    df = df_db.rename(columns={
-        'invoice_no': 'Invoice_No',
-        'date': 'Date',
-        'patient': 'Patient',
-        'age': 'Age',
-        'phone': 'Phone',
-        'doctor': 'Doctor',
-        'total': 'Total',
-        'discount': 'Discount',
-        'paid': 'Paid'
-    })
+    cols_mapping = {'invoice_no': 'Invoice_No', 'date': 'Date', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
+    df = df_db.rename(columns=cols_mapping)
+    # টাইপ এরর দূর করতে ডাটাবেসের তারিখ কলামকে পিওর ডেট অবজেক্টে নিখুঁত রূপান্তর
+    df['Date'] = pd.to_datetime(df['Date']).dt.date
     df['Doctor'] = df['Doctor'].astype(str).str.strip()
 else:
     df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
+    df['Date'] = pd.to_datetime(df['Date']).dt.date
 
 if choice == "📑 Billing / Cash Memo":
     st.subheader("Patient Information")
@@ -157,9 +149,9 @@ if choice == "📑 Billing / Cash Memo":
 
     if st.session_state['show_memo']:
         st.divider()
-        st.subheader("🨴 Last Generated Invoice Print View")
+        st.subheader("🖨️ Last Generated Invoice Print View")
         st.components.v1.html(st.session_state['last_memo_html'], height=520, scrolling=True)
-        st.markdown('<button onclick="window.print()" style="background:#28a745;color:white;padding:15px 30px;font-size:19px;border:none;border-radius:5px;width:100%;margin-top:15px;font-weight:bold;">🨴 Print / Save Memo as PDF</button>', unsafe_allow_html=True)
+        st.markdown('<button onclick="window.print()" style="background:#28a745;color:white;padding:15px 30px;font-size:19px;border:none;border-radius:5px;width:100%;margin-top:15px;font-weight:bold;">🖨️ Print / Save Memo as PDF</button>', unsafe_allow_html=True)
         if st.button("🧹 Clear Memo Preview"):
             st.session_state['show_memo'] = False
             st.rerun()
@@ -177,3 +169,6 @@ if choice == "📊 Dashboard Report":
         filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
         
     total = 0.0
+    if not filtered_df.empty:
+        total = filtered_df['Paid'].sum()
+
