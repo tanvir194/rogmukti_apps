@@ -116,26 +116,41 @@ with tab1:
 with tab2:
     st.header("📊 Dashboard")
     df = st.session_state['sales_data']
+    
     if not df.empty:
         df['Date'] = pd.to_datetime(df['Date']).dt.date
-        today = datetime.now().date()
-        daily = df[df['Date'] == today]['Paid'].sum()
-        weekly = df[df['Date'] >= (today - timedelta(days=7))]['Paid'].sum()
-        monthly = df[df['Date'] >= today.replace(day=1)]['Paid'].sum()
-        yearly = df[df['Date'].apply(lambda x: x.year) == today.year]['Paid'].sum()
         
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Today", f"৳ {daily:,.0f}")
-        c2.metric("Last 7 Days", f"৳ {weekly:,.0f}")
-        c3.metric("This Month", f"৳ {monthly:,.0f}")
-        c4.metric("This Year", f"৳ {yearly:,.0f}")
+        st.subheader("🔍 Date Wise Search")
+        option = st.radio("Select Search Type", ["Single Date", "Date Range"], horizontal=True)
+        
+        if option == "Single Date":
+            selected_date = st.date_input("Select Date", datetime.now().date())
+            filtered_df = df[df['Date'] == selected_date]
+        else:
+            col1, col2 = st.columns(2)
+            with col1:
+                start_date = st.date_input("From Date", value=datetime.now().date() - timedelta(days=30))
+            with col2:
+                end_date = st.date_input("To Date", value=datetime.now().date())
+            filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+        
+        if not filtered_df.empty:
+            total = filtered_df['Paid'].sum()
+            st.success(f"**Total Collection in Selected Period:** ৳ {total:,.0f}")
+            
+            daily = filtered_df[filtered_df['Date'] == datetime.now().date()]['Paid'].sum()
+            st.metric("Today in Selected Period", f"৳ {daily:,.0f}")
+            
+            st.dataframe(filtered_df.sort_values(by="Date", ascending=False), use_container_width=True)
+        else:
+            st.info("এই তারিখে কোনো বিল পাওয়া যায়নি।")
         
         st.divider()
         st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
         selected_doc = st.selectbox("Select Doctor", doctors_list[1:])
         
         if selected_doc:
-            doc_df = df[df['Doctor'] == selected_doc]
+            doc_df = filtered_df[filtered_df['Doctor'] == selected_doc]
             if not doc_df.empty:
                 total_business = doc_df['Paid'].sum()
                 commission = total_business * 0.30
