@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 import sqlite3
 
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="centered")
@@ -13,24 +13,24 @@ doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. A
 # ৫৮টি নিয়মিত ব্যবহৃত টেস্টের পূর্ণাঙ্গ তালিকা
 test_directory = {
     "Select Test": 0,
-    "(CBC) + ESR": 600, "CBC (Complete Blood Count)": 350, "ESR": 150, "Platelet Count": 250,
-    "Hemoglobin (Hb%)": 150, "Blood Group & Rh Factor": 150, "BT / CT (Bleeding & Clotting Time)": 200,
-    "MP (Malarial Parasite)": 250, "ASO Titre": 400, "RA Test": 400, "CRP (C-Reactive Protein)": 500,
+    "(CBC) + ESR": 600, "CBC (Complete Blood Count)": 600, "ESR": 150, "Platelet Count": 250,
+    "Hemoglobin (Hb%)": 250, "Blood Group & Rh Factor": 200, "BT / CT (Bleeding & Clotting Time)": 300,
+    "MP (Malarial Parasite)": 550, "ASO Titre": 400, "RA Test": 400, "CRP (C-Reactive Protein)": 500,
     "Random Blood Sugar (RBS)": 150, "Fasting Blood Sugar (FBS)": 150, "2 Hours After Breakfast (2HABF)": 150,
-    "HbA1c": 1200, "Serum Creatinine": 300, "Serum Urea": 300, "Serum Uric Acid": 350,
-    "Serum Bilirubin (Total)": 250, "SGPT (ALT)": 350, "SGOT (AST)": 350, "Serum Alkaline Phosphatase": 350,
-    "Lipid Profile": 900, "Serum Cholesterol": 250, "Serum Triglycerides (TG)": 300,
-    "Serum Calcium": 450, "Serum Electrolytes": 1000,
+    "HbA1c": 1200, "Serum Creatinine": 500, "Serum Urea": 500, "Serum Uric Acid": 450,
+    "Serum Bilirubin (Total)": 450, "SGPT (ALT)": 450, "SGOT (AST)": 450, "Serum Alkaline Phosphatase": 550,
+    "Lipid Profile": 900, "Serum Cholesterol": 450, "Serum Triglycerides (TG)": 400,
+    "Serum Calcium": 600, "Serum Electrolytes": 1000,
     "HBsAg (Screening)": 300, "HBsAg (ELISA)": 600, "Anti HCV": 600, "HIV I & II": 500,
-    "VDRL (Qualitative)": 250, "TPHA": 400, "Widal Test (Typhoid)": 350, "Dengue NS1 Antigen": 600,
-    "Dengue IgG / IgM": 600, "Chikungunya IgM": 800, "Troponin-I": 1200,
-    "Serum T3": 600, "Serum T4": 600, "Serum TSH": 700, "FT3 (Free T3)": 700, "FT4 (Free T4)": 700,
+    "VDRL (Qualitative)": 400, "TPHA": 400, "Widal Test (Typhoid)": 450, "Dengue NS1": 300,
+    "Dengue IgG / IgM": 300, "Chikungunya IgM": 800, "Troponin-I": 1200,
+    "Serum T3": 900, "Serum T4": 1000, "Serum TSH": 900, "FT3 (Free T3)": 900, "FT4 (Free T4)": 1000,
     "Serum Prolactin": 800, "Serum Testosterone": 1000, "Beta hCG (Pregnancy)": 900,
     "Urine R/E (Routine & Examination)": 200, "Urine Pregnancy Test (UPT)": 150,
-    "Stool R/E": 200, "Stool for OBT (Occult Blood Test)": 250,
-    "USG of Whole Abdomen": 800, "USG of Upper Abdomen": 500, "USG of Lower Abdomen": 500,
-    "USG of Pregnancy / Obs": 500, "USG of Pelvis": 500, "USG of KUB (Kidney, Ureter, Bladder)": 600,
-    "USG of KUB with Prostate": 700,
+    "Stool R/E": 400, "Stool for OBT (Occult Blood Test)": 450,
+    "USG of Whole Abdomen": 800, "USG of Upper Abdomen": 800, "USG of Lower Abdomen": 800,
+    "USG of Pregnancy / Obs": 800, "USG of Pelvis": 800, "USG of KUB (Kidney, Ureter, Bladder)": 1000,
+    "USG of KUB with Prostate": 1000,
     "X-Ray Chest P/A View": 400, "X-Ray Chest A/P View": 400, "X-Ray Lumbar Spine B/V": 700,
     "X-Ray Cervical Spine B/V": 600, "ECG (Digital)": 300
 }
@@ -42,9 +42,6 @@ c.execute('''CREATE TABLE IF NOT EXISTS bills
               doctor TEXT, total REAL, discount REAL, paid REAL)''')
 conn.commit()
 
-if 'sales_data' not in st.session_state:
-    st.session_state['sales_data'] = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
-
 if 'show_memo' not in st.session_state:
     st.session_state['show_memo'] = False
     st.session_state['last_memo_html'] = ""
@@ -52,21 +49,21 @@ if 'show_memo' not in st.session_state:
 if 'num_tests' not in st.session_state:
     st.session_state['num_tests'] = 3
 
-choice = st.sidebar.radio("Main Menu", ["📑 Billing / Cash Memo", "📊 Dashboard Report"])
+# সাইডবার সরিয়ে স্ক্রিনের ওপরে ২টি পরিষ্কার ট্যাব দেওয়া হলো
+tab1, tab2 = st.tabs(["📑 Billing / Cash Memo", "📊 Dashboard Report"])
 
-# ডাটাবেস গ্লোবাল রিড ও অবজেক্ট স্ট্রিং রূপান্তর ফিক্স
+# ডাটাবেস গ্লোবাল রিড
 df_db = pd.read_sql_query("SELECT * FROM bills", conn)
 if not df_db.empty:
     cols_mapping = {'invoice_no': 'Invoice_No', 'date': 'Date', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
     df = df_db.rename(columns=cols_mapping)
-    # টাইপ এরর চিরতরে বন্ধ করতে তারিখ কলামকে পিওর স্ট্রিং বা টেক্সট করা হয়েছে
     df['Date'] = df['Date'].astype(str)
     df['Doctor'] = df['Doctor'].astype(str).str.strip()
 else:
     df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
 
-# --- ১. বিলিং সেকশন (সার্চ সুবিধাসহ) ---
-if choice == "📑 Billing / Cash Memo":
+# --- ট্যাব ১: বিলিং পেজ ---
+with tab1:
     st.subheader("Patient Information")
     col1, col2 = st.columns(2)
     patient_name = col1.text_input("Patient Name:", key="p_name")
@@ -82,7 +79,6 @@ if choice == "📑 Billing / Cash Memo":
     serial = 1
     
     for i in range(1, st.session_state['num_tests'] + 1):
-        # ড্রপডাউন মেনুটি এখন টাইপ করে সার্চ করার সুবিধাযুক্ত
         test = st.selectbox(f"Select Test {i} (নাম লিখে সার্চ করুন):", list(test_directory.keys()), key=f"dynamic_test_{i}")
         if test != "Select Test":
             price = test_directory[test]
@@ -108,7 +104,7 @@ if choice == "📑 Billing / Cash Memo":
             today_str = datetime.now().strftime("%Y%m%d")
             invoice_no = f"ROG-{today_str}-{len(df)+1:03d}"
             
-            c.execute("INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+            c.execute("INSERT OR REPLACE INTO bills (invoice_no, date, patient, age, phone, doctor, total, discount, paid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
                       (invoice_no, str(date_today), patient_name, age, phone, ref_dr.strip(), float(total_amount), float(discount), float(total_paid)))
             conn.commit()
             
@@ -152,11 +148,10 @@ if choice == "📑 Billing / Cash Memo":
             st.session_state['show_memo'] = False
             st.rerun()
 
-# --- ২. ড্যাশবোর্ড সেকশন (সম্পূর্ণ টাইপ এরর মুক্ত) ---
-if choice == "📊 Dashboard Report":
-    st.subheader("📊 Dashboard Report")
+# --- ট্যাব ২: ড্যাশবোর্ড পেজ (সম্পূর্ণ ওপেন এবং আলাদা) ---
+with tab2:
+    st.subheader("📊 Dashboard Income Overview")
     
-    # বর্তমান তারিখের টেক্সট ফরম্যাট তৈরি
     today_str = str(datetime.now().date())
     this_month_prefix = datetime.now().strftime("%Y-%m")
     
@@ -166,9 +161,17 @@ if choice == "📊 Dashboard Report":
     
     if not df.empty:
         total_lifetime = pd.to_numeric(df['Paid'], errors='coerce').sum()
-        # টেক্সট তারিখের সাথে টেক্সট ডাইরেক্ট কম্পারিজন (১০০% এরর মুক্ত)
         today_paid = df[df['Date'] == today_str]['Paid'].sum()
         month_paid = df[df['Date'].str.startswith(this_month_prefix)]['Paid'].sum()
         
     st.success(f"**Total Lifetime Collection:** ৳ {total_lifetime:,.0f}")
+    st.info(f"📅 **আজকের মোট কালেকশন (Today):** **৳ {today_paid:,.0f}**")
+    st.error(f"📈 **এই মাসের মোট কালেকশন (Monthly):** **৳ {month_paid:,.0f}**")
     
+    st.divider()
+    st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
+    selected_doc = st.selectbox("Select Doctor", doctors_list[1:], key="dashboard_doc")
+    
+    if selected_doc and selected_doc != "Select Doctor":
+        doc_df = pd.DataFrame()
+        if not df.empty:
