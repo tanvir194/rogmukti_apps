@@ -1,29 +1,20 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
-import sqlite3
 
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="centered")
 
-# ডাটাবেস সেটআপ
-conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
-c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS bills
-             (invoice_no TEXT, date TEXT, patient TEXT, age TEXT, phone TEXT, 
-              doctor TEXT, total REAL, discount REAL, paid REAL)''')
-conn.commit()
+# ====================== লগইন সিস্টেম ======================
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.role = None
+    st.session_state.username = None
 
-# ইউজার লগইন
 users = {
     "reception": {"password": "1234", "role": "Receptionist"},
     "doctor": {"password": "1234", "role": "Doctor"},
     "admin": {"password": "admin123", "role": "Admin"}
 }
-
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.role = None
-    st.session_state.username = None
 
 if not st.session_state.logged_in:
     st.title("🔐 Rogmukti Diagnostic Centre - Login")
@@ -49,6 +40,22 @@ if st.sidebar.button("Logout"):
     st.rerun()
 
 st.title("ROGMUKTI DIAGNOSTIC CENTRE")
+
+doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"]
+
+test_directory = {
+    "Select Test": 0,
+    "(CBC) + ESR": 600, "CBC": 350, "ESR": 250, "Platelet Count": 300,
+    "MP": 500, "BT/CT": 350, "Blood Group & Rh": 200,
+    "Random Blood Sugar": 200, "Fasting Blood Sugar": 200, "HbA1c": 1500,
+    "T3": 1200, "T4": 1200, "TSH": 1100,
+    "Lipid Profile": 1000, "USG of Whole Abdomen": 800,
+    "USG Lower Abdomen": 750, "USG Pelvis": 700, "USG KUB": 750,
+    "X-Ray Chest": 500, "ECG": 300, "Urine R/E": 250, "Stool R/E": 400
+}
+
+if 'sales_data' not in st.session_state:
+    st.session_state['sales_data'] = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
 
 tab1, tab2 = st.tabs(["📑 Billing / Cash Memo", "📊 Dashboard"])
 
@@ -106,7 +113,6 @@ with tab1:
             
             st.success(f"✅ Invoice Saved! Invoice No: **{invoice_no}**")
             
-            # প্রিন্ট মেমো
             memo_html = f"""
             <div style="font-family: Arial; max-width: 600px; margin: auto; padding: 40px; border: 4px solid black; background: white; color: black;">
                 <h2 style="text-align: center; color: red;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
@@ -162,4 +168,4 @@ with tab2:
     else:
         st.info("এখনো কোনো বিল তৈরি হয়নি।")
 
-st.caption("Developed for Rogmukti Diagnostic Centre")
+st.caption("Developed for Rogmukti Diagnostic
