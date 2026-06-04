@@ -164,14 +164,12 @@ with tab2:
         if selected_doc:
             doc_df = filtered_df[filtered_df['Doctor'] == selected_doc]
             if not doc_df.empty:
-                total_business = doc_df['Paid'].sum()
-                commission = total_business * 0.30
-                st.success(f"**Total Business:** ৳ {total_business:,.0f}")
-                st.info(f"**Doctor's Referral Fee (30%):** ৳ {commission:,.0f}")
-                st.dataframe(doc_df[["Invoice_No", "Date", "Patient", "Paid"]], use_container_width=True)
+                doc_total = doc_df['Total'].sum()
+                referral_fee = doc_total * 0.30
+                st.metric(f"Referral Fee for {selected_doc}", f"৳ {referral_fee:,.0f}")
+                st.dataframe(doc_df)
             else:
-                st.info("এই ডাক্তারের কোনো বিল পাওয়া যায়নি।")
-    else:
-        st.info("এখনো কোনো বিল তৈরি হয়নি।")
+                st.info("No data found for this doctor in the selected period.")
 
-st.caption("Developed for Rogmukti Diagnostic
+st.caption("Developed for Rogmukti Diagnostic")
+        
