@@ -43,7 +43,7 @@ with tab1:
         phone = st.text_input("Phone Number:")
     with col2:
         ref_dr = st.selectbox("Referred By:", doctors_list)
-        date_today = st.date_input("Date:", datetime.now())
+        date_today = st.date_input("Date:", datetime.now().date())
 
     st.divider()
     st.subheader("🧪 Test Selection")
@@ -131,8 +131,9 @@ with tab2:
     st.header("📊 Dashboard")
     df_db = pd.read_sql_query("SELECT * FROM bills", conn)
     if not df_db.empty:
+        # এখানে নিশ্চিত করা হচ্ছে যে ডাটাবেসের তারিখ ডেট-টাইপ অবজেক্টে রূপান্তর হচ্ছে
         df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
-        df = df_db.rename(columns={'date': 'Date', 'paid': 'Paid'})
+        df = df_db.rename(columns={'paid': 'Paid', 'total': 'Total', 'discount': 'Discount'})
     else:
         df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
 
@@ -146,6 +147,7 @@ with tab2:
         with col2:
             end_date = st.date_input("To Date", value=today)
         
+        # ফিল্টার করার আগে নিশ্চিত হওয়া যে দুটিই একই ফরম্যাটে আছে
         filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
         
         total = filtered_df['Paid'].sum()
@@ -168,9 +170,8 @@ with tab2:
                 referral_fee = doc_total * 0.30
                 st.write(f"🩺 **{selected_doc}**-এর মোট রেফারেল টেস্টের পরিমাণ: **{doc_total:,.0f} TK**")
                 st.info(f"💰 **প্রদেয় কমিশন (৩০%):** **{referral_fee:,.0f} TK**")
-                st.dataframe(doc_df[["Invoice_No", "Date", "Patient", "Total"]])
+                st.dataframe(doc_df[["Invoice_No", "Date", "Patient", "Total", "Paid"]])
             else:
                 st.warning("এই ডাক্তারের কোনো ডেটা পাওয়া যায়নি।")
     else:
         st.info("এখনো কোনো ইনভয়েস তৈরি করা হয়নি।")
-
