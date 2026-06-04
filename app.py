@@ -1,7 +1,18 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
+import requests
 
+def send_sms(mobile_number, message):
+    api_url = "https://greenweb.com.bd"
+    api_token = "YOUR_API_TOKEN_HERE" 
+    payload = {'token': api_token, 'to': mobile_number, 'message': message}
+    try:
+        response = requests.post(api_url, data=payload, timeout=5)
+        return response.status_code == 200
+    except:
+        return False
+        
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="centered")
 
 # সফটওয়্যার হেডার
