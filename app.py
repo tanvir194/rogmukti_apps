@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
+import sqlite3
 
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="centered")
 
@@ -19,6 +20,14 @@ test_directory = {
     "USG Lower Abdomen": 750, "USG Pelvis": 700, "USG KUB": 750,
     "X-Ray Chest": 500, "ECG": 300, "Urine R/E": 250, "Stool R/E": 400
 }
+
+# SQLite ডাটাবেস সেটআপ
+conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
+c = conn.cursor()
+c.execute('''CREATE TABLE IF NOT EXISTS bills
+             (invoice_no TEXT PRIMARY KEY, date TEXT, patient TEXT, age TEXT, phone TEXT, 
+              doctor TEXT, total REAL, discount REAL, paid REAL)''')
+conn.commit()
 
 if 'sales_data' not in st.session_state:
     st.session_state['sales_data'] = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
@@ -64,9 +73,9 @@ with tab1:
             today_str = datetime.now().strftime("%Y%m%d")
             invoice_no = f"ROG-{today_str}-{len(st.session_state['sales_data'])+1:03d}"
             
-            new_row = pd.DataFrame([{
+            new_row = {
                 "Invoice_No": invoice_no,
-                "Date": date_today,
+                "Date": str(date_today),
                 "Patient": patient_name,
                 "Age": age,
                 "Phone": phone,
@@ -74,8 +83,15 @@ with tab1:
                 "Total": total_amount,
                 "Discount": discount,
                 "Paid": total_paid
-            }])
-            st.session_state['sales_data'] = pd.concat([st.session_state['sales_data'], new_row], ignore_index=True)
+            }
+            
+            # ডাটাবেসে সেভ
+            c.execute("""INSERT INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                      (invoice_no, str(date_today), patient_name, age, phone, ref_dr, total_amount, discount, total_paid))
+            conn.commit()
+            
+            # session_state এও সেভ
+            st.session_state['sales_data'] = pd.concat([st.session_state['sales_data'], pd.DataFrame([new_row])], ignore_index=True)
             
             st.success(f"✅ Invoice Saved! Invoice No: **{invoice_no}**")
             
@@ -115,13 +131,17 @@ with tab1:
 
 with tab2:
     st.header("📊 Dashboard")
-    df = st.session_state['sales_data']
-    
+    # ডাটাবেস থেকে লোড
+    df_db = pd.read_sql_query("SELECT * FROM bills", conn)
+    if not df_db.empty:
+        df_db['Date'] = pd.to_datetime(df_db['Date']).dt.date
+        df = df_db
+    else:
+        df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
+
     if not df.empty:
-        df['Date'] = pd.to_datetime(df['Date']).dt.date
         today = datetime.now().date()
         
-        # তারিখ ফিল্টার
         st.subheader("🔍 Date Filter")
         col1, col2 = st.columns(2)
         with col1:
@@ -141,32 +161,19 @@ with tab2:
         c4.metric("This Year", f"৳ {filtered_df[filtered_df['Date'].apply(lambda x: x.year) == today.year]['Paid'].sum():,.0f}")
         
         st.divider()
-        st.subheader("👨‍⚕️ Monthly Doctor Report")
+        st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
         selected_doc = st.selectbox("Select Doctor", doctors_list[1:])
-        selected_month = st.date_input("Select Month", value=today.replace(day=1))
         
         if selected_doc:
-            month_start = selected_month.replace(day=1)
-            month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-            
-            doc_df = filtered_df[(filtered_df['Doctor'] == selected_doc) & 
-                               (filtered_df['Date'] >= month_start) & 
-                               (filtered_df['Date'] <= month_end)]
-            
+            doc_df = filtered_df[filtered_df['Doctor'] == selected_doc]
             if not doc_df.empty:
-                patient_count = len(doc_df)
                 total_business = doc_df['Paid'].sum()
                 commission = total_business * 0.30
-                
-                st.success(f"**Patients in {selected_month.strftime('%B %Y')}**: {patient_count}")
                 st.success(f"**Total Business:** ৳ {total_business:,.0f}")
                 st.info(f"**Doctor's Referral Fee (30%):** ৳ {commission:,.0f}")
-                
                 st.dataframe(doc_df[["Invoice_No", "Date", "Patient", "Paid"]], use_container_width=True)
-                
-                st.markdown('<button onclick="window.print()" style="background:#28a745;color:white;padding:12px 30px;font-size:18px;border:none;border-radius:5px;width:100%;margin-top:15px;">🖨️ Print Monthly Doctor Report</button>', unsafe_allow_html=True)
             else:
-                st.info(f"এই ডাক্তারের {selected_month.strftime('%B %Y')} মাসে কোনো বিল নেই।")
+                st.info("এই ডাক্তারের কোনো বিল পাওয়া যায়নি।")
     else:
         st.info("এখনো কোনো বিল তৈরি হয়নি।")
 
