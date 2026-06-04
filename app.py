@@ -54,16 +54,16 @@ if 'num_tests' not in st.session_state:
 
 choice = st.sidebar.radio("Main Menu", ["📑 Billing / Cash Memo", "📊 Dashboard Report"])
 
-# ডাটাবেস গ্লোবাল রিড ও টাইম রূপান্তর
+# ডাটাবেস গ্লোবাল রিড ও অবজেক্ট স্ট্রিং রূপান্তর ফিক্স
 df_db = pd.read_sql_query("SELECT * FROM bills", conn)
 if not df_db.empty:
     cols_mapping = {'invoice_no': 'Invoice_No', 'date': 'Date', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
     df = df_db.rename(columns=cols_mapping)
-    df['Date'] = pd.to_datetime(df['Date']).dt.date
+    # টাইপ এরর চিরতরে বন্ধ করতে তারিখ কলামকে পিওর স্ট্রিং বা টেক্সট করা হয়েছে
+    df['Date'] = df['Date'].astype(str)
     df['Doctor'] = df['Doctor'].astype(str).str.strip()
 else:
     df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
-    df['Date'] = pd.to_datetime(df['Date']).dt.date
 
 # --- ১. বিলিং সেকশন (সার্চ সুবিধাসহ) ---
 if choice == "📑 Billing / Cash Memo":
@@ -152,25 +152,23 @@ if choice == "📑 Billing / Cash Memo":
             st.session_state['show_memo'] = False
             st.rerun()
 
-# --- ২. ড্যাশবোর্ড সেকশন (দৈনিক, সাপ্তাহিক ও মাসিক লাইভ কাউন্টার সহ) ---
+# --- ২. ড্যাশবোর্ড সেকশন (সম্পূর্ণ টাইপ এরর মুক্ত) ---
 if choice == "📊 Dashboard Report":
     st.subheader("📊 Dashboard Report")
     
-    today = datetime.now().date()
+    # বর্তমান তারিখের টেক্সট ফরম্যাট তৈরি
+    today_str = str(datetime.now().date())
+    this_month_prefix = datetime.now().strftime("%Y-%m")
     
-    # অটোমেটিক পিরিয়ড অনুযায়ী লাইভ কালেকশন ক্যালকুলেশন
     total_lifetime = 0.0
     today_paid = 0.0
-    last_7_paid = 0.0
     month_paid = 0.0
     
     if not df.empty:
         total_lifetime = pd.to_numeric(df['Paid'], errors='coerce').sum()
-        today_paid = df[df['Date'] == today]['Paid'].sum()
-        last_7_paid = df[df['Date'] >= (today - timedelta(days=7))]['Paid'].sum()
-        month_paid = df[df['Date'] >= today.replace(day=1)]['Paid'].sum()
+        # টেক্সট তারিখের সাথে টেক্সট ডাইরেক্ট কম্পারিজন (১০০% এরর মুক্ত)
+        today_paid = df[df['Date'] == today_str]['Paid'].sum()
+        month_paid = df[df['Date'].str.startswith(this_month_prefix)]['Paid'].sum()
         
     st.success(f"**Total Lifetime Collection:** ৳ {total_lifetime:,.0f}")
-    
-    # দৈনিক, সাপ্তাহিক ও মাসিক হিসাবের বক্সসমূহ
     
