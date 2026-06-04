@@ -164,14 +164,12 @@ with tab1:
 
 with tab2:
     st.header("🔒 Admin Dashboard Lock")
-    
     input_password = st.text_input("এডমিন পাসওয়ার্ড দিন:", type="password", key="admin_password_input")
     
     if input_password == "rogmukti123":
         st.success("🔓 এক্সেস গ্র্যান্টেড! ড্যাশবোর্ড ওপেন হয়েছে।")
         st.divider()
         
-        # ডাটাবেস থেকে ডেটা রিড করা
         df_db = pd.read_sql_query("SELECT * FROM bills", conn)
         
         if not df_db.empty:
@@ -179,3 +177,4 @@ with tab2:
             cols_mapping = {'invoice_no': 'Invoice_No', 'patient': 'Patient', 'age': 'Age', 'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total', 'discount': 'Discount', 'paid': 'Paid'}
             df = df_db.rename(columns=cols_mapping)
         else:
+            
