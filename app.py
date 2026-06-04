@@ -74,12 +74,12 @@ with tab1:
             
             st.success(f"✅ Invoice Saved! Invoice No: **{invoice_no}**")
             
-            # প্রিন্টেবল মেমো
+            # প্রিন্টেবল মেমো (ইনভয়েস নাম্বারের সাইজ ছোট করা)
             memo_html = f"""
             <div style="font-family: Arial; max-width: 500px; margin: auto; padding: 25px; border: 3px solid black; background: white; color: black;">
                 <h2 style="text-align: center; color: red;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
                 <p style="text-align: center;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
-                <p style="text-align: center; font-size: 18px; font-weight: bold;">Invoice No: {invoice_no}</p>
+                <p style="text-align: center; font-size: 15px; font-weight: bold; margin: 8px 0;">Invoice No: {invoice_no}</p>
                 <hr>
                 <table style="width:100%; font-size:14px;">
                     <tr><td>Patient: <b>{patient_name}</b></td><td style="text-align:right;">Date: {date_today}</td></tr>
@@ -98,7 +98,8 @@ with tab1:
                 <p style="text-align:center; margin-top:25px;">Thank You!</p>
             </div>
             """
-            st.components.v1.html(memo_html, height=550)
+            st.components.v1.html(memo_html, height=520)
+            
             st.markdown('<button onclick="window.print()" style="background:#28a745;color:white;padding:12px 30px;font-size:18px;border:none;border-radius:5px;width:100%;margin-top:10px;">🖨️ Print / Save as PDF</button>', unsafe_allow_html=True)
             
         else:
@@ -123,7 +124,7 @@ with tab2:
         c2.metric("Last 7 Days", f"৳ {weekly:,.0f}")
         c3.metric("This Month", f"৳ {monthly:,.0f}")
         c4.metric("This Year", f"৳ {yearly:,.0f}")
-
+        
         st.divider()
         st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
         selected_doc = st.selectbox("Select Doctor", doctors_list[1:])
@@ -136,8 +137,6 @@ with tab2:
                 st.success(f"**Total Business:** ৳ {total_business:,.0f}")
                 st.info(f"**Doctor's Referral Fee (30%):** ৳ {commission:,.0f}")
                 st.dataframe(doc_df[["Invoice_No", "Date", "Patient", "Paid"]], use_container_width=True)
-            else:
-                st.info("এই ডাক্তারের কোনো বিল পাওয়া যায়নি।")
     else:
         st.info("এখনো কোনো বিল তৈরি হয়নি।")
 
