@@ -23,7 +23,7 @@ test_directory = {
 if 'sales_data' not in st.session_state:
     st.session_state['sales_data'] = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
 
-tab1, tab2 = st.tabs(["📑 Billing", "📊 Dashboard"])
+tab1, tab2 = st.tabs(["📑 Billing / Cash Memo", "📊 Dashboard"])
 
 with tab1:
     st.subheader("Patient Information")
@@ -37,7 +37,7 @@ with tab1:
         date_today = st.date_input("Date:", datetime.now())
 
     st.divider()
-    st.subheader("Test Selection")
+    st.subheader("🧪 Test Selection")
     
     total_amount = 0
     test_list_html = ""
@@ -55,7 +55,7 @@ with tab1:
     discount = st.number_input("Discount (TK)", min_value=0, value=0, step=10)
     total_paid = total_amount - discount
 
-    st.markdown(f"**Total:** {total_amount} TK")
+    st.markdown(f"**Total Amount:** {total_amount} TK")
     st.markdown(f"**Discount:** {discount} TK")
     st.markdown(f"### **Net Payable:** {total_paid} TK")
 
@@ -65,33 +65,42 @@ with tab1:
             invoice_no = f"ROG-{today_str}-{len(st.session_state['sales_data'])+1:03d}"
             
             new_row = pd.DataFrame([{
-                "Invoice_No": invoice_no, "Date": date_today, "Patient": patient_name,
-                "Age": age, "Phone": phone, "Doctor": ref_dr,
-                "Total": total_amount, "Discount": discount, "Paid": total_paid
+                "Invoice_No": invoice_no,
+                "Date": date_today,
+                "Patient": patient_name,
+                "Age": age,
+                "Phone": phone,
+                "Doctor": ref_dr,
+                "Total": total_amount,
+                "Discount": discount,
+                "Paid": total_paid
             }])
             st.session_state['sales_data'] = pd.concat([st.session_state['sales_data'], new_row], ignore_index=True)
             
-            st.success(f"Invoice Saved! No: {invoice_no}")
+            st.success(f"✅ Invoice Saved! Invoice No: **{invoice_no}**")
 
-            # প্রিন্ট মেমো
             memo_html = f"""
-            <div style="font-family: Arial; max-width: 600px; margin: auto; padding: 40px; border: 4px solid black; background: white;">
+            <div style="font-family: Arial; max-width: 600px; margin: auto; padding: 40px; border: 4px solid black; background: white; color: black;">
                 <h2 style="text-align: center; color: red;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
                 <p style="text-align: center;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
-                <p style="text-align: center; font-size: 11px; font-weight: bold;">Invoice No: {invoice_no}</p>
+                <p style="text-align: center; font-size: 11px; font-weight: bold; margin: 10px 0;">Invoice No: {invoice_no}</p>
                 <hr>
                 <table style="width:100%; font-size:15px;">
                     <tr><td><b>Patient:</b> {patient_name}</td><td style="text-align:right;"><b>Date:</b> {date_today}</td></tr>
                     <tr><td><b>Age:</b> {age}</td><td style="text-align:right;"><b>Doctor:</b> {ref_dr}</td></tr>
                 </table>
                 <hr>
-                <table style="width:100%; border-collapse:collapse;">
-                    <tr style="background:#f0f0f0; font-weight:bold;"><td style="padding:8px; width:40px;">Sl.</td><td style="padding:8px;">Test Name</td><td style="padding:8px; text-align:right;">Price</td></tr>
+                <table style="width:100%; border-collapse:collapse; font-size:15px;">
+                    <tr style="background:#f0f0f0; font-weight:bold;">
+                        <td style="padding:8px; width:40px;">Sl.</td>
+                        <td style="padding:8px;">Test Name</td>
+                        <td style="padding:8px; text-align:right;">Price</td>
+                    </tr>
                     {test_list_html}
                 </table>
                 <hr>
                 <table style="width:100%; font-weight:bold; font-size:17px;">
-                    <tr><td style="text-align:right;">Total:</td><td style="text-align:right;">{total_amount} TK</td></tr>
+                    <tr><td style="text-align:right;">Total Amount:</td><td style="text-align:right;">{total_amount} TK</td></tr>
                     <tr><td style="text-align:right; color:red;">Discount:</td><td style="text-align:right; color:red;">{discount} TK</td></tr>
                     <tr style="font-size:19px; color:green;"><td style="text-align:right;">Net Payable:</td><td style="text-align:right;">{total_paid} TK</td></tr>
                 </table>
@@ -123,6 +132,6 @@ with tab2:
         
         st.dataframe(df.sort_values(by="Date", ascending=False), use_container_width=True)
     else:
-        st.info("এখনো কোনো বিল নেই")
+        st.info("এখনো কোনো বিল তৈরি হয়নি।")
 
 st.caption("Developed for Rogmukti Diagnostic Centre")
