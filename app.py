@@ -168,11 +168,59 @@ with tab2:
         c3.metric("This Month", f"৳ {filtered_df[filtered_df['Date'] >= today.replace(day=1)]['Paid'].sum():,.0f}")
         c4.metric("This Year", f"৳ {filtered_df[filtered_df['Date'].apply(lambda x: x.year) == today.year]['Paid'].sum():,.0f}")
         
-        st.divider()
+                st.divider()
         st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
-        selected_doc = st.selectbox("Select Doctor", doctors_list[1:])
+        selected_doc = st.selectbox("Select Doctor", doctors_list[1:], key="dashboard_doc_select")
         
         if selected_doc:
+            doc_df = filtered_df[filtered_df['Doctor'] == selected_doc]
+            if not doc_df.empty:
+                doc_total = doc_df['Total'].sum()
+                referral_fee = doc_total * 0.30
+                
+                # ড্যাশবোর্ডে সামারি দেখানো
+                st.metric(f"Referral Fee for {selected_doc}", f"৳ {referral_fee:,.0f}")
+                st.dataframe(doc_df)
+                
+                # প্রিন্ট করার জন্য সুন্দর একটি HTML টেবিল তৈরি
+                doc_rows = ""
+                for idx, row in doc_df.iterrows():
+                    doc_rows += f"<tr><td style='padding:8px; border: 1px solid #ddd;'>{row['Date']}</td><td style='padding:8px; border: 1px solid #ddd;'>{row['Patient']}</td><td style='padding:8px; text-align:right; border: 1px solid #ddd;'>{row['Total']} TK</td></tr>"
+                
+                report_html = f"""
+                <div style="font-family: Arial; max-width: 700px; margin: auto; padding: 30px; border: 2px solid #000; background: white; color: black;">
+                    <h2 style="text-align: center; color: red; margin-bottom:5px;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
+                    <p style="text-align: center; margin-top:0;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
+                    <h3 style="text-align: center; background: #f0f0f0; padding: 5px;">Doctor Referral Statement</h3>
+                    <table style="width:100%; font-size:15px; margin-bottom: 15px;">
+                        <tr><td><b>Doctor Name:</b> {selected_doc}</td><td style="text-align:right;"><b>Period:</b> {start_date} to {end_date}</td></tr>
+                    </table>
+                    <table style="width:100%; border-collapse:collapse; font-size:14px; border: 1px solid #ddd;">
+                        <tr style="background:#e0e0e0; font-weight:bold;">
+                            <td style="padding:8px; border: 1px solid #ddd;">Date</td>
+                            <td style="padding:8px; border: 1px solid #ddd;">Patient Name</td>
+                            <td style="padding:8px; text-align:right; border: 1px solid #ddd;">Total Bill</td>
+                        </tr>
+                        {doc_rows}
+                    </table>
+                    <hr style="border-top: 2px dashed #000; margin-top:20px;">
+                    <table style="width:100%; font-weight:bold; font-size:16px;">
+                        <tr><td style="text-align:right;">Total Business:</td><td style="text-align:right; width:150px;">{doc_total:,.0f} TK</td></tr>
+                        <tr style="color: green; font-size:18px;"><td style="text-align:right;">Total Referral Fee (30%):</td><td style="text-align:right;">{referral_fee:,.0f} TK</td></tr>
+                    </table>
+                </div>
+                """
+                
+                # প্রিন্ট সেকশন
+                st.divider()
+                st.subheader("🖨️ Print Report")
+                st.components.v1.html(report_html, height=350, scrolling=True)
+                st.markdown('<button onclick="window.print()" style="background:#007bff;color:white;padding:12px 25px;font-size:16px;border:none;border-radius:5px;width:100%;font-weight:bold;cursor:pointer;">🖨️ Print Doctor Report / Save as PDF</button>', unsafe_allow_html=True)
+            else:
+                st.info("No data found for this doctor in the selected period.")
+
+st.caption("Developed for Rogmukti Diagnostic")
+
             doc_df = filtered_df[filtered_df['Doctor'] == selected_doc]
             if not doc_df.empty:
                 doc_total = doc_df['Total'].sum()
