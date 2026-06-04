@@ -132,7 +132,7 @@ with tab2:
     df_db = pd.read_sql_query("SELECT * FROM bills", conn)
     if not df_db.empty:
         df_db['Date'] = pd.to_datetime(df_db['date']).dt.date
-        df = df_db
+        df = df_db.rename(columns={'date': 'Date', 'paid': 'Paid'})
     else:
         df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
 
