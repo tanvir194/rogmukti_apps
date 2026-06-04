@@ -119,46 +119,54 @@ with tab2:
     
     if not df.empty:
         df['Date'] = pd.to_datetime(df['Date']).dt.date
+        today = datetime.now().date()
         
-        st.subheader("🔍 Date Wise Search")
-        option = st.radio("Select Search Type", ["Single Date", "Date Range"], horizontal=True)
+        # তারিখ ফিল্টার
+        st.subheader("🔍 Date Filter")
+        col1, col2 = st.columns(2)
+        with col1:
+            start_date = st.date_input("From Date", value=today.replace(day=1))
+        with col2:
+            end_date = st.date_input("To Date", value=today)
         
-        if option == "Single Date":
-            selected_date = st.date_input("Select Date", datetime.now().date())
-            filtered_df = df[df['Date'] == selected_date]
-        else:
-            col1, col2 = st.columns(2)
-            with col1:
-                start_date = st.date_input("From Date", value=datetime.now().date() - timedelta(days=30))
-            with col2:
-                end_date = st.date_input("To Date", value=datetime.now().date())
-            filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+        filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
         
-        if not filtered_df.empty:
-            total = filtered_df['Paid'].sum()
-            st.success(f"**Total Collection in Selected Period:** ৳ {total:,.0f}")
-            
-            daily = filtered_df[filtered_df['Date'] == datetime.now().date()]['Paid'].sum()
-            st.metric("Today in Selected Period", f"৳ {daily:,.0f}")
-            
-            st.dataframe(filtered_df.sort_values(by="Date", ascending=False), use_container_width=True)
-        else:
-            st.info("এই তারিখে কোনো বিল পাওয়া যায়নি।")
+        total = filtered_df['Paid'].sum()
+        st.success(f"**Total Collection (Selected Period):** ৳ {total:,.0f}")
+        
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Today", f"৳ {filtered_df[filtered_df['Date'] == today]['Paid'].sum():,.0f}")
+        c2.metric("Last 7 Days", f"৳ {filtered_df[filtered_df['Date'] >= (today - timedelta(days=7))]['Paid'].sum():,.0f}")
+        c3.metric("This Month", f"৳ {filtered_df[filtered_df['Date'] >= today.replace(day=1)]['Paid'].sum():,.0f}")
+        c4.metric("This Year", f"৳ {filtered_df[filtered_df['Date'].apply(lambda x: x.year) == today.year]['Paid'].sum():,.0f}")
         
         st.divider()
-        st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
+        st.subheader("👨‍⚕️ Monthly Doctor Report")
         selected_doc = st.selectbox("Select Doctor", doctors_list[1:])
+        selected_month = st.date_input("Select Month", value=today.replace(day=1))
         
         if selected_doc:
-            doc_df = filtered_df[filtered_df['Doctor'] == selected_doc]
+            month_start = selected_month.replace(day=1)
+            month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+            
+            doc_df = filtered_df[(filtered_df['Doctor'] == selected_doc) & 
+                               (filtered_df['Date'] >= month_start) & 
+                               (filtered_df['Date'] <= month_end)]
+            
             if not doc_df.empty:
+                patient_count = len(doc_df)
                 total_business = doc_df['Paid'].sum()
                 commission = total_business * 0.30
+                
+                st.success(f"**Patients in {selected_month.strftime('%B %Y')}**: {patient_count}")
                 st.success(f"**Total Business:** ৳ {total_business:,.0f}")
                 st.info(f"**Doctor's Referral Fee (30%):** ৳ {commission:,.0f}")
+                
                 st.dataframe(doc_df[["Invoice_No", "Date", "Patient", "Paid"]], use_container_width=True)
+                
+                st.markdown('<button onclick="window.print()" style="background:#28a745;color:white;padding:12px 30px;font-size:18px;border:none;border-radius:5px;width:100%;margin-top:15px;">🖨️ Print Monthly Doctor Report</button>', unsafe_allow_html=True)
             else:
-                st.info("এই ডাক্তারের কোনো বিল পাওয়া যায়নি।")
+                st.info(f"এই ডাক্তারের {selected_month.strftime('%B %Y')} মাসে কোনো বিল নেই।")
     else:
         st.info("এখনো কোনো বিল তৈরি হয়নি।")
 
