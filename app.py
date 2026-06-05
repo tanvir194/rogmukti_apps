@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 import sqlite3
-import plotly.express as px
 
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="wide")
 
@@ -60,7 +59,7 @@ with tab1:
     st.divider()
     st.subheader("🧪 Test Selection (Unlimited)")
     
-    # মাল্টিসিলেক্ট বক্স যার মাধ্যমে একসাথে যত খুশি টেস্ট নেওয়া যাবে
+    # মাল্টিসিলেক্ট বক্স - একসাথে যত খুশি টেস্ট নেওয়া যাবে
     selected_tests = st.multiselect("পরীক্ষাগুলো সিলেক্ট করুন:", list(test_directory.keys())[1:])
     
     total_amount = 0
@@ -179,16 +178,21 @@ with tab2:
         m3.metric("Total Due (বাকি)", f"৳ {filtered_df['Due'].sum():,.0f}", delta_color="inverse")
         m4.metric("Total Patients", f"{len(filtered_df)} জন")
         
-        # --- রঙিন গ্রাফ সেকশন ---
+        # --- বিল্ট-ইন বার চার্ট সেকশন ---
         st.divider()
-        g1, g2 = st.columns(2)
-        
-        with g1:
-            st.subheader("📈 Daily Collection Trend")
-            daily_sales = filtered_df.groupby('Date')['Paid'].sum().reset_index()
-            fig_bar = px.bar(daily_sales, x='Date', y='Paid', labels={'Paid':'Collection (৳)'}, color='Paid', color_continuous_scale='Viridis')
-            st.plotly_chart(fig_bar, use_container_width=True)
+        st.subheader("📈 Daily Collection Trend")
+        if not filtered_df.empty:
+            daily_sales = filtered_df.groupby('Date')['Paid'].sum()
+            st.bar_chart(daily_sales, color="#1f77b4")
             
-        with g2:
-            st.subheader("🍩 Doctor Wise Share")
-            doc_share = filtered_df.groupby('Doctor')['Total'].sum().reset_index()
+            st.subheader("👨‍⚕️ Doctor Wise Business Summary")
+            doc_sales = filtered_df.groupby('Doctor')['Total'].sum()
+            st.bar_chart(doc_sales, color="#ff7f0e")
+
+        # --- ডাক্তারদের রেফারেল স্টেটমেন্ট ও মাসিক প্রিন্ট ---
+        st.divider()
+        st.subheader("👨‍⚕️ Doctor Statement & Print Report")
+        selected_doc = st.selectbox("Select Doctor for Monthly Report", doctors_list[1:], key="report_doc_select")
+        
+        if selected_doc:
+            
