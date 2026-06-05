@@ -88,8 +88,6 @@ c.execute('''CREATE TABLE IF NOT EXISTS bills
               due REAL,
               referral_fee REAL)''')
 conn.commit()
-
-# ২. স্ট্রীমলিট ট্যাব সেটিং ও বিলিং সেকশন
 tab1, tab2 = st.tabs(["📄 Billing / Cash Memo", "📊 Dashboard"])
 
 with tab1:
@@ -100,15 +98,11 @@ with tab1:
         age = st.text_input("Age:")
         phone = st.text_input("Phone Number:")
     with col2:
-        ref_dr = st.selectbox("Referred By:", doctors_list)
+        ref_dr = st.selectbox("Referred By:", doctors_list, key="billing_doctor_select")
         date_today = st.date_input("Date:", datetime.now())
 
-# আপনার ফাইলের ১০৬ নম্বর লাইন থেকে শুরু করে একদম শেষ পর্যন্ত সব মুছে এটি বসান:
-
     # বিল সেভ করার বাটন
-    if st.button("Save Bill"):
-        # এখানে আপনার মোট বিলের ভ্যারিয়েবল (যেমন total_real) বসাবেন
-        # আপাতত একটি ডামি ভ্যালু হিসেবে total_real = 1000 ধরে রাখলাম, আপনার আসল ভ্যারিয়েবল থাকলে এটি কেটে দিন
+    if st.button("Save Bill", key="save_bill_btn"):
         total_real = 1000  
         discount_real = 0
         paid_real = 1000
@@ -118,14 +112,14 @@ with tab1:
         # ৩০% রেফারেল ফি অটোমেটিক হিসাব
         ref_fee = total_real * 0.30 
         
-        # ডাটাবেজে সেভ করা (১১টি কলামের জন্য ১১টি ?)
+        # ডাটাবেজে সেভ করা (১১টি কলাম)
         c.execute("INSERT INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                   (invoice_no, date_today.strftime('%Y-%m-%d'), patient_name, age, phone, ref_dr, total_real, discount_real, paid_real, due_real, ref_fee))
         conn.commit()
         st.success("বিল সফলভাবে সেভ হয়েছে!")
 
 with tab2:
-    st.header("📊 দৈনিক, সাপ্তাহিক ও মাসিক ড্যাশবোর্ড")
+    st.header("📊 দৈনিক, साप्ताहिक ও মাসিক ড্যাশবোর্ড")
     
     try:
         # ডাটাবেজ থেকে ডাটা লোড করা
@@ -134,8 +128,8 @@ with tab2:
         if not df.empty:
             df['date'] = pd.to_datetime(df['date'], errors='coerce')
             
-            # ফিল্টার বাটন
-            filter_option = st.selectbox("হিসাব দেখার সময় নির্বাচন করুন", ["আজ", "এই সপ্তাহ", "এই মাস", "সব সময়"])
+            # ফিল্টার অপশন (অনন্য key ব্যবহার করা হয়েছে)
+            filter_option = st.selectbox("হিসাব দেখার সময় নির্বাচন করুন", ["আজ", "এই সপ্তাহ", "এই মাস", "সব সময়"], key="dashboard_time_filter_unique")
             today = datetime.today()
             
             if filter_option == "আজ":
@@ -148,7 +142,7 @@ with tab2:
             else:
                 filtered_df = df
                 
-            # সামারি বক্স
+            # সামারি বক্সসমূহ
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("মোট কালেকশন", f"৳ {filtered_df['total'].sum() if 'total' in filtered_df else 0:,.2f}")
             c2.metric("মোট ডিসকাউন্ট", f"৳ {filtered_df['discount'].sum() if 'discount' in filtered_df else 0:,.2f}")
@@ -186,53 +180,4 @@ with tab2:
             
     except Exception as e:
         st.info("নতুন ডাটাবেজ তৈরি হচ্ছে। একটি নতুন বিল সেভ করলেই ড্যাশবোর্ড সচল হয়ে যাবে।")
-    if not df.empty:
-        df['date'] = pd.to_datetime(df['date'], errors='coerce')
-        
-        # ফিল্টার বাটন বা ড্রপডাউন
-        filter_option = st.selectbox("হিসাব দেখার সময় নির্বাচন করুন", ["আজ", "এই সপ্তাহ", "এই মাস", "সব সময়"])
-        today = datetime.today()
-        
-        if filter_option == "আজ":
-            filtered_df = df[df['date'].dt.date == today.date()]
-        elif filter_option == "এই সপ্তাহ":
-            start_of_week = today - timedelta(days=today.weekday())
-            filtered_df = df[df['date'] >= start_of_week]
-        elif filter_option == "এই মাস":
-            filtered_df = df[(df['date'].dt.month == today.month) & (df['date'].dt.year == today.year)]
-        else:
-            filtered_df = df
-            
-        # সামারি মেট্রিক্স (কাউন্টার বক্স)
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("মোট কালেকশন", f"৳ {filtered_df['total'].sum():,.2f}")
-        c2.metric("মোট ডিসকাউন্ট", f"৳ {filtered_df['discount'].sum():,.2f}")
-        c3.metric("মোট ডিউ (বাকি)", f"৳ {filtered_df['due'].sum():,.2f}")
-        c4.metric("মোট রেফারেল ফি (৩০%)", f"৳ {filtered_df['referral_fee'].sum():,.2f}")
-        
-        # ডাক্তার ভিত্তিক রিপোর্ট টেবিল
-        st.subheader("👨‍⚕️ ডাক্তার ভিত্তিক রেফারেল রিপোর্ট (নামসহ)")
-        if not filtered_df.empty:
-            report_display = filtered_df[['doctor', 'patient', 'invoice_no', 'total', 'referral_fee', 'date']]
-            st.dataframe(report_display, use_container_width=True)
-            
-            # প্রিন্ট বাটন
-            st.markdown("""
-                <br>
-                <button onclick="window.print()" style="
-                    background-color: #4CAF50; 
-                    color: white; 
-                    padding: 12px 30px; 
-                    border: none; 
-                    border-radius: 4px; 
-                    cursor: pointer;
-                    font-size: 16px;
-                    font-weight: bold;">
-                    🖨️ রিপোর্টটি প্রিন্ট করুন
-                </button>
-            """, unsafe_allow_html=True)
-        else:
-            st.warning("নির্বাচিত সময়ে কোনো ডাটা পাওয়া যায়নি।")
-    else:
-        st.info("ডেটাবেজে এখনো কোনো বিলের রেকর্ড নেই।")
-        
+
