@@ -195,3 +195,8 @@ with tab2:
         if selected_doc:
             doc_df = filtered_df[filtered_df['Doctor'] == selected_doc]
             if not doc_df.empty:
+                doc_total = doc_df['Total'].sum()
+                referral_fee = doc_total * 0.30
+                
+                st.info(f"📊 **{selected_doc}** এর মোট বিজনেস: ৳ {doc_total:,.0f} | রেফারেল ফি (৩০%): **৳ {referral_fee:,.0f}**")
+
