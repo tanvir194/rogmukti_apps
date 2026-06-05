@@ -111,7 +111,7 @@ with tab1:
             
             # --- রোগীর ক্যাশ মেমো বা রসিদ ভিউ (ছক ও প্রফেশনাল ডিজাইন) ---
             st.markdown("---")
-            st.markdown(f"""
+            st.html(f"""
                 <div style="border: 2px solid #000000; padding: 20px; background-color: #ffffff; color: #000000; font-family: 'Courier New', Courier, monospace;">
                     <!-- হেডার সেকশন -->
                     <div style="text-align: center; margin-bottom: 20px;">
