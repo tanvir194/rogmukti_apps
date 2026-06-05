@@ -195,4 +195,3 @@ with tab2:
         selected_doc = st.selectbox("Select Doctor for Monthly Report", doctors_list[1:], key="report_doc_select")
         
         if selected_doc:
-            
