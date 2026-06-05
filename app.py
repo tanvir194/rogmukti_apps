@@ -2,67 +2,52 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 import sqlite3
+import plotly.express as px
 
-st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="centered")
+st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="wide")
 
 st.markdown("<h1 style='text-align: center; color: red;'>ROGMUKTI DIAGNOSTIC CENTRE</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Auliapur, Patuakhali<br>Phone: 01711-867637</p>", unsafe_allow_html=True)
 
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"]
 
-# বর্ধিত ও বিস্তারিত টেস্ট লিস্ট ও প্রাইস
 test_directory = {
     "Select Test": 0,
-    # --- Hematology (রক্ত রোগ ও সাধারণ পরীক্ষা) ---
     "(CBC) + ESR": 600, "CBC": 350, "ESR": 250, "Platelet Count": 300,
     "MP (Malaria Parasite)": 500, "BT/CT": 350, "Blood Group & Rh": 200,
     "Hemoglobin (Hb%)": 200, "PBF (Peripheral Blood Film)": 600,
-    
-    # --- Biochemistry & Diabetes (বায়োকেমিস্ট্রি ও ডায়াবেটিস) ---
     "Random Blood Sugar (RBS)": 200, "Fasting Blood Sugar (FBS)": 200, 
     "2 Hours After Breakfast (2HABF)": 200, "HbA1c": 1200,
-    "Serum Creatinine (কিডনি পরীক্ষা)": 400, "Serum Urea": 400, "Serum Uric Acid": 450,
-    "Lipid Profile (রক্তের চর্বি)": 1000, "Serum Cholesterol": 300,
-    "Serum Bilirubin (জন্ডিস পরীক্ষা)": 300, "SGPT (ALT)": 450, "SGOT (AST)": 450,
-    "Serum Alkaline Phosphatase": 500, "Serum Calcium": 600,
-    
-    # --- Serology & Immunology (হরমোন ও ইনফেকশন) ---
-    "TSH": 800, "T3": 900, "T4": 900, "FT4 (Free T4)": 1000,
-    "HBsAg (Hepatitis B Screen)": 400, "Widal Test (টাইফয়েড)": 500, 
-    "Febrile Antigen": 800, "ASO Titre": 600, "RA Test / RF Factor": 600, 
-    "CRP (C-Reactive Protein)": 600, "Dengue NS1 Antigen": 700, 
-    "Dengue IgG/IgM": 800, "Troponin-I": 1200,
-    
-    # --- Urine & Stool (মূত্র ও মল পরীক্ষা) ---
-    "Urine R/E (Routine Exam)": 250, "Urine Pregnancy Test": 300,
-    "Stool R/E": 300, "Stool OBE": 350,
-    
-    # --- Ultrasonography (ইউএসজি) ---
+    "Serum Creatinine": 400, "Serum Urea": 400, "Serum Uric Acid": 450,
+    "Lipid Profile": 1000, "Serum Cholesterol": 300,
+    "Serum Bilirubin (Jaundice)": 300, "SGPT (ALT)": 450, "SGOT (AST)": 450,
+    "TSH": 800, "T3": 900, "T4": 900,
+    "HBsAg": 400, "Widal Test (Typhoid)": 500, "CRP": 600, "Dengue NS1": 700,
+    "Urine R/E": 250, "Urine Pregnancy Test": 300, "Stool R/E": 300,
     "USG of Whole Abdomen": 1000, "USG of Upper Abdomen": 800, 
-    "USG of Lower Abdomen": 750, "USG of Pelvis": 700, 
-    "USG of KUB (Kidney, Ureter, Bladder)": 800, "USG of Pregnancy/Obs": 700,
-    
-    # --- X-Ray & ECG (এক্স-রে ও ইসিজি) ---
-    "X-Ray Chest P/A View": 500, "X-Ray Chest OBL View": 550,
-    "X-Ray Lumbar Spine B/V": 800, "X-Ray Cervical Spine B/V": 800,
-    "ECG (Electrocardiogram)": 400
+    "USG of Lower Abdomen": 750, "USG of Pelvis": 700, "USG of KUB": 800,
+    "X-Ray Chest P/A View": 500, "ECG": 400
 }
 
-# SQLite ডাটাবেস
+# SQLite ডাটাবেস আপডেট (Due কলাম সহ)
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('''CREATE TABLE IF NOT EXISTS bills
              (invoice_no TEXT PRIMARY KEY, date TEXT, patient TEXT, age TEXT, phone TEXT, 
-              doctor TEXT, total REAL, discount REAL, paid REAL)''')
+              doctor TEXT, total REAL, discount REAL, paid REAL, due REAL)''')
 conn.commit()
 
-if 'sales_data' not in st.session_state:
-    st.session_state['sales_data'] = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
+# ডাটাবেসে পুরানো টেবিল থাকলে due কলাম চেক ও এড করা
+try:
+    c.execute("ALTER TABLE bills ADD COLUMN due REAL DEFAULT 0")
+    conn.commit()
+except:
+    pass
 
 tab1, tab2 = st.tabs(["📑 Billing / Cash Memo", "📊 Dashboard"])
 
 with tab1:
-    st.subheader("Patient Information")
+    st.subheader("👤 Patient Information")
     col1, col2 = st.columns(2)
     with col1:
         patient_name = st.text_input("Patient Name:")
@@ -73,133 +58,137 @@ with tab1:
         date_today = st.date_input("Date:", datetime.now())
 
     st.divider()
-    st.subheader("🧪 Test Selection")
+    st.subheader("🧪 Test Selection (Unlimited)")
+    
+    # মাল্টিসিলেক্ট বক্স যার মাধ্যমে একসাথে যত খুশি টেস্ট নেওয়া যাবে
+    selected_tests = st.multiselect("পরীক্ষাগুলো সিলেক্ট করুন:", list(test_directory.keys())[1:])
     
     total_amount = 0
     test_list_html = ""
-    serial = 1
     
-    for i in range(1, 6):
-        test = st.selectbox(f"Test {i}:", list(test_directory.keys()), key=f"test{i}")
-        if test != "Select Test":
+    if selected_tests:
+        st.write("### 📋 নির্বাচিত টেস্টের তালিকা:")
+        for idx, test in enumerate(selected_tests, 1):
             price = test_directory[test]
-            st.write(f"✅ {test} = **{price} TK**")
-            test_list_html += f"<tr><td style='padding:8px;'>{serial}</td><td style='padding:8px;'>{test}</td><td style='padding:8px; text-align:right;'>{price} TK</td></tr>"
+            st.write(f"{idx}. **{test}** — {price} TK")
+            test_list_html += f"<tr><td style='padding:8px; border:1px solid #ddd;'>{idx}</td><td style='padding:8px; border:1px solid #ddd;'>{test}</td><td style='padding:8px; border:1px solid #ddd; text-align:right;'>{price} TK</td></tr>"
             total_amount += price
-            serial += 1
 
-    discount = st.number_input("Discount (TK)", min_value=0, value=0, step=10)
-    total_paid = total_amount - discount
+    st.divider()
+    st.subheader("💰 Payment Details")
+    c_dis, c_paid = st.columns(2)
+    with c_dis:
+        discount = st.number_input("Discount (TK)", min_value=0, value=0, step=10)
+    with c_paid:
+        net_payable = total_amount - discount
+        paid_amount = st.number_input("Paid Amount (জমা)", min_value=0, value=int(net_payable), step=50)
+    
+    due_amount = net_payable - paid_amount
+    
+    col_t1, col_t2, col_t3 = st.columns(3)
+    col_t1.markdown(f"**Total Amount:** {total_amount} TK")
+    col_t2.markdown(f"**Discount:** {discount} TK")
+    if due_amount > 0:
+        col_t3.markdown(f"### <span style='color:red;'>Due Amount (বাকি): {due_amount} TK</span>", unsafe_allow_html=True)
+    else:
+        col_t3.markdown(f"### <span style='color:green;'>Paid (পরিশোধিত)</span>", unsafe_allow_html=True)
 
-    st.markdown(f"**Total Amount:** {total_amount} TK")
-    st.markdown(f"**Discount:** {discount} TK")
-    st.markdown(f"### **Net Payable:** {total_paid} TK")
-
-    if st.button("💾 Save Invoice", type="primary"):
-        if patient_name and ref_dr != "Select Doctor":
+    if st.button("💾 Save & Generate Invoice", type="primary"):
+        if patient_name and ref_dr != "Select Doctor" and selected_tests:
             today_str = datetime.now().strftime("%Y%m%d")
-            invoice_no = f"ROG-{today_str}-{len(st.session_state['sales_data'])+1:03d}"
             
-            new_row = {
-                "Invoice_No": invoice_no,
-                "Date": str(date_today),
-                "Patient": patient_name,
-                "Age": age,
-                "Phone": phone,
-                "Doctor": ref_dr,
-                "Total": total_amount,
-                "Discount": discount,
-                "Paid": total_paid
-            }
+            # ইনভয়েস নম্বর গণনা
+            c.execute("SELECT COUNT(*) FROM bills")
+            count = c.fetchone()[0]
+            invoice_no = f"ROG-{today_str}-{count+1:03d}"
             
-            c.execute("""INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                      (invoice_no, str(date_today), patient_name, age, phone, ref_dr, total_amount, discount, total_paid))
+            c.execute("""INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                      (invoice_no, str(date_today), patient_name, age, phone, ref_dr, total_amount, discount, paid_amount, due_amount))
             conn.commit()
-            
-            st.session_state['sales_data'] = pd.concat([st.session_state['sales_data'], pd.DataFrame([new_row])], ignore_index=True)
             
             st.success(f"✅ Invoice Saved! Invoice No: **{invoice_no}**")
             
             memo_html = f"""
-            <div style="font-family: Arial; max-width: 600px; margin: auto; padding: 40px; border: 4px solid black; background: white; color: black;">
-                <h2 style="text-align: center; color: red;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
-                <p style="text-align: center;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
-                <p style="text-align: center; font-size: 11px; font-weight: bold; margin: 10px 0;">Invoice No: {invoice_no}</p>
+            <div style="font-family: Arial; max-width: 600px; margin: auto; padding: 30px; border: 3px solid black; background: white; color: black;">
+                <h2 style="text-align: center; color: red; margin-bottom:5px;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
+                <p style="text-align: center; margin-top:0;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
+                <p style="text-align: center; font-size: 12px; font-weight: bold;">Invoice No: {invoice_no}</p>
                 <hr>
-                <table style="width:100%; font-size:15px;">
+                <table style="width:100%; font-size:14px;">
                     <tr><td><b>Patient:</b> {patient_name}</td><td style="text-align:right;"><b>Date:</b> {date_today}</td></tr>
-                    <tr><td><b>Age:</b> {age}</td><td style="text-align:right;"><b>Doctor:</b> {ref_dr}</td></tr>
+                    <tr><td><b>Age/Sex:</b> {age}</td><td style="text-align:right;"><b>Doctor:</b> {ref_dr}</td></tr>
+                    <tr><td><b>Phone:</b> {phone}</td><td></td></tr>
                 </table>
                 <hr>
-                <table style="width:100%; border-collapse:collapse; font-size:15px;">
+                <table style="width:100%; border-collapse:collapse; font-size:14px;">
                     <tr style="background:#f0f0f0; font-weight:bold;">
-                        <td style="padding:8px; width:40px;">Sl.</td>
-                        <td style="padding:8px;">Test Name</td>
-                        <td style="padding:8px; text-align:right;">Price</td>
+                        <td style="padding:8px; border:1px solid #ddd; width:40px;">Sl.</td>
+                        <td style="padding:8px; border:1px solid #ddd;">Test Name</td>
+                        <td style="padding:8px; border:1px solid #ddd; text-align:right;">Price</td>
                     </tr>
                     {test_list_html}
                 </table>
                 <hr>
-                <table style="width:100%; font-weight:bold; font-size:17px;">
-                    <tr><td style="text-align:right;">Total Amount:</td><td style="text-align:right;">{total_amount} TK</td></tr>
+                <table style="width:100%; font-weight:bold; font-size:15px;">
+                    <tr><td style="text-align:right;">Total Amount:</td><td style="text-align:right; width:120px;">{total_amount} TK</td></tr>
                     <tr><td style="text-align:right; color:red;">Discount:</td><td style="text-align:right; color:red;">{discount} TK</td></tr>
-                    <tr style="font-size:19px; color:green;"><td style="text-align:right;">Net Payable:</td><td style="text-align:right;">{total_paid} TK</td></tr>
+                    <tr><td style="text-align:right; color:blue;">Total Paid:</td><td style="text-align:right; color:blue;">{paid_amount} TK</td></tr>
+                    <tr style="font-size:17px; color:{'red' if due_amount > 0 else 'green'};">
+                        <td style="text-align:right;">Due (বাকি):</td>
+                        <td style="text-align:right;">{due_amount} TK</td>
+                    </tr>
                 </table>
-                <p style="text-align:center; margin-top:30px;">Thank You!</p>
+                <p style="text-align:center; margin-top:25px; font-weight:bold;">Thank You!</p>
             </div>
             """
-            st.components.v1.html(memo_html, height=580)
-            st.markdown('<button onclick="window.print()" style="background:#28a745;color:white;padding:15px 30px;font-size:19px;border:none;border-radius:5px;width:100%;margin-top:15px;font-weight:bold;">🖨️ Print / Save as PDF</button>', unsafe_allow_html=True)
-            
+            st.components.v1.html(memo_html, height=550)
+            st.markdown('<button onclick="window.print()" style="background:#28a745;color:white;padding:12px 25px;font-size:17px;border:none;border-radius:5px;width:100%;margin-top:10px;font-weight:bold;cursor:pointer;">🖨️ Print Cash Memo</button>', unsafe_allow_html=True)
         else:
-            st.error("Patient Name এবং Doctor সিলেক্ট করুন")
+            st.error("Patient Name, Doctor এবং কমপক্ষে ১টি Test সিলেক্ট করুন।")
 
 with tab2:
-    st.header("📊 Dashboard")
+    st.header("📊 Advanced Analytics Dashboard")
     df_db = pd.read_sql_query("SELECT * FROM bills", conn)
+    
     if not df_db.empty:
         df = df_db.rename(columns={
-            'invoice_no': 'Invoice_No',
-            'patient': 'Patient',
-            'age': 'Age',
-            'phone': 'Phone',
-            'doctor': 'Doctor',
-            'total': 'Total',
-            'discount': 'Discount',
-            'paid': 'Paid'
+            'invoice_no': 'Invoice_No', 'patient': 'Patient', 'age': 'Age',
+            'phone': 'Phone', 'doctor': 'Doctor', 'total': 'Total',
+            'discount': 'Discount', 'paid': 'Paid', 'due': 'Due'
         })
         df['Date'] = pd.to_datetime(df_db['date']).dt.date
     else:
-        df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid"])
+        df = pd.DataFrame(columns=["Invoice_No", "Date", "Patient", "Age", "Phone", "Doctor", "Total", "Discount", "Paid", "Due"])
 
     if not df.empty:
         today = datetime.now().date()
         
-        st.subheader("🔍 Date Filter")
-        col1, col2 = st.columns(2)
-        with col1:
-            start_date = st.date_input("From Date", value=today.replace(day=1))
-        with col2:
-            end_date = st.date_input("To Date", value=today)
+        st.subheader("🔍 Filter Records")
+        col_d1, col_d2 = st.columns(2)
+        with col_d1:
+            start_date = st.date_input("From Date", value=today.replace(day=1), key="dash_start")
+        with col_d2:
+            end_date = st.date_input("To Date", value=today, key="dash_end")
         
         filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
         
-        total = filtered_df['Paid'].sum()
-        st.success(f"**Total Collection (Selected Period):** ৳ {total:,.0f}")
+        # চার কাউন্টার ম্যাট্রিক্স
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Total Collected", f"৳ {filtered_df['Paid'].sum():,.0f}")
+        m2.metric("Total Discount", f"৳ {filtered_df['Discount'].sum():,.0f}")
+        m3.metric("Total Due (বাকি)", f"৳ {filtered_df['Due'].sum():,.0f}", delta_color="inverse")
+        m4.metric("Total Patients", f"{len(filtered_df)} জন")
         
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Today", f"৳ {filtered_df[filtered_df['Date'] == today]['Paid'].sum():,.0f}")
-        c2.metric("Last 7 Days", f"৳ {filtered_df[filtered_df['Date'] >= (today - timedelta(days=7))]['Paid'].sum():,.0f}")
-        c3.metric("This Month", f"৳ {filtered_df[filtered_df['Date'] >= today.replace(day=1)]['Paid'].sum():,.0f}")
-        c4.metric("This Year", f"৳ {filtered_df[filtered_df['Date'].apply(lambda x: x.year) == today.year]['Paid'].sum():,.0f}")
-        
+        # --- রঙিন গ্রাফ সেকশন ---
         st.divider()
-        st.subheader("👨‍⚕️ Doctor Wise Referral Fee (30%)")
-        selected_doc = st.selectbox("Select Doctor", doctors_list[1:], key="dashboard_doc_select")
+        g1, g2 = st.columns(2)
         
-        if selected_doc:
-            doc_df = filtered_df[filtered_df['Doctor'] == selected_doc]
-            if not doc_df.empty:
-                doc_total = doc_df['Total'].sum()
-                referral_fee = doc_total * 0.30
-
+        with g1:
+            st.subheader("📈 Daily Collection Trend")
+            daily_sales = filtered_df.groupby('Date')['Paid'].sum().reset_index()
+            fig_bar = px.bar(daily_sales, x='Date', y='Paid', labels={'Paid':'Collection (৳)'}, color='Paid', color_continuous_scale='Viridis')
+            st.plotly_chart(fig_bar, use_container_width=True)
+            
+        with g2:
+            st.subheader("🍩 Doctor Wise Share")
+            doc_share = filtered_df.groupby('Doctor')['Total'].sum().reset_index()
