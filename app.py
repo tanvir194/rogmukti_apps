@@ -91,8 +91,10 @@ with tab1:
     if st.button("💾 Save & Generate Invoice", type="primary"):
         if patient_name and ref_dr != "Select Doctor" and selected_tests:
             today_str = datetime.now().strftime("%Y%m%d")
+                        # টাপল (Tuple) থেকে সংখ্যা আলাদা করার সঠিক কোড
             c.execute("SELECT COUNT(*) FROM bills")
-            invoice_no = f"ROG-{today_str}-{c.fetchone()+1:03d}"
+            count_result = c.fetchone()[0]
+            invoice_no = f"ROG-{today_str}-{(count_result + 1):03d}"
             
             c.execute("""INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                       (invoice_no, str(date_today), patient_name, age, phone, ref_dr, total_amount, discount, paid_amount, due_amount))
