@@ -93,8 +93,7 @@ with tab1:
     with col6:
         due = max(0.0, net_total - paid)
         st.metric(label="Due Amount (বাকি বিল):", value=f"৳ {due:,.2f}")
-
-    # বিল সেভ এবং রসিদ বাটন
+            # বিল সেভ এবং রসিদ বাটন লজিক
     if st.button("Save Bill & Generate Invoice", key="save_bill_btn", type="primary"):
         if not patient_name:
             st.error("অনুগ্রহ করে রোগীর নাম লিখুন!")
@@ -102,81 +101,74 @@ with tab1:
             st.error("অনুগ্রহ করে অন্তত একটি টেস্ট সিলেক্ট করুন!")
         else:
             invoice_no = f"INV-{int(datetime.now().timestamp())}"
-            ref_fee = total_amount * 0.30 # ৩০% রেফারেল ফি অটোমেটিক হিসাব
+            ref_fee = total_amount * 0.30  # ৩০% রেফারেল ফি অটোমেটিক হিসাব
             
             c.execute("INSERT INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                       (invoice_no, date_today.strftime('%Y-%m-%d'), patient_name, age, phone, ref_dr, total_amount, discount, paid, due, ref_fee))
             conn.commit()
             st.success(f"বিল সফলভাবে সেভ হয়েছে! ইনভয়েস নম্বর: {invoice_no}")
             
-            # --- রোগীর ক্যাশ মেমো বা রসিদ ভিউ (ছক ও প্রফেশনাল ডিজাইন) ---
-                      # ১১৪ নম্বর লাইন থেকে শুরু করে এটি পেস্ট করুন:
-            st.html(f"""
-                <div style="border: 2px solid #000000; padding: 20px; background-color: #ffffff; color: #000000; font-family: 'Courier New', Courier, monospace;">
-                    <!-- হেডার সেকশন -->
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #ff0000; margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 1px;">ROGMUKTI DIAGNOSTIC CENTRE</h1>
-                        <p style="margin: 5px 0 2px 0; font-size: 14px; font-weight: bold; color: #333333;">Mollah Market, Galachipa, Patuakhali</p>
-                        <p style="margin: 0; font-size: 13px; font-weight: bold; color: #555555;">Mobile: 01646176947</p>
-                        <div style="border-bottom: 2px double #000000; margin-top: 10px; margin-bottom: 5px;"></div>
-                        <span style="background-color: #000000; color: #ffffff; padding: 3px 15px; font-size: 13px; font-weight: bold;">CASH MEMO / MONEY RECEIPT</span>
-                    </div>
-
-                    <!-- রোগীর তথ্য ছক -->
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 14px; color: #000000;">
-                        <tr>
-                            <td style="padding: 5px; width: 18%; font-weight: bold;">Invoice No:</td>
-                            <td style="padding: 5px; width: 32%; border-bottom: 1px dotted #000;">{invoice_no}</td>
-                            <td style="padding: 5px; width: 15%; font-weight: bold; text-align: right;">Date:</td>
-                            <td style="padding: 5px; width: 35%; border-bottom: 1px dotted #000; text-align: center;">{date_today.strftime('%d-%m-%Y')}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 5px; font-weight: bold;">Patient Name:</td>
-                            <td style="padding: 5px; border-bottom: 1px dotted #000; font-weight: bold;">{patient_name}</td>
-                            <td style="padding: 5px; font-weight: bold; text-align: right;">Age/Sex:</td>
-                            <td style="padding: 5px; border-bottom: 1px dotted #000; text-align: center;">{age}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 5px; font-weight: bold;">Mobile No:</td>
-                            <td style="padding: 5px; border-bottom: 1px dotted #000;">{phone}</td>
-                            <td style="padding: 5px; font-weight: bold; text-align: right;">Ref. By:</td>
-                            <td style="padding: 5px; border-bottom: 1px dotted #000; font-weight: bold; text-align: center;">{ref_dr}</td>
-                        </tr>
-                    </table>
-                    <div style="border-bottom: 1px solid #000000; margin-bottom: 10px;"></div>
-                    <p style="margin: 0 0 8px 0; font-weight: bold; font-size: 14px;">🔬 INVESTIGATION LIST (টেস্টের বিবরণ):</p>
-                </div>
-            """)
-            <td style="padding: 5px; font-weight: bold; text-align: right;">Ref. By:</td>
-                            <td style="padding: 5px; border-bottom: 1px dotted #000; font-weight: bold; text-align: center;">{ref_dr}</td>
-                        </tr>
-                    </table>
-                    <div style="border-bottom: 1px solid #000000; margin-bottom: 10px;"></div>
-                    <p style="margin: 0 0 8px 0; font-weight: bold; font-size: 14px;">🔬 INVESTIGATION LIST (টেস্টের বিবরণ):</p>
-                </div>
-            """, unsafe_allow_html=True)
+            # --- রোগীর ক্যাশ মেমো বা রসিদ ভিউ (HTML ছক ডিজাইন) ---
+            st.markdown("---")
             
-            # টেস্টের তালিকা
+            # রসিদের উপরের ছক ও হেডার
+            html_header = f"""
+            <div style="border: 2px solid #000000; padding: 20px; background-color: #ffffff; color: #000000; font-family: 'Courier New', Courier, monospace;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #ff0000; margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 1px;">ROGMUKTI DIAGNOSTIC CENTRE</h1>
+                    <p style="margin: 5px 0 2px 0; font-size: 14px; font-weight: bold; color: #333333;">Mollah Market, Galachipa, Patuakhali</p>
+                    <p style="margin: 0; font-size: 13px; font-weight: bold; color: #555555;">Mobile: 01646176947</p>
+                    <div style="border-bottom: 2px double #000000; margin-top: 10px; margin-bottom: 5px;"></div>
+                    <span style="background-color: #000000; color: #ffffff; padding: 3px 15px; font-size: 13px; font-weight: bold;">CASH MEMO / MONEY RECEIPT</span>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 14px; color: #000000;">
+                    <tr>
+                        <td style="padding: 5px; width: 18%; font-weight: bold;">Invoice No:</td>
+                        <td style="padding: 5px; width: 32%; border-bottom: 1px dotted #000;">{invoice_no}</td>
+                        <td style="padding: 5px; width: 15%; font-weight: bold; text-align: right;">Date:</td>
+                        <td style="padding: 5px; width: 35%; border-bottom: 1px dotted #000; text-align: center;">{date_today.strftime('%d-%m-%Y')}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px; font-weight: bold;">Patient Name:</td>
+                        <td style="padding: 5px; border-bottom: 1px dotted #000; font-weight: bold;">{patient_name}</td>
+                        <td style="padding: 5px; font-weight: bold; text-align: right;">Age/Sex:</td>
+                        <td style="padding: 5px; border-bottom: 1px dotted #000; text-align: center;">{age}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px; font-weight: bold;">Mobile No:</td>
+                        <td style="padding: 5px; border-bottom: 1px dotted #000;">{phone}</td>
+                        <td style="padding: 5px; font-weight: bold; text-align: right;">Ref. By:</td>
+                        <td style="padding: 5px; border-bottom: 1px dotted #000; font-weight: bold; text-align: center;">{ref_dr}</td>
+                    </tr>
+                </table>
+                <div style="border-bottom: 1px solid #000000; margin-bottom: 10px;"></div>
+                <p style="margin: 0; font-weight: bold; font-size: 14px;">🔬 INVESTIGATION LIST (টেস্টের বিবরণ):</p>
+            </div>
+            """
+            st.html(html_header)
+            
+            # টেস্ট টেবিল
             st.dataframe(pd.DataFrame(test_rows), use_container_width=True)
             
-            # মোট বিলের নিচের ছক
-            st.markdown(f"""
-                <div style="border: 2px solid #000000; border-top: none; padding: 15px; background-color: #ffffff; color: #000000; font-family: 'Courier New', Courier, monospace;">
-                    <table style="width: 100%; font-size: 15px; font-weight: bold; border-collapse: collapse;">
-                        <tr style="border-top: 1px solid #000; border-bottom: 1px solid #000;">
-                            <td style="padding: 8px 5px; width: 25%;">Total Amount: ৳ {total_amount}</td>
-                            <td style="padding: 8px 5px; width: 25%; color: blue;">Discount: ৳ {discount}</td>
-                            <td style="padding: 8px 5px; width: 25%; color: green;">Paid Amount: ৳ {paid}</td>
-                            <td style="padding: 8px 5px; width: 25%; color: red;">Due Amount: ৳ {due}</td>
-                        </tr>
-                    </table>
-                    <div style="margin-top: 50px; display: flex; justify-content: space-between; font-size: 12px;">
-                        <p style="border-top: 1px solid #000; width: 150px; text-align: center; margin: 0;">Prepared By</p>
-                        <p style="border-top: 1px solid #000; width: 150px; text-align: center; margin: 0;">Authorized Signature</p>
-                    </div>
+            # রসিদের নিচের মোট বিলের ছক ও বাটন
+            html_footer = f"""
+            <div style="border: 2px solid #000000; border-top: none; padding: 15px; background-color: #ffffff; color: #000000; font-family: 'Courier New', Courier, monospace;">
+                <table style="width: 100%; font-size: 15px; font-weight: bold; border-collapse: collapse;">
+                    <tr style="border-top: 1px solid #000; border-bottom: 1px solid #000;">
+                        <td style="padding: 8px 5px; width: 25%;">Total Amount: ৳ {total_amount}</td>
+                        <td style="padding: 8px 5px; width: 25%; color: blue;">Discount: ৳ {discount}</td>
+                        <td style="padding: 8px 5px; width: 25%; color: green;">Paid Amount: ৳ {paid}</td>
+                        <td style="padding: 8px 5px; width: 25%; color: red;">Due Amount: ৳ {due}</td>
+                    </tr>
+                </table>
+                <div style="margin-top: 40px; display: flex; justify-content: space-between; font-size: 12px;">
+                    <p style="border-top: 1px solid #000; width: 140px; text-align: center; margin: 0; color: #000000;">Prepared By</p>
+                    <p style="border-top: 1px solid #000; width: 140px; text-align: center; margin: 0; color: #000000;">Authorized Signature</p>
                 </div>
-                <br>
-            """, unsafe_allow_html=True)
+            </div>
+            <br>
+            """
+            st.html(html_footer)
             
             # সবুজ প্রিন্ট বাটন
             st.markdown("""
@@ -185,8 +177,8 @@ with tab1:
                 </button>
                 <br><br>
             """, unsafe_allow_html=True)
-with tab2:
-    st.header("📊 দৈনিক, साप्ताहिक ও মাসিক ড্যাশবোর্ড")
+            with tab2:
+    st.header("📊 দৈনিক, সাপ্তাহিক ও মাসিক ড্যাশবোর্ড")
     try:
         df = pd.read_sql_query("SELECT * FROM bills", conn)
         if not df.empty:
