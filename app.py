@@ -205,4 +205,22 @@ with tab2:
             st.dataframe(display_df.iloc[::-1].head(10), use_container_width=True, hide_index=True)
         else: 
             st.info("নির্বাচিত সময়ের মধ্যে কোনো টেস্ট বুকিং পাওয়া যায়নি।")
-
+        # ডেমো রিসিট ডিলিট করার নতুন সেকশন
+        st.markdown("---")
+        st.markdown("### 🗑️ ডেমো রিসিট ও ইনভয়েস ডিলিট প্যানেল")
+        
+        col_del1, col_del2 = st.columns([3, 1])
+        with col_del1:
+            delete_invoice_no = st.text_input("যে ইনভয়েস নম্বরটি ডিলিট করতে চান সেটি লিখুন (যেমন: INV-1780684897):", key="del_inv_input")
+        with col_del2:
+            st.write("##") # অ্যালাইনমেন্ট ঠিক করার জন্য স্পেস
+            if st.button("🔴 রিসিট ডিলিট করুন", key="del_inv_btn", type="secondary"):
+                if delete_invoice_no:
+                    # ডাটাবেজ থেকে ডিলিট করার কুয়েরি
+                    c.execute("DELETE FROM bills WHERE invoice_no = ?", (delete_invoice_no.strip(),))
+                    conn.commit()
+                    st.success(f"ইনভয়েস {delete_invoice_no} সফলভাবে ডাটাবেজ থেকে ডিলিট করা হয়েছে!")
+                    st.rerun()
+                else:
+                    st.error("অনুগ্রহ করে একটি সঠিক ইনভয়েস নম্বর লিখুন!")
+                    
