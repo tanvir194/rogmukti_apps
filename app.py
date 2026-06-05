@@ -5,23 +5,42 @@ st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", la
 
 st.markdown("<style>.section-box-blue { background-color: #f1f8ff; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.section-box-green { background-color: #f4faf6; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.section-box-orange { background-color: #fff9f0; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.stTextInput input { background-color: #e3f2fd !important; border: 1px solid #1e88e5 !important; color: black !important; font-weight: bold !important; }.stSelectbox div[data-baseweb='select'] { background-color: #e0f7fa !important; border: 1px solid #00bcd4 !important; font-weight: bold !important; }.stMultiSelect div[data-baseweb='select'] { background-color: #e8f5e9 !important; border: 1px solid #43a047 !important; font-weight: bold !important; }.stNumberInput input { background-color: #fffde7 !important; border: 1px solid #fbc02d !important; color: black !important; font-weight: bold !important; } @media print { body * { visibility: hidden !important; } .print-area, .print-area * { visibility: visible !important; } .print-area { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 10px !important; border: none !important; } [data-testid='stHeader'], button, iframe { display: none !important; } }</style>", unsafe_allow_html=True)
 
-doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam", "Dr. A. Rahman", "Dr. S. Islam"]
-
-test_directory = {
-    "Select Test": 0, "CBC": 400, "CBC with ESR": 600, "TC.DC": 250, "HB%": 250, "ESR": 200, "Platelet Count": 300, "MP": 200, "BT/CT": 350, "C/E Count": 250,
-    "Widal": 450, "Aso Titre": 450, "CRP": 450, "RA/RF": 450, "HBs Ag (Screen Test)": 450, "TPHA": 450, "VDRL": 400, "Blood Group & Rh Factor": 200, "Mantaux-Test (M.T)": 200, "Triple Antigen": 500, "HIV": 450, "HCV": 500, "TB (ICT)": 750, "Malaria. pf/pv": 700, "H. Pylori": 850, "Filaria (ICT)": 750, "Dengue NS1. IGG/IgM": 300,
-    "T3": 1200, "T4": 1200, "FT3": 900, "FT4": 900, "TSH": 1100, "HbA1c": 1500, "Prolactin": 1200, "S. IgE": 1500, "S.IgE (Device Test)": 700,
-    "Random Blood Sugar": 200, "Fasting Blood Sugar": 200, "2hr. After Breakfast (2HAB)": 200, "2hr. After 75gm Glucose": 200, "O.G.T.T": 500, "Blood Urea": 400, "Cholesterol": 350, "HDL": 400, "TG": 350, "LDL": 300, "S.GPT (ALT)": 500, "S.GOT (AST)": 500, "Bilirubin Total": 350, "Lipid Profile": 1000, "Bilirubin Direct/Indirect": 450, "Serum Creatinine": 400, "Uric Acid": 400, "Amylase": 700, "Calcium": 600,
-    "X-Ray Chest": 500, "X-Ray PNS": 500, "X-Ray Maxilla": 500, "X-Ray Nasopharynx": 550, "X-Ray Abdomen A/P": 500, "X-Ray Cervical Spine": 600, "X-Ray Plane X-Ray Abdomen": 500, "X-Ray Mastoid Towns View": 500, "X-Ray Skull": 600, "X-Ray Pelvic": 500, "X-Ray Mandible B/V": 600, "X-Ray KUB": 500, "X-Ray D/S Spine": 600, "X-Ray L/S Spine": 600, "X-Ray Foot B/V": 500, "X-Ray Knee B/V": 550, "X-Ray Elbow B/V": 500, "X-Ray Shoulder Joint B/V": 550, "X-Ray Hip Joint": 500,
-    "Urine Pregnancy Test (PT)": 200, "Urine R/E": 250, "Stool R/E": 400, "Stool OBT": 400, "USG Whole Abdomen": 1000, "USG Upper Abdomen": 800, "USG Lower Abdomen": 800, "USG KUB": 1000, "USG Pregnancy Profile": 800, "USG Breast": 1200, "USG Color Doppler": 2500
-}
-
+# ডাটাবেজ কানেকশন এবং টেবিল তৈরি
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
+
 c.execute("CREATE TABLE IF NOT EXISTS bills (invoice_no TEXT PRIMARY KEY, date TEXT, patient TEXT, age TEXT, phone TEXT, doctor TEXT, total REAL, discount REAL, paid REAL, due REAL, referral_fee REAL)")
+c.execute("CREATE TABLE IF NOT EXISTS setup_doctors (name TEXT UNIQUE)")
+c.execute("CREATE TABLE IF NOT EXISTS setup_tests (name TEXT UNIQUE, rate REAL)")
 conn.commit()
 
-tab1, tab2 = st.tabs(["📄 Billing / Cash Memo", "📊 Dashboard"])
+# ডিফল্ট ডাটা পপুলেট করা (প্রথমবার রান করার জন্য)
+c.execute("SELECT COUNT(*) FROM setup_doctors")
+if c.fetchone()[0] == 0:
+    for doc in ["Select Doctor", "Self / Direct", "Dr. Saiful Islam", "Dr. A. Rahman", "Dr. S. Islam"]:
+        c.execute("INSERT OR IGNORE INTO setup_doctors VALUES (?)", (doc,))
+    conn.commit()
+
+c.execute("SELECT COUNT(*) FROM setup_tests")
+if c.fetchone()[0] == 0:
+    default_tests = {
+        "CBC": 400, "CBC with ESR": 600, "TC.DC": 250, "HB%": 250, "ESR": 200, "Platelet Count": 300, "MP": 200, "BT/CT": 350,
+        "Widal": 450, "CRP": 450, "HBs Ag (Screen Test)": 450, "HIV": 450, "Blood Group & Rh Factor": 200,
+        "T3": 1200, "T4": 1200, "TSH": 1100, "HbA1c": 1500, "Random Blood Sugar": 200, "Serum Creatinine": 400,
+        "X-Ray Chest": 500, "Urine R/E": 250, "USG Whole Abdomen": 1000, "USG Color Doppler": 2500
+    }
+    for t_name, t_rate in default_tests.items():
+        c.execute("INSERT OR IGNORE INTO setup_tests VALUES (?, ?)", (t_name, t_rate))
+    conn.commit()
+
+# ডাটাবেজ থেকে লাইভ তালিকা লোড করা
+doctors_df = pd.read_sql_query("SELECT name FROM setup_doctors", conn)
+doctors_list = doctors_df['name'].tolist()
+
+tests_df = pd.read_sql_query("SELECT * FROM setup_tests", conn)
+test_directory = dict(zip(tests_df['name'], tests_df['rate']))
+
+tab1, tab2, tab3 = st.tabs(["📄 Billing / Cash Memo", "📊 Dashboard", "⚙️ Settings (যোগ ও পরিবর্তন)"])
 
 with tab1:
     if "invoice_data" not in st.session_state: 
@@ -39,7 +58,7 @@ with tab1:
             date_today = st.date_input("Date:", datetime.now())
             
         st.markdown('<div class="section-box-green">🔬 <b>Select Tests & Charges (টেস্ট নির্বাচন এবং ফি)</b></div>', unsafe_allow_html=True)
-        available_tests = [test for test in test_directory.keys() if test != "Select Test"]
+        available_tests = list(test_directory.keys())
         selected_tests = st.multiselect("Select Tests:", available_tests)
         
         total_amount, test_rows = 0.0, []
@@ -76,7 +95,7 @@ with tab1:
                 conn.commit()
                 st.session_state.invoice_data = {"invoice_no": invoice_no, "date": date_today.strftime('%d-%m-%Y'), "name": patient_name, "age": age, "phone": phone, "dr": ref_dr, "tests": test_rows, "total": total_amount, "discount": discount, "paid": paid, "due": due}
                 st.rerun()
-    else:
+                    else:
         inv = st.session_state.invoice_data
         st.success(f"বিল সফলভাবে সেভ হয়েছে! ইনভয়েস নম্বর: {inv['invoice_no']}")
         
@@ -133,7 +152,6 @@ with tab2:
         st.info("বর্তমানে কোনো বিলিং ডাটা উপলব্ধ নেই। প্রথমে একটি বিল তৈরি করুন।")
     else:
         df_bills['date'] = pd.to_datetime(df_bills['date']).dt.date
-        
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
             time_filter = st.selectbox("📅 সময় ফিল্টার করুন:", ["আজ (Today)", "গতকাল (Yesterday)", "গত ৭ দিন", "কাস্টম তারিখ সিলেক্ট", "সব সময়"], index=0)
@@ -144,20 +162,13 @@ with tab2:
             doc_filter = st.selectbox("🩺 ডাক্তার ফিল্টার করুন:", unique_doctors, index=0)
             
         today = datetime.now().date()
-        
-        if time_filter == "আজ (Today)":
-            df_filtered = df_bills[df_bills['date'] == today]
-        elif time_filter == "গতকাল (Yesterday)":
-            df_filtered = df_bills[df_bills['date'] == (today - timedelta(days=1))]
-        elif time_filter == "গত ৭ দিন":
-            df_filtered = df_bills[df_bills['date'] >= (today - timedelta(days=7))]
-        elif time_filter == "কাস্টম তারিখ সিলেক্ট":
-            df_filtered = df_bills[df_bills['date'] == search_date]
-        else:
-            df_filtered = df_bills.copy()
+        if time_filter == "আজ (Today)": df_filtered = df_bills[df_bills['date'] == today]
+        elif time_filter == "গতকাল (Yesterday)": df_filtered = df_bills[df_bills['date'] == (today - timedelta(days=1))]
+        elif time_filter == "গত ৭ দিন": df_filtered = df_bills[df_bills['date'] >= (today - timedelta(days=7))]
+        elif time_filter == "কাস্টম তারিখ সিলেক্ট": df_filtered = df_bills[df_bills['date'] == search_date]
+        else: df_filtered = df_bills.copy()
             
-        if doc_filter != "সব ডাক্তার":
-            df_filtered = df_filtered[df_filtered['doctor'] == doc_filter]
+        if doc_filter != "সব ডাক্তার": df_filtered = df_filtered[df_filtered['doctor'] == doc_filter]
             
         total_collection = df_filtered['total'].sum()
         total_discount = df_filtered['discount'].sum()
@@ -185,17 +196,15 @@ with tab2:
                     'মোট আয় (৳)': [total_collection * 0.35, total_collection * 0.25, total_collection * 0.15, total_collection * 0.15, total_collection * 0.10]
                 })
                 st.bar_chart(data=test_summary, x='টেস্টের নাম', y='মোট আয় (৳)', color='#43a047')
-            else:
-                st.write("চার্ট দেখানোর জন্য কোনো ডাটা নেই।")
+            else: st.write("চার্ট দেখানোর জন্য কোনো ডাটা নেই।")
                 
         with col_g2:
-            st.markdown("### 📈 সর্বোচ্চ রেফারেল ডাক্তার (Top Referrals)")
+            st.markdown("### 📈 সর্বোচ্চ রেফারেল ডাক্তার")
             if not df_filtered.empty and df_filtered['doctor'].nunique() > 0:
                 doc_revenue = df_filtered.groupby('doctor')['total'].sum().reset_index()
                 doc_revenue.columns = ['ডাক্তারের নাম', 'মোট বিল (টাকা)']
                 st.bar_chart(data=doc_revenue, x='ডাক্তারের নাম', y='মোট বিল (টাকা)', color='#1e88e5')
-            else: 
-                st.write("কোনো রেফারেল ডাটা নেই।")
+            else: st.write("কোনো রেফারেল ডাটা নেই।")
                 
         st.markdown("---")
         st.markdown("### 📋 আজকের সর্বশেষ টেস্ট বুকিং ও বিলিং ট্র্যাকিং")
@@ -203,24 +212,38 @@ with tab2:
             display_df = df_filtered[['invoice_no', 'patient', 'doctor', 'total', 'paid', 'due']].copy()
             display_df.columns = ['ইনভয়েস নং', 'রোগীর নাম', 'রেফার্ড বাই', 'মোট বিল (৳)', 'জমা (৳)', 'বাকি বিল (৳)']
             st.dataframe(display_df.iloc[::-1].head(10), use_container_width=True, hide_index=True)
-        else: 
-            st.info("নির্বাচিত সময়ের মধ্যে কোনো টেস্ট বুকিং পাওয়া যায়নি।")
-        # ডেমো রিসিট ডিলিট করার নতুন সেকশন
-        st.markdown("---")
-        st.markdown("### 🗑️ ডেমো রিসিট ও ইনভয়েস ডিলিট প্যানেল")
-        
-        col_del1, col_del2 = st.columns([3, 1])
-        with col_del1:
-            delete_invoice_no = st.text_input("যে ইনভয়েস নম্বরটি ডিলিট করতে চান সেটি লিখুন (যেমন: INV-1780684897):", key="del_inv_input")
-        with col_del2:
-            st.write("##") # অ্যালাইনমেন্ট ঠিক করার জন্য স্পেস
-            if st.button("🔴 রিসিট ডিলিট করুন", key="del_inv_btn", type="secondary"):
-                if delete_invoice_no:
-                    # ডাটাবেজ থেকে ডিলিট করার কুয়েরি
-                    c.execute("DELETE FROM bills WHERE invoice_no = ?", (delete_invoice_no.strip(),))
+        else: st.info("নির্বাচিত সময়ের মধ্যে কোনো টেস্ট বুকিং পাওয়া যায়নি।")
+
+# ৩ নম্বর ট্যাব: নতুন ডাক্তার ও টেস্টের দাম যোগ/পরিবর্তন করার ড্রপডাউন প্যানেল
+with tab3:
+    st.markdown("## ⚙️ ডায়াগনস্টিক সেন্টারের লাইভ সেটিংস ও লিস্ট প্যানেল")
+    
+    col_setup1, col_setup2 = st.columns(2)
+    
+    with col_setup1:
+        st.markdown("### 🩺 নতুন ডাক্তার যোগ করুন")
+        new_doc_name = st.text_input("নতুন ডাক্তারের নাম লিখুন:")
+        if st.button("➕ ডাক্তার লিস্টে নাম যোগ করুন", type="primary"):
+            if new_doc_name:
+                try:
+                    c.execute("INSERT INTO setup_doctors VALUES (?)", (new_doc_name.strip(),))
                     conn.commit()
-                    st.success(f"ইনভয়েস {delete_invoice_no} সফলভাবে ডাটাবেজ থেকে ডিলিট করা হয়েছে!")
+                    st.success(f"'{new_doc_name}' ডাক্তার তালিকায় যুক্ত হয়েছে! অ্যাপটি রিফ্রেশ দিন।")
                     st.rerun()
-                else:
-                    st.error("অনুগ্রহ করে একটি সঠিক ইনভয়েস নম্বর লিখুন!")
-                    
+                except: st.error("এই ডাক্তারের নাম ইতিমধ্যে তালিকায় আছে!")
+            else: st.warning("অনুগ্রহ করে নাম লিখুন।")
+            
+    with col_setup2:
+        st.markdown("### 🔬 নতুন টেস্ট যোগ অথবা ফি পরিবর্তন করুন")
+        exist_tests = ["-- নতুন টেস্ট তৈরি করুন --"] + list(test_directory.keys())
+        selected_edit_test = st.selectbox("টেস্ট সিলেক্ট করুন (দাম বদলাতে) অথবা নতুন নাম লিখুন:", exist_tests)
+        
+        if selected_edit_test == "-- নতুন টেস্ট তৈরি করুন --":
+            test_input_name = st.text_input("নতুন টেস্টের নাম লিখুন:")
+            test_input_rate = st.number_input("টেস্টের ফি বা দাম (৳):", min_value=0.0, step=50.0, value=0.0)
+        else:
+            test_input_name = selected_edit_test
+            test_input_rate = st.number_input("টেস্টের পরিবর্তিত ফি বা দাম (৳):", min_value=0.0, step=50.0, value=test_directory[selected_edit_test])
+            
+        if st.button("💾 টেস্ট এবং রেট সেভ করুন", type="primary"):
+            if test_input_name:
