@@ -6,12 +6,43 @@ import sqlite3
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="wide")
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="wide")
 
-# ১. থিম স্টাইলিং (রঙিন ব্যাকগ্রাউন্ড এবং বর্ডার)
+# ইনপুট বক্স, ড্রপডাউন এবং সিলেকশন বক্সের ভেতরের ঘরগুলো রঙিন করার CSS
 st.markdown("""
     <style>
-    .section-box-blue { background-color: #e3f2fd; padding: 12px; border-radius: 8px; border-left: 5px solid #1e88e5; margin-bottom: 15px; }
-    .section-box-green { background-color: #e8f5e9; padding: 12px; border-radius: 8px; border-left: 5px solid #43a047; margin-bottom: 15px; }
-    .section-box-orange { background-color: #fff3e0; padding: 12px; border-radius: 8px; border-left: 5px solid #fb8c00; margin-bottom: 15px; }
+    /* ১. রোগী ও ডাক্তারের পুরো সেকশনের ব্যাকগ্রাউন্ড */
+    .section-box-blue { background-color: #f1f8ff; padding: 12px; border-radius: 8px; border-left: 5px solid #1e88e5; margin-bottom: 15px; }
+    /* ২. টেস্ট লিস্ট সেকশনের ব্যাকগ্রাউন্ড */
+    .section-box-green { background-color: #f4faf6; padding: 12px; border-radius: 8px; border-left: 5px solid #43a047; margin-bottom: 15px; }
+    /* ৩. পেমেন্ট সেকশনের ব্যাকগ্রাউন্ড */
+    .section-box-orange { background-color: #fff9f0; padding: 12px; border-radius: 8px; border-left: 5px solid #fb8c00; margin-bottom: 15px; }
+    
+    /* ✍️ লেখার ও সিলেক্ট করার মূল ইনপুট ঘরগুলোর ভেতরের কালার স্টাইল */
+    /* রোগীর নাম, বয়স, ফোন নাম্বার লেখার বক্সের ব্যাকগ্রাউন্ড হালকা নীল */
+    .stTextInput input {
+        background-color: #e3f2fd !important;
+        border: 1px solid #1e88e5 !important;
+        color: black !important;
+        font-weight: bold !important;
+    }
+    /* ডাক্তার সিলেক্ট করার ড্রপডাউন বক্সের ব্যাকগ্রাউন্ড হালকা আকাশী */
+    .stSelectbox div[data-baseweb="select"] {
+        background-color: #e0f7fa !important;
+        border: 1px solid #00bcd4 !important;
+        font-weight: bold !important;
+    }
+    /* পরীক্ষাগুলো সিলেক্ট করার মূল চয়েস বক্সের ব্যাকগ্রাউন্ড হালকা সবুজ */
+    .stMultiSelect div[data-baseweb="select"] {
+        background-color: #e8f5e9 !important;
+        border: 1px solid #43a047 !important;
+        font-weight: bold !important;
+    }
+    /* ডিসকাউন্ট এবং জমার টাকা লেখার বক্সের ব্যাকগ্রাউন্ড হালকা হলুদ */
+    .stNumberInput input {
+        background-color: #fffde7 !important;
+        border: 1px solid #fbc02d !important;
+        color: black !important;
+        font-weight: bold !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -54,7 +85,6 @@ except:
 tab1, tab2 = st.tabs(["📑 Billing / Cash Memo", "📊 Dashboard"])
 
 with tab1:
-    # ২. পেশেন্ট ও ডক্টর লিস্টে নীল কালার বক্স
     st.markdown('<div class="section-box-blue">📢 <b>Patient Information & Doctor List (রোগী ও ডাক্তার তালিকা)</b></div>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
@@ -66,11 +96,23 @@ with tab1:
         date_today = st.date_input("Date:", datetime.now())
 
     st.divider()
-    # ৩. টেস্ট সিলেকশনে সবুজ কালার বক্স
     st.markdown('<div class="section-box-green">🧪 <b>Test Selection (টেস্ট লিস্ট)</b></div>', unsafe_allow_html=True)
     selected_tests = st.multiselect("পরীক্ষাগুলো সিলেক্ট করুন:", list(test_directory.keys())[1:])
     
     total_amount = 0
+    test_list_html = ""
+    
+    if selected_tests:
+        st.write("### 📋 নির্বাচিত টেস্টের তালিকা:")
+        for idx, test in enumerate(selected_tests, 1):
+            price = test_directory[test]
+            st.write(f"{idx}. **{test}** — {price} TK")
+            test_list_html += f"<tr><td style='padding:8px; border:1px solid #ddd;'>{idx}</td><td style='padding:8px; border:1px solid #ddd;'>{test}</td><td style='padding:8px; border:1px solid #ddd; text-align:right;'>{price} TK</td></tr>"
+            total_amount += price
+
+    st.divider()
+    st.markdown('<div class="section-box-orange">💰 <b>Payment Details (বিল ও জমা)</b></div>', unsafe_allow_html=True)
+    
     test_list_html = ""
     
     if selected_tests:
