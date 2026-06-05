@@ -71,20 +71,20 @@ test_directory = {
 
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS bills
-                 (invoice_no TEXT PRIMARY KEY, 
-                  date TEXT, 
-                  patient TEXT, 
-                  age TEXT, 
-                  phone TEXT,
-                  doctor TEXT, 
-                  total REAL, 
-                  discount REAL, 
-                  paid REAL, 
-                  due REAL,
-                  referral_fee REAL)''')
-    conn.commit()
-
+    c = conn.cursor()
+c.execute('''CREATE TABLE IF NOT EXISTS bills
+             (invoice_no TEXT PRIMARY KEY, 
+              date TEXT, 
+              patient TEXT, 
+              age TEXT, 
+              phone TEXT,
+              doctor TEXT, 
+              total REAL, 
+              discount REAL, 
+              paid REAL, 
+              due REAL,
+              referral_fee REAL)''')
+conn.commit()
 
 try:
     c.execute("ALTER TABLE bills ADD COLUMN due REAL DEFAULT 0")
