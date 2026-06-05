@@ -76,7 +76,7 @@ with tab1:
                 conn.commit()
                 st.session_state.invoice_data = {"invoice_no": invoice_no, "date": date_today.strftime('%d-%m-%Y'), "name": patient_name, "age": age, "phone": phone, "dr": ref_dr, "tests": test_rows, "total": total_amount, "discount": discount, "paid": paid, "due": due}
                 st.rerun()
-                else:
+    else:
         inv = st.session_state.invoice_data
         st.success(f"বিল সফলভাবে সেভ হয়েছে! ইনভয়েস নম্বর: {inv['invoice_no']}")
         
@@ -124,7 +124,6 @@ with tab1:
             if st.button("Create New Bill (নতুন বিল)"):
                 st.session_state.invoice_data = None
                 st.rerun()
-
 with tab2:
     st.markdown("<h2 style='text-align: center; color: #1e88e5;'>📊 রোগমুক্তি ড্যাশবোর্ড ও রিপোর্ট প্যানেল</h2>", unsafe_allow_html=True)
     df_bills = pd.read_sql_query("SELECT * FROM bills", conn)
@@ -173,7 +172,10 @@ with tab2:
         col_g1, col_g2 = st.columns(2)
         with col_g1:
             st.markdown("### 🔬 শীর্ষ জনপ্রিয় টেস্টসমূহ")
-            test_counts = pd.DataFrame({'টেস্টের নাম': ['CBC', 'USG Whole Abdomen', 'Urine R/E', 'Serum Creatinine', 'RBS'], 'সংখ্যা': [15, 10, 8, 7, 5]})
+            test_counts = pd.DataFrame({
+                'টেস্টের নাম': ['CBC', 'USG Whole Abdomen', 'Urine R/E', 'Serum Creatinine', 'RBS'], 
+                'সংখ্যা': [5, 4, 3, 2, 1]
+            })
             st.bar_chart(data=test_counts, x='টেস্টের নাম', y='সংখ্যা', color='#43a047')
         with col_g2:
             st.markdown("### 📈 সর্বোচ্চ রেফারেল ডাক্তার (Top Referrals)")
@@ -192,4 +194,4 @@ with tab2:
             st.dataframe(display_df.iloc[::-1].head(10), use_container_width=True, hide_index=True)
         else: 
             st.info("নির্বাচিত সময়ের মধ্যে কোনো টেস্ট বুকিং পাওয়া যায়নি।")
-        
+
