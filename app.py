@@ -70,20 +70,20 @@ with tab1:
             st.rerun()
 with tab2:
     st.markdown("<h2 style='text-align: center; color: #1E88E5;'>📊 রোগমুক্তি ড্যাশবোর্ড ও রিপোর্ট প্যানেল</h2>", unsafe_allow_html=True)
-    try:
-        df_dash = pd.read_sql_query("SELECT * FROM bills", conn)
-        if not df_dash.empty:
-            df_dash['date'] = pd.to_datetime(df_dash['date'], errors='coerce')
-            col_f1, col_f2 = st.columns(2)
-            with col_f1: f_opt = st.selectbox("📅 সময় নির্বাচন করুন:", ["সব সময়", "আজ", "এই সপ্তাহ", "এই মাস", "এই বছর"], key="dash_time_f_unique")
-            with col_f2:
-                all_docs = ["সব ডাক্তার"] + [d for d in doctors_list if d != "Select Doctor"]
-                f_doc = st.selectbox("👨‍⚕️ ডাক্তার নির্বাচন করুন:", all_docs, key="dash_doc_f_unique")
-            t_now = datetime.today()
-            if f_opt == "আজ": f_df = df_dash[df_dash['date'].dt.date == t_now.date()]
-            elif f_opt == "এই সপ্তাহ": f_df = df_dash[df_dash['date'] >= (t_now - timedelta(days=t_now.weekday()))]
-            elif f_opt == "এই মাস": f_df = df_dash[(df_dash['date'].dt.month == t_now.month) & (df_dash['date'].dt.year == t_now.year)]
-            elif f_opt == "এই বছর": f_df = df_dash[df_dash['date'].dt.year == t_now.year]
-            else: f_df = df_dash
-            if f_doc != "সব ডাক্তার": f_df = f_df[f_df['doctor'] == f_doc]
+    df_dash = pd.read_sql_query("SELECT * FROM bills", conn)
+    if not df_dash.empty:
+        df_dash['date'] = pd.to_datetime(df_dash['date'], errors='coerce')
+        col_f1, col_f2 = st.columns(2)
+        with col_f1: f_opt = st.selectbox("📅 সময় নির্বাচন করুন:", ["সব সময়", "আজ", "এই সপ্তাহ", "এই মাস", "এই বছর"], key="dash_time_f_unique")
+        with col_f2:
+            all_docs = ["সব ডাক্তার"] + [d for d in doctors_list if d != "Select Doctor"]
+            f_doc = st.selectbox("👨‍⚕️ ডাক্তার নির্বাচন করুন:", all_docs, key="dash_doc_f_unique")
+        t_now = datetime.today()
+        if f_opt == "আজ": f_df = df_dash[df_dash['date'].dt.date == t_now.date()]
+        elif f_opt == "এই সপ্তাহ": f_df = df_dash[df_dash['date'] >= (t_now - timedelta(days=t_now.weekday()))]
+        elif f_opt == "এই মাস": f_df = df_dash[(df_dash['date'].dt.month == t_now.month) & (df_dash['date'].dt.year == t_now.year)]
+        elif f_opt == "এই বছর": f_df = df_dash[df_dash['date'].dt.year == t_now.year]
+        else: f_df = df_dash
+        if f_doc != "সব ডাক্তার": f_df = f_df[f_df['doctor'] == f_doc]
+        st.markdown(f"<div style='display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; font-family: sans-serif; text-align: center;'><div style='background-color: #E8F5E9; padding: 15px; border-radius: 8px; border-left: 5px solid #2E7D32;'><span style='font-size: 13px; color: #2E7D32; font-weight: bold;'>💰 মোট কালেকশন</span><h3 style='margin: 5px 0 0 0; color: #1B5E20;'>৳ {f_df['total'].sum():,.2f}</h3></div><div style='background-color: #FFF3E0; padding: 15px; border-radius: 8px; border-left: 5px solid #EF6C00;'><span style='font-size: 13px; color: #EF6C00; font-weight: bold;'>📉 মোট ডিসকাউন্ট</span><h3 style='margin: 5px 0 0 0; color: #E65100;'>৳ {f_df['discount'].sum():,.2f}</h3></div><div style='background-color: #FFEBEE; padding: 15px; border-radius: 8px; border-left: 5px solid #C62828;'><span style='font-size: 13px; color: #C62828; font-weight: bold;'>🚨 মোট ডিউ (বাকি)</span><h3 style='margin: 5px 0 0 0; color: #B71C1C;'>৳ {f_df['due'].sum():,.2f}</h3></div><div style='background-color: #E3F2FD; padding: 15px; border-radius: 8px; border-left: 5px solid #1565C0;'><span style='font-size: 13px; color: #1565C0; font-weight: bold;'>👨‍⚕️ রেফারেল ফি (৩০%)</span><h3 style='margin: 5px 0 0 0; color: #0D47A1;'>৳ {f_df['referral_fee'].sum():,.2f}</h3></div></div>", unsafe_allow_html=True)
 
