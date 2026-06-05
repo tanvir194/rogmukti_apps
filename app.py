@@ -68,116 +68,105 @@ test_directory = {
     "USG of Lower Abdomen": 750, "USG of Pelvis": 700, "USG of KUB": 800,
     "X-Ray Chest P/A View": 500, "ECG": 400
 }
-conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
-# ৭২ নম্বর লাইন থেকে আপনার ফাইলের একদম শেষ পর্যন্ত পুরো অংশটি মুছে এই কোডটি বসান:
 
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
-
-# ১. নতুন কলাম (referral_fee) সহ টেবিল তৈরি
 c.execute('''CREATE TABLE IF NOT EXISTS bills
-             (invoice_no TEXT PRIMARY KEY, 
-              date TEXT, 
-              patient TEXT, 
-              age TEXT, 
-              phone TEXT,
-              doctor TEXT, 
-              total REAL, 
-              discount REAL, 
-              paid REAL, 
-              due REAL,
-              referral_fee REAL)''')
+             (invoice_no TEXT PRIMARY KEY, date TEXT, patient TEXT, age TEXT, phone TEXT, 
+              doctor TEXT, total REAL, discount REAL, paid REAL, due REAL)''')
 conn.commit()
-tab1, tab2 = st.tabs(["📄 Billing / Cash Memo", "📊 Dashboard"])
+
+try:
+    c.execute("ALTER TABLE bills ADD COLUMN due REAL DEFAULT 0")
+    conn.commit()
+except:
+    pass
+
+tab1, tab2 = st.tabs(["📑 Billing / Cash Memo", "📊 Dashboard"])
 
 with tab1:
-    st.markdown('<div class="section-box-blue">✨ <b>Patient Information & Doctor List (রোগী ও ডাক্তার তালিকা)</b></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-box-blue">📢 <b>Patient Information & Doctor List (রোগী ও ডাক্তার তালিকা)</b></div>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
         patient_name = st.text_input("Patient Name:")
         age = st.text_input("Age:")
         phone = st.text_input("Phone Number:")
     with col2:
-        ref_dr = st.selectbox("Referred By:", doctors_list, key="billing_doctor_select")
+        ref_dr = st.selectbox("Referred By:", doctors_list)
         date_today = st.date_input("Date:", datetime.now())
 
-    # বিল সেভ করার বাটন
-    if st.button("Save Bill", key="save_bill_btn"):
-        total_real = 1000  
-        discount_real = 0
-        paid_real = 1000
-        due_real = 0
-        invoice_no = f"INV-{int(datetime.now().timestamp())}"
-        
-        # ৩০% রেফারেল ফি অটোমেটিক হিসাব
-        ref_fee = total_real * 0.30 
-        
-        # ডাটাবেজে সেভ করা (১১টি কলাম)
-        c.execute("INSERT INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                  (invoice_no, date_today.strftime('%Y-%m-%d'), patient_name, age, phone, ref_dr, total_real, discount_real, paid_real, due_real, ref_fee))
-        conn.commit()
-        st.success("বিল সফলভাবে সেভ হয়েছে!")
-
-with tab2:
-    st.header("📊 দৈনিক, साप्ताहिक ও মাসিক ড্যাশবোর্ড")
+    st.divider()
+    st.markdown('<div class="section-box-green">🧪 <b>Test Selection (টেস্ট লিস্ট)</b></div>', unsafe_allow_html=True)
+    selected_tests = st.multiselect("পরীক্ষাগুলো সিলেক্ট করুন:", list(test_directory.keys())[1:])
     
-    try:
-        # ডাটাবেজ থেকে ডাটা লোড করা
-        df = pd.read_sql_query("SELECT * FROM bills", conn)
-        
-        if not df.empty:
-            df['date'] = pd.to_datetime(df['date'], errors='coerce')
-            
-            # ফিল্টার অপশন (অনন্য key ব্যবহার করা হয়েছে)
-            filter_option = st.selectbox("হিসাব দেখার সময় নির্বাচন করুন", ["আজ", "এই সপ্তাহ", "এই মাস", "সব সময়"], key="dashboard_time_filter_unique")
-            today = datetime.today()
-            
-            if filter_option == "আজ":
-                filtered_df = df[df['date'].dt.date == today.date()]
-            elif filter_option == "এই সপ্তাহ":
-                start_of_week = today - timedelta(days=today.weekday())
-                filtered_df = df[df['date'] >= start_of_week]
-            elif filter_option == "এই মাস":
-                filtered_df = df[(df['date'].dt.month == today.month) & (df['date'].dt.year == today.year)]
-            else:
-                filtered_df = df
-                
-            # সামারি বক্সসমূহ
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("মোট কালেকশন", f"৳ {filtered_df['total'].sum() if 'total' in filtered_df else 0:,.2f}")
-            c2.metric("মোট ডিসকাউন্ট", f"৳ {filtered_df['discount'].sum() if 'discount' in filtered_df else 0:,.2f}")
-            c3.metric("মোট ডিউ (বাকি)", f"৳ {filtered_df['due'].sum() if 'due' in filtered_df else 0:,.2f}")
-            
-            ref_sum = filtered_df['referral_fee'].sum() if 'referral_fee' in filtered_df else 0
-            c4.metric("মোট রেফারেল ফি (৩০%)", f"৳ {ref_sum:,.2f}")
-            
-            # রিপোর্ট টেবিল
-            st.subheader("👨‍⚕️ ডাক্তার ভিত্তিক রেফারেল রিপোর্ট (নামসহ)")
-            if not filtered_df.empty:
-                available_cols = [col for col in ['doctor', 'patient', 'invoice_no', 'total', 'referral_fee', 'date'] if col in filtered_df]
-                report_display = filtered_df[available_cols]
-                st.dataframe(report_display, use_container_width=True)
-                
-                # প্রিন্ট বাটন
-                st.markdown("""
-                    <br>
-                    <button onclick="window.print()" style="
-                        background-color: #4CAF50; 
-                        color: white; 
-                        padding: 12px 30px; 
-                        border: none; 
-                        border-radius: 4px; 
-                        cursor: pointer;
-                        font-size: 16px;
-                        font-weight: bold;">
-                        🖨️ এই রিপোর্টটি প্রিন্ট করুন
-                    </button>
-                """, unsafe_allow_html=True)
-            else:
-                st.warning("নির্বাচিত সময়ে কোনো ডাটা পাওয়া যায়নি।")
-        else:
-            st.info("ডেটাবেজে এখনো কোনো বিলের রেকর্ড নেই।")
-            
-    except Exception as e:
-        st.info("নতুন ডাটাবেজ তৈরি হচ্ছে। একটি নতুন বিল সেভ করলেই ড্যাশবোর্ড সচল হয়ে যাবে।")
+    total_amount = 0
+    test_list_html = ""
+    
+    if selected_tests:
+        st.write("### 📋 নির্বাচিত টেস্টের তালিকা:")
+        for idx, test in enumerate(selected_tests, 1):
+            price = test_directory[test]
+            st.write(f"{idx}. **{test}** — {price} TK")
+            test_list_html += f"<tr><td style='padding:8px; border:1px solid #ddd;'>{idx}</td><td style='padding:8px; border:1px solid #ddd;'>{test}</td><td style='padding:8px; border:1px solid #ddd; text-align:right;'>{price} TK</td></tr>"
+            total_amount += price
 
+    st.divider()
+    st.markdown('<div class="section-box-orange">💰 <b>Payment Details (বিল ও জমা)</b></div>', unsafe_allow_html=True)
+    
+    test_list_html = ""
+    
+    if selected_tests:
+        st.write("### 📋 নির্বাচিত টেস্টের তালিকা:")
+        for idx, test in enumerate(selected_tests, 1):
+            price = test_directory[test]
+            st.write(f"{idx}. **{test}** — {price} TK")
+            test_list_html += f"<tr><td style='padding:8px; border:1px solid #ddd;'>{idx}</td><td style='padding:8px; border:1px solid #ddd;'>{test}</td><td style='padding:8px; border:1px solid #ddd; text-align:right;'>{price} TK</td></tr>"
+            total_amount += price
+
+    st.divider()
+    # ৪. পেমেন্ট সেকশনে অরেঞ্জ কালার বক্স
+    st.markdown('<div class="section-box-orange">💰 <b>Payment Details (বিল ও জমা)</b></div>', unsafe_allow_html=True)
+    
+    c_dis, c_paid = st.columns(2)
+    with c_dis:
+        discount = st.number_input("Discount (TK)", min_value=0, value=0, step=10)
+    with c_paid:
+        net_payable = total_amount - discount
+        paid_amount = st.number_input("Paid Amount (জমা)", min_value=0, value=int(net_payable), step=50)
+    
+    due_amount = net_payable - paid_amount
+    
+    col_t1, col_t2, col_t3 = st.columns(3)
+    col_t1.markdown(f"**Total Amount:** {total_amount} TK")
+    col_t2.markdown(f"**Discount:** {discount} TK")
+    if due_amount > 0:
+        col_t3.markdown(f"### <span style='color:red;'>Due Amount (বাকি): {due_amount} TK</span>", unsafe_allow_html=True)
+    else:
+        col_t3.markdown(f"### <span style='color:green;'>Paid (পরিশোধিত)</span>", unsafe_allow_html=True)
+
+    if st.button("💾 Save & Generate Invoice", type="primary"):
+        if patient_name and ref_dr != "Select Doctor" and selected_tests:
+            today_str = datetime.now().strftime("%Y%m%d")
+                        # টাপল (Tuple) থেকে সংখ্যা আলাদা করার সঠিক কোড
+            c.execute("SELECT COUNT(*) FROM bills")
+            count_result = c.fetchone()[0]
+            invoice_no = f"ROG-{today_str}-{(count_result + 1):03d}"
+            
+            c.execute("""INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                      (invoice_no, str(date_today), patient_name, age, phone, ref_dr, total_amount, discount, paid_amount, due_amount))
+                        # প্রিন্ট দেওয়ার সময় ক্যাশ মেমোর বাইরের সবকিছু লুকিয়ে ফেলার বিশেষ স্টাইলসহ HTML
+            memo_html = f"""
+            <html>
+            <head>
+                <style>
+                    @media print {{
+                        body * {{
+                            visibility: hidden;
+                        }}
+                        #print-memo-area, #print-memo-area * {{
+                            visibility: visible;
+                        }}
+                        #print-memo-area {{
+                            position: absolute;
+                            left: 0;
+                            top: 0;
