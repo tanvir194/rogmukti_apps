@@ -177,9 +177,8 @@ with tab1:
                 </button>
                 <br><br>
             """, unsafe_allow_html=True)
-            with tab2:
-    st.header("📊 দৈনিক, সাপ্তাহিক ও মাসিক ড্যাশবোর্ড")
-    try:
+            with tab2: st.header("📊 দৈনিক, সাপ্তাহিক ও মাসিক ড্যাশবোর্ড")
+                try:
         df = pd.read_sql_query("SELECT * FROM bills", conn)
         if not df.empty:
             df['date'] = pd.to_datetime(df['date'], errors='coerce')
