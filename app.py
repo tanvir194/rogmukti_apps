@@ -3,9 +3,25 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="wide")
 
-st.markdown("<style>.section-box-blue { background-color: #f1f8ff; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.section-box-green { background-color: #f4faf6; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.section-box-orange { background-color: #fff9f0; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.stTextInput input { background-color: #e3f2fd !important; border: 1px solid #1e88e5 !important; color: black !important; font-weight: bold !important; }.stSelectbox div[data-baseweb='select'] { background-color: #e0f7fa !important; border: 1px solid #00bcd4 !important; font-weight: bold !important; }.stMultiSelect div[data-baseweb='select'] { background-color: #e8f5e9 !important; border: 1px solid #43a047 !important; font-weight: bold !important; }.stNumberInput input { background-color: #fffde7 !important; border: 1px solid #fbc02d !important; color: black !important; font-weight: bold !important; } @media print { body * { visibility: hidden !important; } .print-area, .print-area * { visibility: visible !important; } .print-area { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 10px !important; border: none !important; } [data-testid='stHeader'], button, iframe { display: none !important; } }</style>", unsafe_allow_html=True)
+st.markdown("""
+<style>
+    .section-box-blue { background-color: #f1f8ff; padding: 12px; border-radius: 5px; margin-bottom: 10px; }
+    .section-box-green { background-color: #f4faf6; padding: 12px; border-radius: 5px; margin-bottom: 10px; }
+    .section-box-orange { background-color: #fff9f0; padding: 12px; border-radius: 5px; margin-bottom: 10px; }
+    .stTextInput input { background-color: #e3f2fd !important; border: 1px solid #1e88e5 !important; color: black !important; font-weight: bold !important; }
+    .stSelectbox div[data-baseweb='select'] { background-color: #e0f7fa !important; border: 1px solid #00bcd4 !important; font-weight: bold !important; }
+    .stMultiSelect div[data-baseweb='select'] { background-color: #e8f5e9 !important; border: 1px solid #43a047 !important; font-weight: bold !important; }
+    .stNumberInput input { background-color: #fffde7 !important; border: 1px solid #fbc02d !important; color: black !important; font-weight: bold !important; }
+    [data-testid="stMetricValue"] { font-size: 1.4rem !important; font-weight: bold !important; color: #1e88e5 !important; }
+    @media print { 
+        body * { visibility: hidden !important; } 
+        .print-area, .print-area * { visibility: visible !important; } 
+        .print-area { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 10px !important; border: none !important; } 
+        [data-testid='stHeader'], button, iframe { display: none !important; } 
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# ডাটাবেজ কানেকশন এবং টেবিল তৈরি
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
 
@@ -14,7 +30,6 @@ c.execute("CREATE TABLE IF NOT EXISTS setup_doctors (name TEXT UNIQUE)")
 c.execute("CREATE TABLE IF NOT EXISTS setup_tests (name TEXT UNIQUE, rate REAL)")
 conn.commit()
 
-# ডিফল্ট ডাটা পপুলেট করা (প্রথমবার রান করার জন্য)
 c.execute("SELECT COUNT(*) FROM setup_doctors")
 if c.fetchone()[0] == 0:
     for doc in ["Select Doctor", "Self / Direct", "Dr. Saiful Islam", "Dr. A. Rahman", "Dr. S. Islam"]:
@@ -24,16 +39,14 @@ if c.fetchone()[0] == 0:
 c.execute("SELECT COUNT(*) FROM setup_tests")
 if c.fetchone()[0] == 0:
     default_tests = {
-        "CBC": 400, "CBC with ESR": 600, "TC.DC": 250, "HB%": 250, "ESR": 200, "Platelet Count": 300, "MP": 200, "BT/CT": 350,
-        "Widal": 450, "CRP": 450, "HBs Ag (Screen Test)": 450, "HIV": 450, "Blood Group & Rh Factor": 200,
-        "T3": 1200, "T4": 1200, "TSH": 1100, "HbA1c": 1500, "Random Blood Sugar": 200, "Serum Creatinine": 400,
+        "CBC": 400, "CBC with ESR": 600, "TC.DC": 250, "HB%": 250, "ESR": 200, "Platelet Count": 300,
+        "Widal": 450, "CRP": 450, "Blood Group & Rh Factor": 200, "TSH": 1100, "Serum Creatinine": 400,
         "X-Ray Chest": 500, "Urine R/E": 250, "USG Whole Abdomen": 1000, "USG Color Doppler": 2500
     }
     for t_name, t_rate in default_tests.items():
         c.execute("INSERT OR IGNORE INTO setup_tests VALUES (?, ?)", (t_name, t_rate))
     conn.commit()
 
-# ডাটাবেজ থেকে লাইভ তালিকা লোড করা
 doctors_df = pd.read_sql_query("SELECT name FROM setup_doctors", conn)
 doctors_list = doctors_df['name'].tolist()
 
@@ -72,10 +85,8 @@ with tab1:
         
         st.markdown('<div class="section-box-orange">💰 <b>Payment & Calculation (পেমেন্ট এবং হিসাব)</b></div>', unsafe_allow_html=True)
         col3, col4, col5, col6 = st.columns(4)
-        with col3: 
-            st.metric(label="Total Amount (মোট বিল):", value=f"TK {total_amount:,.2f}")
-        with col4: 
-            discount = st.number_input("Discount (ছাড় TK):", min_value=0.0, step=10.0, value=0.0)
+        with col3: st.metric(label="Total Amount (মোট বিল):", value=f"TK {total_amount:,.2f}")
+        with col4: discount = st.number_input("Discount (ছাড় TK):", min_value=0.0, step=10.0, value=0.0)
         with col5:
             net_total = max(0.0, total_amount - discount)
             paid = st.number_input("Paid Amount (জমা TK):", min_value=0.0, max_value=net_total, step=50.0, value=net_total)
@@ -84,10 +95,8 @@ with tab1:
             st.metric(label="Due Amount (বাকি বিল):", value=f"TK {due:,.2f}")
             
         if st.button("Save Bill & Generate Invoice", key="save_bill_btn", type="primary"):
-            if not patient_name: 
-                st.error("অনুগ্রহ করে রোগীর নাম লিখুন!")
-            elif not selected_tests: 
-                st.error("অনুগ্রহ করে অন্তত একটি টেস্ট সিলেক্ট করুন!")
+            if not patient_name: st.error("অনুগ্রহ করে রোগীর নাম লিখুন!")
+            elif not selected_tests: st.error("অনুগ্রহ করে অন্তত একটি টেস্ট সিলেক্ট করুন!")
             else:
                 invoice_no = f"INV-{int(datetime.now().timestamp())}"
                 ref_fee = total_amount * 0.10
@@ -213,37 +222,39 @@ with tab2:
             display_df.columns = ['ইনভয়েস নং', 'রোগীর নাম', 'রেফার্ড বাই', 'মোট বিল (৳)', 'জমা (৳)', 'বাকি বিল (৳)']
             st.dataframe(display_df.iloc[::-1].head(10), use_container_width=True, hide_index=True)
         else: st.info("নির্বাচিত সময়ের মধ্যে কোনো টেস্ট বুকিং পাওয়া যায়নি।")
+        
+        st.markdown("---")
+        st.markdown("### 🗑️ ডেমো রিসিট ও ইনভয়েস ডিলিট প্যানেল")
+        col_del1, col_del2 = st.columns(2)
+        with col_del1:
+            delete_invoice_no = st.text_input("যে ইনভয়েস নম্বরটি ডিলিট করতে চান সেটি এখানে লিখুন:", key="del_inv_input")
+        with col_del2:
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("🔴 রিসিট ডিলিট করুন", key="del_inv_btn", use_container_width=True):
+                if delete_invoice_no:
+                    c.execute("DELETE FROM bills WHERE invoice_no = ?", (delete_invoice_no.strip(),))
+                    conn.commit()
+                    st.success(f"ইনভয়েসটি সফলভাবে ডিলিট করা হয়েছে!")
+                    st.rerun()
+                else: st.error("ইনভয়েস নম্বরটি লিখুন!")
 
-# ৩ নম্বর ট্যাব: নতুন ডাক্তার ও টেস্টের দাম যোগ/পরিবর্তন করার ড্রপডাউন প্যানেল
 with tab3:
     st.markdown("## ⚙️ ডায়াগনস্টিক সেন্টারের লাইভ সেটিংস ও লিস্ট প্যানেল")
-    
     col_setup1, col_setup2 = st.columns(2)
-    
     with col_setup1:
-        st.markdown("### 🩺 নতুন ডাক্তার যোগ করুন")
-        new_doc_name = st.text_input("নতুন ডাক্তারের নাম লিখুন:")
-        if st.button("➕ ডাক্তার লিস্টে নাম যোগ করুন", type="primary"):
-            if new_doc_name:
-                try:
-                    c.execute("INSERT INTO setup_doctors VALUES (?)", (new_doc_name.strip(),))
-                    conn.commit()
-                    st.success(f"'{new_doc_name}' ডাক্তার তালিকায় যুক্ত হয়েছে! অ্যাপটি রিফ্রেশ দিন।")
-                    st.rerun()
-                except: st.error("এই ডাক্তারের নাম ইতিমধ্যে তালিকায় আছে!")
-            else: st.warning("অনুগ্রহ করে নাম লিখুন।")
-            
-    with col_setup2:
-        st.markdown("### 🔬 নতুন টেস্ট যোগ অথবা ফি পরিবর্তন করুন")
-        exist_tests = ["-- নতুন টেস্ট তৈরি করুন --"] + list(test_directory.keys())
-        selected_edit_test = st.selectbox("টেস্ট সিলেক্ট করুন (দাম বদলাতে) অথবা নতুন নাম লিখুন:", exist_tests)
+        st.markdown("### 🩺 ডাক্তার তালিকা ব্যবস্থাপনা (যোগ ও পরিবর্তন)")
+        doc_mode = st.radio("অ্যাকশন সিলেক্ট করুন:", ["নতুন ডাক্তার যোগ করুন", "বিদ্যমান ডাক্তারের নাম পরিবর্তন করুন"], key="doc_mode_radio")
         
-        if selected_edit_test == "-- নতুন টেস্ট তৈরি করুন --":
-            test_input_name = st.text_input("নতুন টেস্টের নাম লিখুন:")
-            test_input_rate = st.number_input("টেস্টের ফি বা দাম (৳):", min_value=0.0, step=50.0, value=0.0)
-        else:
-            test_input_name = selected_edit_test
-            test_input_rate = st.number_input("টেস্টের পরিবর্তিত ফি বা দাম (৳):", min_value=0.0, step=50.0, value=test_directory[selected_edit_test])
-            
-        if st.button("💾 টেস্ট এবং রেট সেভ করুন", type="primary"):
-            if test_input_name:
+        if doc_mode == "নতুন ডাক্তার যোগ করুন":
+            new_doc_name = st.text_input("নতুন ডাক্তারের নাম লিখুন:")
+            if st.button("➕ ডাক্তার লিস্টে নাম যোগ করুন", type="primary"):
+                if new_doc_name:
+                    try:
+                        c.execute("INSERT INTO setup_doctors VALUES (?)", (new_doc_name.strip(),))
+                        conn.commit()
+                        st.success(f"সফলভাবে যুক্ত হয়েছে!")
+                        st.rerun()
+                    except: st.error("এই নাম ইতিমধ্যে তালিকায় আছে!")
+                else: st.warning("অনুগ্রহ করে নাম লিখুন।")
+                         else:
+                
