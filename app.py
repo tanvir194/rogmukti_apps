@@ -4,6 +4,16 @@ from datetime import datetime, timedelta
 import sqlite3
 
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="wide")
+st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="wide")
+
+# ১. থিম স্টাইলিং (রঙিন ব্যাকগ্রাউন্ড এবং বর্ডার)
+st.markdown("""
+    <style>
+    .section-box-blue { background-color: #e3f2fd; padding: 12px; border-radius: 8px; border-left: 5px solid #1e88e5; margin-bottom: 15px; }
+    .section-box-green { background-color: #e8f5e9; padding: 12px; border-radius: 8px; border-left: 5px solid #43a047; margin-bottom: 15px; }
+    .section-box-orange { background-color: #fff3e0; padding: 12px; border-radius: 8px; border-left: 5px solid #fb8c00; margin-bottom: 15px; }
+    </style>
+""", unsafe_allow_html=True)
 
 st.markdown("<h1 style='text-align: center; color: red;'>ROGMUKTI DIAGNOSTIC CENTRE</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Auliapur, Patuakhali<br>Phone: 01711-867637</p>", unsafe_allow_html=True)
@@ -44,7 +54,8 @@ except:
 tab1, tab2 = st.tabs(["📑 Billing / Cash Memo", "📊 Dashboard"])
 
 with tab1:
-    st.subheader("👤 Patient Information")
+    # ২. পেশেন্ট ও ডক্টর লিস্টে নীল কালার বক্স
+    st.markdown('<div class="section-box-blue">📢 <b>Patient Information & Doctor List (রোগী ও ডাক্তার তালিকা)</b></div>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
         patient_name = st.text_input("Patient Name:")
@@ -55,7 +66,8 @@ with tab1:
         date_today = st.date_input("Date:", datetime.now())
 
     st.divider()
-    st.subheader("🧪 Test Selection (Unlimited)")
+    # ৩. টেস্ট সিলেকশনে সবুজ কালার বক্স
+    st.markdown('<div class="section-box-green">🧪 <b>Test Selection (টেস্ট লিস্ট)</b></div>', unsafe_allow_html=True)
     selected_tests = st.multiselect("পরীক্ষাগুলো সিলেক্ট করুন:", list(test_directory.keys())[1:])
     
     total_amount = 0
@@ -70,7 +82,9 @@ with tab1:
             total_amount += price
 
     st.divider()
-    st.subheader("💰 Payment Details")
+    # ৪. পেমেন্ট সেকশনে অরেঞ্জ কালার বক্স
+    st.markdown('<div class="section-box-orange">💰 <b>Payment Details (বিল ও জমা)</b></div>', unsafe_allow_html=True)
+    
     c_dis, c_paid = st.columns(2)
     with c_dis:
         discount = st.number_input("Discount (TK)", min_value=0, value=0, step=10)
