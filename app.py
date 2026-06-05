@@ -28,100 +28,22 @@ doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam", "Dr. A. Ra
 test_directory = {
     "Select Test": 0,
     # --- HAEMATOLOGY ---
-    "CBC": 400,
-    "CBC with ESR": 600,
-    "TC.DC": 250,
-    "HB%": 250,
-    "ESR": 200,
-    "Platelet Count": 300,
-    "MP": 200,
-    "BT/CT": 350,
-    "C/E Count": 250,
+    "CBC": 400, "CBC with ESR": 600, "TC.DC": 250, "HB%": 250, "ESR": 200, "Platelet Count": 300, "MP": 200, "BT/CT": 350, "C/E Count": 250,
     
     # --- SEROLOGY ---
-    "Widal": 450,
-    "Aso Titre": 450,
-    "CRP": 450,
-    "RA/RF": 450,
-    "HBs Ag (Screen Test)": 450,
-    "TPHA": 450,
-    "VDRL": 400,
-    "Blood Group & Rh Factor": 200,
-    "Mantaux-Test (M.T)": 200,
-    "Triple Antigen": 500,
-    "HIV": 450,
-    "HCV": 500,
-    "TB (ICT)": 750,
-    "Malaria. pf/pv": 700,
-    "H. Pylori": 850,
-    "Filaria (ICT)": 750,
-    "Dengue NS1. IGG/IgM": 300,
+    "Widal": 450, "Aso Titre": 450, "CRP": 450, "RA/RF": 450, "HBs Ag (Screen Test)": 450, "TPHA": 450, "VDRL": 400, "Blood Group & Rh Factor": 200, "Mantaux-Test (M.T)": 200, "Triple Antigen": 500, "HIV": 450, "HCV": 500, "TB (ICT)": 750, "Malaria. pf/pv": 700, "H. Pylori": 850, "Filaria (ICT)": 750, "Dengue NS1. IGG/IgM": 300,
     
     # --- HORMONE PANEL ---
-    "T3": 1200,
-    "T4": 1200,
-    "FT3": 900,
-    "FT4": 900,
-    "TSH": 1100,
-    "HbA1c": 1500,
-    "Prolactin": 1200,
-    "S. IgE": 1500,
-    "S.IgE (Device Test)": 700,
+    "T3": 1200, "T4": 1200, "FT3": 900, "FT4": 900, "TSH": 1100, "HbA1c": 1500, "Prolactin": 1200, "S. IgE": 1500, "S.IgE (Device Test)": 700,
     
     # --- BIO CHEMICAL ANALYSIS ---
-    "Random Blood Sugar": 200,
-    "Fasting Blood Sugar": 200,
-    "2hr. After Breakfast (2HAB)": 200,
-    "2hr. After 75gm Glucose": 200,
-    "O.G.T.T": 500,
-    "Blood Urea": 400,
-    "Cholesterol": 350,
-    "HDL": 400,
-    "TG": 350,
-    "LDL": 300,
-    "S.GPT (ALT)": 500,
-    "S.GOT (AST)": 500,
-    "Bilirubin Total": 350,
-    "Lipid Profile": 1000,
-    "Bilirubin Direct/Indirect": 450,
-    "Serum Creatinine": 400,
-    "Uric Acid": 400,
-    "Amylase": 700,
-    "Calcium": 600,
+    "Random Blood Sugar": 200, "Fasting Blood Sugar": 200, "2hr. After Breakfast (2HAB)": 200, "2hr. After 75gm Glucose": 200, "O.G.T.T": 500, "Blood Urea": 400, "Cholesterol": 350, "HDL": 400, "TG": 350, "LDL": 300, "S.GPT (ALT)": 500, "S.GOT (AST)": 500, "Bilirubin Total": 350, "Lipid Profile": 1000, "Bilirubin Direct/Indirect": 450, "Serum Creatinine": 400, "Uric Acid": 400, "Amylase": 700, "Calcium": 600,
     
     # --- X-RAY DIGITAL ---
-    "X-Ray Chest": 500,
-    "X-Ray PNS": 500,
-    "X-Ray Maxilla": 500,
-    "X-Ray Nasopharynx": 550,
-    "X-Ray Abdomen A/P": 500,
-    "X-Ray Cervical Spine": 600,
-    "X-Ray Plane X-Ray Abdomen": 500,
-    "X-Ray Mastoid Towns View": 500,
-    "X-Ray Skull": 600,
-    "X-Ray Pelvic": 500,
-    "X-Ray Mandible B/V": 600,
-    "X-Ray KUB": 500,
-    "X-Ray D/S Spine": 600,
-    "X-Ray L/S Spine": 600,
-    "X-Ray Foot B/V": 500,
-    "X-Ray Knee B/V": 550,
-    "X-Ray Elbow B/V": 500,
-    "X-Ray Shoulder Joint B/V": 550,
-    "X-Ray Hip Joint": 500,
+    "X-Ray Chest": 500, "X-Ray PNS": 500, "X-Ray Maxilla": 500, "X-Ray Nasopharynx": 550, "X-Ray Abdomen A/P": 500, "X-Ray Cervical Spine": 600, "X-Ray Plane X-Ray Abdomen": 500, "X-Ray Mastoid Towns View": 500, "X-Ray Skull": 600, "X-Ray Pelvic": 500, "X-Ray Mandible B/V": 600, "X-Ray KUB": 500, "X-Ray D/S Spine": 600, "X-Ray L/S Spine": 600, "X-Ray Foot B/V": 500, "X-Ray Knee B/V": 550, "X-Ray Elbow B/V": 500, "X-Ray Shoulder Joint B/V": 550, "X-Ray Hip Joint": 500,
     
     # --- URINE, STOOL & ULTRASOUND ---
-    "Urine Pregnancy Test (PT)": 200,
-    "Urine R/E": 250,
-    "Stool R/E": 400,
-    "Stool OBT": 400,
-    "USG Whole Abdomen": 1000,
-    "USG Upper Abdomen": 800,
-    "USG Lower Abdomen": 800,
-    "USG KUB": 1000,
-    "USG Pregnancy Profile": 800,
-    "USG Breast": 1200,
-    "USG Color Doppler": 2500
+    "Urine Pregnancy Test (PT)": 200, "Urine R/E": 250, "Stool R/E": 400, "Stool OBT": 400, "USG Whole Abdomen": 1000, "USG Upper Abdomen": 800, "USG Lower Abdomen": 800, "USG KUB": 1000, "USG Pregnancy Profile": 800, "USG Breast": 1200, "USG Color Doppler": 2500
 }
 
 # ডাটাবেজ কানেকশন এবং নতুন referral_fee কলামসহ টেবিল তৈরি
@@ -187,23 +109,76 @@ with tab1:
             conn.commit()
             st.success(f"বিল সফলভাবে সেভ হয়েছে! ইনভয়েস নম্বর: {invoice_no}")
             
-            # রোগীর ক্যাশ মেমো বা রসিদ ভিউ
-            st.markdown("### 📄 রোগীর ক্যাশ মেমো (রসিদ)")
-            st.write(f"**Invoice No:** {invoice_no} | **Date:** {date_today.strftime('%d-%m-%Y')}")
-            st.write(f"**Patient Name:** {patient_name} | **Age:** {age} | **Phone:** {phone}")
-            st.write(f"**Referred By:** {ref_dr}")
-            st.dataframe(pd.DataFrame(test_rows), use_container_width=True)
-            st.write(f"**Total:** ৳{total_amount} | **Discount:** ৳{discount} | **Paid:** ৳{paid} | **Due:** ৳{due}")
+            # --- রোগীর ক্যাশ মেমো বা রসিদ ভিউ (ছক ও প্রফেশনাল ডিজাইন) ---
+            st.markdown("---")
+            st.markdown(f"""
+                <div style="border: 2px solid #000000; padding: 20px; background-color: #ffffff; color: #000000; font-family: 'Courier New', Courier, monospace;">
+                    <!-- হেডার সেকশন -->
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 style="color: #ff0000; margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 1px;">ROGMUKTI DIAGNOSTIC CENTRE</h1>
+                        <p style="margin: 5px 0 2px 0; font-size: 14px; font-weight: bold; color: #333333;">Mollah Market, Galachipa, Patuakhali</p>
+                        <p style="margin: 0; font-size: 13px; font-weight: bold; color: #555555;">Mobile: 01646176947</p>
+                        <div style="border-bottom: 2px double #000000; margin-top: 10px; margin-bottom: 5px;"></div>
+                        <span style="background-color: #000000; color: #ffffff; padding: 3px 15px; font-size: 14px; font-weight: bold;">CASH MEMO / MONEY RECEIPT</span>
+                    </div>
+
+                    <!-- রোগীর তথ্য ছক -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 14px;">
+                        <tr>
+                            <td style="padding: 5px; width: 18%; font-weight: bold;">Invoice No:</td>
+                            <td style="padding: 5px; width: 32%; border-bottom: 1px dotted #000;">{invoice_no}</td>
+                            <td style="padding: 5px; width: 15%; font-weight: bold; text-align: right;">Date:</td>
+                            <td style="padding: 5px; width: 35%; border-bottom: 1px dotted #000; text-align: center;">{date_today.strftime('%d-%m-%Y')}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px; font-weight: bold;">Patient Name:</td>
+                            <td style="padding: 5px; border-bottom: 1px dotted #000; font-weight: bold;">{patient_name}</td>
+                            <td style="padding: 5px; font-weight: bold; text-align: right;">Age/Sex:</td>
+                            <td style="padding: 5px; border-bottom: 1px dotted #000; text-align: center;">{age}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px; font-weight: bold;">Mobile No:</td>
+                            <td style="padding: 5px; border-bottom: 1px dotted #000;">{phone}</td>
+                            <td style="padding: 5px; font-weight: bold; text-align: right;">Ref. By:</td>
+                            <td style="padding: 5px; border-bottom: 1px dotted #000; font-weight: bold; text-align: center;">{ref_dr}</td>
+                        </tr>
+                    </table>
+                    <div style="border-bottom: 1px solid #000000; margin-bottom: 10px;"></div>
+                    <p style="margin: 0 0 8px 0; font-weight: bold; font-size: 14px;">🔬 INVESTIGATION LIST (টেস্টের বিবরণ):</p>
+                </div>
+            """, unsafe_allow_html=True)
             
-            # রসিদের নিচে দৃশ্যমান প্রিন্ট বাটন
-            st.markdown("""
+            # টেস্টের তালিকা
+            st.dataframe(pd.DataFrame(test_rows), use_container_width=True)
+            
+            # মোট বিলের নিচের ছক
+            st.markdown(f"""
+                <div style="border: 2px solid #000000; border-top: none; padding: 15px; background-color: #ffffff; color: #000000; font-family: 'Courier New', Courier, monospace;">
+                    <table style="width: 100%; font-size: 15px; font-weight: bold; border-collapse: collapse;">
+                        <tr style="border-top: 1px solid #000; border-bottom: 1px solid #000;">
+                            <td style="padding: 8px 5px; width: 25%;">Total Amount: ৳ {total_amount}</td>
+                            <td style="padding: 8px 5px; width: 25%; color: blue;">Discount: ৳ {discount}</td>
+                            <td style="padding: 8px 5px; width: 25%; color: green;">Paid Amount: ৳ {paid}</td>
+                            <td style="padding: 8px 5px; width: 25%; color: red;">Due Amount: ৳ {due}</td>
+                        </tr>
+                    </table>
+                    <div style="margin-top: 50px; display: flex; justify-content: space-between; font-size: 12px;">
+                        <p style="border-top: 1px solid #000; width: 150px; text-align: center; margin: 0;">Prepared By</p>
+                        <p style="border-top: 1px solid #000; width: 150px; text-align: center; margin: 0;">Authorized Signature</p>
+                    </div>
+                </div>
                 <br>
-                <button onclick="window.print()" style="background-color: #00E676; color: black; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%;">
+            """, unsafe_allow_html=True)
+            
+            # সবুজ প্রিন্ট বাটন
+            st.markdown("""
+                <button onclick="window.print()" style="background-color: #00E676; color: black; padding: 14px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%;">
                     🖨️ রোগীর এই রসিদটি (Cash Memo) প্রিন্ট করুন
                 </button>
+                <br><br>
             """, unsafe_allow_html=True)
 with tab2:
-    st.header("📊 দৈনিক, সাপ্তাহিক ও মাসিক ড্যাশবোর্ড")
+    st.header("📊 দৈনিক, साप्ताहिक ও মাসিক ড্যাশবোর্ড")
     try:
         df = pd.read_sql_query("SELECT * FROM bills", conn)
         if not df.empty:
