@@ -98,48 +98,73 @@ with tab1:
             
             c.execute("""INSERT OR REPLACE INTO bills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                       (invoice_no, str(date_today), patient_name, age, phone, ref_dr, total_amount, discount, paid_amount, due_amount))
-            conn.commit()
-            
-            st.success(f"✅ Invoice Saved! Invoice No: **{invoice_no}**")
-            
-            # মেমো ফরম্যাট (কোনো অভ্যন্তরীণ আইফ্রেম বাটন ছাড়া)
+                        # প্রিন্ট দেওয়ার সময় ক্যাশ মেমোর বাইরের সবকিছু লুকিয়ে ফেলার বিশেষ স্টাইলসহ HTML
             memo_html = f"""
-            <div id="print-memo-area" style="font-family: Arial; max-width: 600px; margin: auto; padding: 30px; border: 3px solid black; background: white; color: black; box-sizing: border-box;">
-                <h2 style="text-align: center; color: red; margin-bottom:5px; font-size: 24px;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
-                <p style="text-align: center; margin-top:0; font-size: 14px;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
-                <p style="text-align: center; font-size: 13px; font-weight: bold; margin: 10px 0;">Invoice No: {invoice_no}</p>
-                <hr style="border: 1px solid black;">
-                <table style="width:100%; font-size:14px; margin-bottom: 10px;">
-                    <tr><td><b>Patient Name:</b> {patient_name}</td><td style="text-align:right;"><b>Date:</b> {date_today}</td></tr>
-                    <tr><td><b>Age/Sex:</b> {age}</td><td style="text-align:right;"><b>Doctor:</b> {ref_dr}</td></tr>
-                    <tr><td><b>Phone:</b> {phone}</td><td></td></tr>
-                </table>
-                <hr style="border: 1px solid black;">
-                <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom: 15px;">
-                    <tr style="background:#f0f0f0; font-weight:bold;">
-                        <td style="padding:8px; border:1px solid #ddd; width:40px;">Sl.</td>
-                        <td style="padding:8px; border:1px solid #ddd;">Test Name</td>
-                        <td style="padding:8px; border:1px solid #ddd; text-align:right;">Price</td>
-                    </tr>
-                    {test_list_html}
-                </table>
-                <hr style="border: 1px solid black;">
-                <table style="width:100%; font-weight:bold; font-size:15px; line-height: 1.6;">
-                    <tr><td style="text-align:right; padding-right: 15px;">Total Amount:</td><td style="text-align:right; width:120px;">{total_amount} TK</td></tr>
-                    <tr><td style="text-align:right; padding-right: 15px; color:red;">Discount:</td><td style="text-align:right; color:red;">{discount} TK</td></tr>
-                    <tr><td style="text-align:right; padding-right: 15px; color:blue;">Total Paid:</td><td style="text-align:right; color:blue;">{paid_amount} TK</td></tr>
-                    <tr style="font-size:17px; color:{'red' if due_amount > 0 else 'green'};">
-                        <td style="text-align:right; padding-right: 15px;">Due (বাকি):</td>
-                        <td style="text-align:right;">{due_amount} TK</td>
-                    </tr>
-                </table>
-                <p style="text-align:center; margin-top:25px; font-weight:bold; font-size:14px;">Thank You!</p>
-            </div>
+            <html>
+            <head>
+                <style>
+                    @media print {{
+                        body * {{
+                            visibility: hidden;
+                        }}
+                        #print-memo-area, #print-memo-area * {{
+                            visibility: visible;
+                        }}
+                        #print-memo-area {{
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            width: 100%;
+                            border: none !important;
+                        }}
+                        .no-print {{
+                            display: none !important;
+                        }}
+                    }}
+                </style>
+            </head>
+            <body>
+                <div id="print-memo-area" style="font-family: Arial; max-width: 580px; margin: auto; padding: 25px; border: 3px solid black; background: white; color: black; box-sizing: border-box;">
+                    <h2 style="text-align: center; color: red; margin-bottom:5px; font-size: 24px;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
+                    <p style="text-align: center; margin-top:0; font-size: 14px;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
+                    <p style="text-align: center; font-size: 13px; font-weight: bold; margin: 10px 0;">Invoice No: {invoice_no}</p>
+                    <hr style="border: 1px solid black;">
+                    <table style="width:100%; font-size:14px; margin-bottom: 10px;">
+                        <tr><td><b>Patient Name:</b> {patient_name}</td><td style="text-align:right;"><b>Date:</b> {date_today}</td></tr>
+                        <tr><td><b>Age/Sex:</b> {age}</td><td style="text-align:right;"><b>Doctor:</b> {ref_dr}</td></tr>
+                        <tr><td><b>Phone:</b> {phone}</td><td></td></tr>
+                    </table>
+                    <hr style="border: 1px solid black;">
+                    <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom: 15px;">
+                        <tr style="background:#f0f0f0; font-weight:bold;">
+                            <td style="padding:8px; border:1px solid #ddd; width:40px;">Sl.</td>
+                            <td style="padding:8px; border:1px solid #ddd;">Test Name</td>
+                            <td style="padding:8px; border:1px solid #ddd; text-align:right;">Price</td>
+                        </tr>
+                        {test_list_html}
+                    </table>
+                    <hr style="border: 1px solid black;">
+                    <table style="width:100%; font-weight:bold; font-size:15px; line-height: 1.6;">
+                        <tr><td style="text-align:right; padding-right: 15px;">Total Amount:</td><td style="text-align:right; width:120px;">{total_amount} TK</td></tr>
+                        <tr><td style="text-align:right; padding-right: 15px; color:red;">Discount:</td><td style="text-align:right; color:red;">{discount} TK</td></tr>
+                        <tr><td style="text-align:right; padding-right: 15px; color:blue;">Total Paid:</td><td style="text-align:right; color:blue;">{paid_amount} TK</td></tr>
+                        <tr style="font-size:17px; color:{'red' if due_amount > 0 else 'green'};">
+                            <td style="text-align:right; padding-right: 15px;">Due (বাকি):</td>
+                            <td style="text-align:right;">{due_amount} TK</td>
+                        </tr>
+                    </table>
+                    <p style="text-align:center; margin-top:25px; font-weight:bold; font-size:14px;">Thank You!</p>
+                </div>
+                
+                <div class="no-print" style="margin-top: 25px; text-align: center; max-width: 580px; margin-left: auto; margin-right: auto;">
+                    <button onclick="window.print()" style="background-color:#28a745; color:white; padding:14px 20px; font-size:18px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; width:100%;">🖨️ Click to Print Cash Memo</button>
+                </div>
+            </body>
+            </html>
             """
-            calculated_height = 420 + (len(selected_tests) * 35)
+            calculated_height = 490 + (len(selected_tests) * 35)
             st.components.v1.html(memo_html, height=calculated_height, scrolling=True)
             
-            # গ্লোবাল প্রিন্ট বাটন যা ব্রাউজারের মেইন উইন্ডোকে প্রিন্ট ট্রিগার করবে
             st.components.v1.html("""
                 <script>
                 function triggerPrint() {
