@@ -36,7 +36,7 @@ c.execute('''CREATE TABLE IF NOT EXISTS bills
               doctor TEXT, total REAL, discount REAL, paid REAL, due REAL)''')
 conn.commit()
 
-# ডাটাবেসে পুরানো টেবিল থাকলে due কলাম চেক ও এড করা
+# ডাটাবেসে due কলাম চেক ও এড করা
 try:
     c.execute("ALTER TABLE bills ADD COLUMN due REAL DEFAULT 0")
     conn.commit()
@@ -59,7 +59,6 @@ with tab1:
     st.divider()
     st.subheader("🧪 Test Selection (Unlimited)")
     
-    # মাল্টিসিলেক্ট বক্স - একসাথে যত খুশি টেস্ট নেওয়া যাবে
     selected_tests = st.multiselect("পরীক্ষাগুলো সিলেক্ট করুন:", list(test_directory.keys())[1:])
     
     total_amount = 0
@@ -96,7 +95,6 @@ with tab1:
         if patient_name and ref_dr != "Select Doctor" and selected_tests:
             today_str = datetime.now().strftime("%Y%m%d")
             
-            # ইনভয়েস নম্বর গণনা
             c.execute("SELECT COUNT(*) FROM bills")
             count = c.fetchone()[0]
             invoice_no = f"ROG-{today_str}-{count+1:03d}"
@@ -195,3 +193,5 @@ with tab2:
         selected_doc = st.selectbox("Select Doctor for Monthly Report", doctors_list[1:], key="report_doc_select")
         
         if selected_doc:
+            doc_df = filtered_df[filtered_df['Doctor'] == selected_doc]
+            if not doc_df.empty:
