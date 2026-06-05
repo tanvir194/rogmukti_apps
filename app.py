@@ -68,22 +68,10 @@ test_directory = {
     "USG of Lower Abdomen": 750, "USG of Pelvis": 700, "USG of KUB": 800,
     "X-Ray Chest P/A View": 500, "ECG": 400
 }
-
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
-    c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS bills
-             (invoice_no TEXT PRIMARY KEY, 
-              date TEXT, 
-              patient TEXT, 
-              try:
-    c.execute("ALTER TABLE bills ADD COLUMN due REAL DEFAULT 0")
-    ...
-tab1, tab2 = st.tabs(["📑 Billing / Cash Memo", "📊 Dashboard"])
-
-with tab1:
-    st.markdown('<div class="section-box-blue">📢 <b>Patient Information & Doctor List (রোগী ও ডাক্তার তালিকা)</b></div>', unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
+c.execute('''CREATE TABLE IF NOT EXISTS bills (invoice_no TEXT PRIMARY KEY, date TEXT, patient TEXT, age TEXT, phone TEXT, doctor TEXT, total REAL, discount REAL, paid REAL, due REAL, referral_fee REAL)''')
+conn.commit()
     with col1:
         patient_name = st.text_input("Patient Name:")
         age = st.text_input("Age:")
