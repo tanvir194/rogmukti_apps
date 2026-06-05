@@ -110,20 +110,20 @@ with tab1:
             st.success(f"বিল সফলভাবে সেভ হয়েছে! ইনভয়েস নম্বর: {invoice_no}")
             
             # --- রোগীর ক্যাশ মেমো বা রসিদ ভিউ (ছক ও প্রফেশনাল ডিজাইন) ---
-            st.markdown("---")
+                      # ১১৪ নম্বর লাইন থেকে শুরু করে এটি পেস্ট করুন:
             st.html(f"""
                 <div style="border: 2px solid #000000; padding: 20px; background-color: #ffffff; color: #000000; font-family: 'Courier New', Courier, monospace;">
                     <!-- হেডার সেকশন -->
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #ff0000; margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 1px;">ROGMUKTI DIAGNOSTIC CENTRE</h1>
+                        <h1 style="color: #ff0000; margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 1px;">ROGMUKTI DIAGNOSTIC CENTRE</h1>
                         <p style="margin: 5px 0 2px 0; font-size: 14px; font-weight: bold; color: #333333;">Mollah Market, Galachipa, Patuakhali</p>
                         <p style="margin: 0; font-size: 13px; font-weight: bold; color: #555555;">Mobile: 01646176947</p>
                         <div style="border-bottom: 2px double #000000; margin-top: 10px; margin-bottom: 5px;"></div>
-                        <span style="background-color: #000000; color: #ffffff; padding: 3px 15px; font-size: 14px; font-weight: bold;">CASH MEMO / MONEY RECEIPT</span>
+                        <span style="background-color: #000000; color: #ffffff; padding: 3px 15px; font-size: 13px; font-weight: bold;">CASH MEMO / MONEY RECEIPT</span>
                     </div>
 
                     <!-- রোগীর তথ্য ছক -->
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 14px;">
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 14px; color: #000000;">
                         <tr>
                             <td style="padding: 5px; width: 18%; font-weight: bold;">Invoice No:</td>
                             <td style="padding: 5px; width: 32%; border-bottom: 1px dotted #000;">{invoice_no}</td>
@@ -140,6 +140,14 @@ with tab1:
                             <td style="padding: 5px; font-weight: bold;">Mobile No:</td>
                             <td style="padding: 5px; border-bottom: 1px dotted #000;">{phone}</td>
                             <td style="padding: 5px; font-weight: bold; text-align: right;">Ref. By:</td>
+                            <td style="padding: 5px; border-bottom: 1px dotted #000; font-weight: bold; text-align: center;">{ref_dr}</td>
+                        </tr>
+                    </table>
+                    <div style="border-bottom: 1px solid #000000; margin-bottom: 10px;"></div>
+                    <p style="margin: 0 0 8px 0; font-weight: bold; font-size: 14px;">🔬 INVESTIGATION LIST (টেস্টের বিবরণ):</p>
+                </div>
+            """)
+            <td style="padding: 5px; font-weight: bold; text-align: right;">Ref. By:</td>
                             <td style="padding: 5px; border-bottom: 1px dotted #000; font-weight: bold; text-align: center;">{ref_dr}</td>
                         </tr>
                     </table>
