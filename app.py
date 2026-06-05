@@ -10,15 +10,42 @@ st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Bazar, Aul
 
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam RMP", "DR. Abdur Rahman D M F", "DR. Moshiur Rahman MBBS BCS FCPS"]
 
+# বর্ধিত ও বিস্তারিত টেস্ট লিস্ট ও প্রাইস
 test_directory = {
     "Select Test": 0,
+    # --- Hematology (রক্ত রোগ ও সাধারণ পরীক্ষা) ---
     "(CBC) + ESR": 600, "CBC": 350, "ESR": 250, "Platelet Count": 300,
-    "MP": 500, "BT/CT": 350, "Blood Group & Rh": 200,
-    "Random Blood Sugar": 200, "Fasting Blood Sugar": 200, "HbA1c": 1500,
-    "T3": 1200, "T4": 1200, "TSH": 1100,
-    "Lipid Profile": 1000, "USG of Whole Abdomen": 800,
-    "USG Lower Abdomen": 750, "USG Pelvis": 700, "USG KUB": 750,
-    "X-Ray Chest": 500, "ECG": 300, "Urine R/E": 250, "Stool R/E": 400
+    "MP (Malaria Parasite)": 500, "BT/CT": 350, "Blood Group & Rh": 200,
+    "Hemoglobin (Hb%)": 200, "PBF (Peripheral Blood Film)": 600,
+    
+    # --- Biochemistry & Diabetes (বায়োকেমিস্ট্রি ও ডায়াবেটিস) ---
+    "Random Blood Sugar (RBS)": 200, "Fasting Blood Sugar (FBS)": 200, 
+    "2 Hours After Breakfast (2HABF)": 200, "HbA1c": 1200,
+    "Serum Creatinine (কিডনি পরীক্ষা)": 400, "Serum Urea": 400, "Serum Uric Acid": 450,
+    "Lipid Profile (রক্তের চর্বি)": 1000, "Serum Cholesterol": 300,
+    "Serum Bilirubin (জন্ডিস পরীক্ষা)": 300, "SGPT (ALT)": 450, "SGOT (AST)": 450,
+    "Serum Alkaline Phosphatase": 500, "Serum Calcium": 600,
+    
+    # --- Serology & Immunology (হরমোন ও ইনফেকশন) ---
+    "TSH": 800, "T3": 900, "T4": 900, "FT4 (Free T4)": 1000,
+    "HBsAg (Hepatitis B Screen)": 400, "Widal Test (টাইফয়েড)": 500, 
+    "Febrile Antigen": 800, "ASO Titre": 600, "RA Test / RF Factor": 600, 
+    "CRP (C-Reactive Protein)": 600, "Dengue NS1 Antigen": 700, 
+    "Dengue IgG/IgM": 800, "Troponin-I": 1200,
+    
+    # --- Urine & Stool (মূত্র ও মল পরীক্ষা) ---
+    "Urine R/E (Routine Exam)": 250, "Urine Pregnancy Test": 300,
+    "Stool R/E": 300, "Stool OBE": 350,
+    
+    # --- Ultrasonography (ইউএসজি) ---
+    "USG of Whole Abdomen": 1000, "USG of Upper Abdomen": 800, 
+    "USG of Lower Abdomen": 750, "USG of Pelvis": 700, 
+    "USG of KUB (Kidney, Ureter, Bladder)": 800, "USG of Pregnancy/Obs": 700,
+    
+    # --- X-Ray & ECG (এক্স-রে ও ইসিজি) ---
+    "X-Ray Chest P/A View": 500, "X-Ray Chest OBL View": 550,
+    "X-Ray Lumbar Spine B/V": 800, "X-Ray Cervical Spine B/V": 800,
+    "ECG (Electrocardiogram)": 400
 }
 
 # SQLite ডাটাবেস
@@ -175,17 +202,4 @@ with tab2:
             if not doc_df.empty:
                 doc_total = doc_df['Total'].sum()
                 referral_fee = doc_total * 0.30
-                
-                st.metric(f"Total Business for {selected_doc}", f"৳ {doc_total:,.0f}")
-                st.metric(f"Total Referral Fee (30%)", f"৳ {referral_fee:,.0f}")
-                
-                st.write(f"### 📋 Statement ({start_date} to {end_date})")
-                st.dataframe(doc_df[["Date", "Patient", "Total", "Discount", "Paid"]])
-                
-                # ব্রাউজারের ডিফল্ট প্রিন্ট ব্যবহার করে পুরো পেজ প্রিন্ট করার সহজ বাটন
-                st.markdown('<button onclick="window.print()" style="background:#007bff;color:white;padding:12px 25px;font-size:16px;border:none;border-radius:5px;width:100%;font-weight:bold;cursor:pointer;margin-top:15px;">🖨️ Print This Statement / Save as PDF</button>', unsafe_allow_html=True)
-            else:
-                st.info("No data found for this doctor in the selected period.")
 
-st.caption("Developed for Rogmukti Diagnostic")
-                
