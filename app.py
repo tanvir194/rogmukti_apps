@@ -177,49 +177,25 @@ with tab1:
                 </button>
                 <br><br>
             """, unsafe_allow_html=True)
-            with tab2: st.header("📊 দৈনিক, সাপ্তাহিক ও মাসিক ড্যাশবোর্ড")
-                try:
-        df = pd.read_sql_query("SELECT * FROM bills", conn)
-        if not df.empty:
-            df['date'] = pd.to_datetime(df['date'], errors='coerce')
-            filter_option = st.selectbox("হিসাব দেখার সময় নির্বাচন করুন", ["আজ", "এই সপ্তাহ", "এই মাস", "সব সময়"], key="dashboard_time_filter_final")
-            today = datetime.today()
-            
-            if filter_option == "আজ":
-                filtered_df = df[df['date'].dt.date == today.date()]
-            elif filter_option == "এই সপ্তাহ":
-                start_of_week = today - timedelta(days=today.weekday())
-                filtered_df = df[df['date'] >= start_of_week]
-            elif filter_option == "এই মাস":
-                filtered_df = df[(df['date'].dt.month == today.month) & (df['date'].dt.year == today.year)]
-            else:
-                filtered_df = df
-                
-            # কাউন্টার বক্স
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("মোট কালেকশন", f"৳ {filtered_df['total'].sum() if 'total' in filtered_df else 0:,.2f}")
-            c2.metric("মোট ডিসকাউন্ট", f"৳ {filtered_df['discount'].sum() if 'discount' in filtered_df else 0:,.2f}")
-            c3.metric("মোট ডিউ (বাকি)", f"৳ {filtered_df['due'].sum() if 'due' in filtered_df else 0:,.2f}")
-            ref_sum = filtered_df['referral_fee'].sum() if 'referral_fee' in filtered_df else 0
-            c4.metric("মোট রেফারেল ফি (৩০%)", f"৳ {ref_sum:,.2f}")
-            
-            # রিপোর্ট টেবিল
-            st.subheader("👨‍⚕️ ডাক্তার ভিত্তিক রেফারেল রিপোর্ট (নামসহ)")
-            if not filtered_df.empty:
-                available_cols = [col for col in ['doctor', 'patient', 'invoice_no', 'total', 'referral_fee', 'date'] if col in filtered_df]
-                st.dataframe(filtered_df[available_cols], use_container_width=True)
-                
-                # ড্যাশবোর্ড প্রিন্ট বাটন
-                st.markdown("""
-                    <br>
-                    <button onclick="window.print()" style="background-color: #4CAF50; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold;">
-                        🖨️ এই ড্যাশবোর্ড রিপোর্টটি প্রিন্ট করুন
-                    </button>
-                """, unsafe_allow_html=True)
-            else:
-                st.warning("নির্বাচিত সময়ে কোনো ডাটা পাওয়া যায়নি।")
-        else:
-            st.info("ডেটাবেজে এখনো কোনো বিলের রেকর্ড নেই।")
-    except Exception as e:
-        st.info("নতুন ডাটাবেজ তৈরি হচ্ছে। একটি নতুন বিল সেভ করলেই ড্যাশবোর্ড সচল হয়ে যাবে।")
+            with tab2:
+    st.header("📊 দৈনিক, সাপ্তাহিক ও মাসিক ড্যাশবোর্ড")
+    df = pd.read_sql_query("SELECT * FROM bills", conn) if sqlite3.connect('rogmukti.db').cursor().execute("SELECT name FROM sqlite_master WHERE type='table' AND name='bills'").fetchone() else pd.DataFrame()
+    if not df.empty:
+        df['date'] = pd.to_datetime(df['date'], errors='coerce')
+        filter_option = st.selectbox("হিসাব দেখার সময় নির্বাচন করুন", ["সব সময়", "আজ", "এই সপ্তাহ", "এই মাস"], key="dashboard_time_filter_final")
+        today = datetime.today()
+        if filter_option == "আজ": filtered_df = df[df['date'].dt.date == today.date()]
+        elif filter_option == "এই সপ্তাহ": filtered_df = df[df['date'] >= (today - timedelta(days=today.weekday()))]
+        elif filter_option == "এই মাস": filtered_df = df[(df['date'].dt.month == today.month) & (df['date'].dt.year == today.year)]
+        else: filtered_df = df
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("মোট কালেকশন", f"৳ {filtered_df['total'].sum() if 'total' in filtered_df else 0:,.2f}")
+        c2.metric("মোট ডিসকাউন্ট", f"৳ {filtered_df['discount'].sum() if 'discount' in filtered_df else 0:,.2f}")
+        c3.metric("মোট ডিউ (বাকি)", f"৳ {filtered_df['due'].sum() if 'due' in filtered_df else 0:,.2f}")
+        c4.metric("মোট রেফারেল ফি (৩০%)", f"৳ {filtered_df['referral_fee'].sum() if 'referral_fee' in filtered_df else 0:,.2f}")
+        st.subheader("👨‍⚕️ ডাক্তার ভিত্তিক রেফারেল রিপোর্ট (নামসহ)")
+        available_cols = [col for col in ['doctor', 'patient', 'invoice_no', 'total', 'referral_fee', 'date'] if col in filtered_df]
+        st.dataframe(filtered_df[available_cols], use_container_width=True)
+        st.markdown('<button onclick="window.print()" style="background-color: #4CAF50; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold;">🖨️ এই ড্যাশবোর্ড রিপোর্টটি প্রিন্ট করুন</button>', unsafe_allow_html=True)
+    else: st.info("ডেটাবেজে এখনো কোনো বিলের রেকর্ড নেই। একটি নতুন বিল সেভ করলেই ড্যাশবোর্ড সচল হয়ে যাবে।")
         
