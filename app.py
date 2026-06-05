@@ -176,18 +176,16 @@ with tab2:
                 doc_total = doc_df['Total'].sum()
                 referral_fee = doc_total * 0.30
                 
-                st.metric(f"Referral Fee for {selected_doc}", f"৳ {referral_fee:,.0f}")
-                st.dataframe(doc_df)
+                st.metric(f"Total Business for {selected_doc}", f"৳ {doc_total:,.0f}")
+                st.metric(f"Total Referral Fee (30%)", f"৳ {referral_fee:,.0f}")
                 
-                doc_rows = ""
-                for idx, row in doc_df.iterrows():
-                    doc_rows += f"<tr><td style='padding:8px; border: 1px solid #ddd;'>{row['Date']}</td><td style='padding:8px; border: 1px solid #ddd;'>{row['Patient']}</td><td style='padding:8px; text-align:right; border: 1px solid #ddd;'>{row['Total']} TK</td></tr>"
+                st.write(f"### 📋 Statement ({start_date} to {end_date})")
+                st.dataframe(doc_df[["Date", "Patient", "Total", "Discount", "Paid"]])
                 
-                report_html = f"""
-                <div style="font-family: Arial; max-width: 700px; margin: auto; padding: 30px; border: 2px solid #000; background: white; color: black;">
-                    <h2 style="text-align: center; color: red; margin-bottom:5px;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
-                    <p style="text-align: center; margin-top:0;">Mollah Bazar, Auliapur, Patuakhali | 01711-867637</p>
-                    <h3 style="text-align: center; background: #f0f0f0; padding: 5px;">Doctor Referral Statement</h3>
-                    <table style="width:100%; font-size:15px; margin-bottom: 15px;">
-                        <tr><td><b>Doctor Name:</b> {selected_doc}</td><td style="text-align:right;"><b>Period:</b> {start_date} to {end_date}</td></tr>
-                    </table>
+                # ব্রাউজারের ডিফল্ট প্রিন্ট ব্যবহার করে পুরো পেজ প্রিন্ট করার সহজ বাটন
+                st.markdown('<button onclick="window.print()" style="background:#007bff;color:white;padding:12px 25px;font-size:16px;border:none;border-radius:5px;width:100%;font-weight:bold;cursor:pointer;margin-top:15px;">🖨️ Print This Statement / Save as PDF</button>', unsafe_allow_html=True)
+            else:
+                st.info("No data found for this doctor in the selected period.")
+
+st.caption("Developed for Rogmukti Diagnostic")
+                
