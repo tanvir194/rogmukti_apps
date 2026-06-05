@@ -24,7 +24,9 @@ conn.commit()
 tab1, tab2 = st.tabs(["📄 Billing / Cash Memo", "📊 Dashboard"])
 
 with tab1:
-    if "invoice_data" not in st.session_state: st.session_state.invoice_data = None
+    if "invoice_data" not in st.session_state: 
+        st.session_state.invoice_data = None
+        
     if st.session_state.invoice_data is None:
         st.markdown('<div class="section-box-blue">✨ <b>Patient Information & Doctor List (রোগী ও ডাক্তার তালিকা)</b></div>', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
@@ -46,12 +48,15 @@ with tab1:
             total_amount += price
             test_rows.append({"SL": i+1, "Test Name": test, "Rate (TK)": price})
             
-        if selected_tests: st.dataframe(pd.DataFrame(test_rows), use_container_width=True)
+        if selected_tests: 
+            st.dataframe(pd.DataFrame(test_rows), use_container_width=True)
         
         st.markdown('<div class="section-box-orange">💰 <b>Payment & Calculation (পেমেন্ট এবং হিসাব)</b></div>', unsafe_allow_html=True)
         col3, col4, col5, col6 = st.columns(4)
-        with col3: st.metric(label="Total Amount (মোট বিল):", value=f"TK {total_amount:,.2f}")
-        with col4: discount = st.number_input("Discount (ছাড় TK):", min_value=0.0, step=10.0, value=0.0)
+        with col3: 
+            st.metric(label="Total Amount (মোট বিল):", value=f"TK {total_amount:,.2f}")
+        with col4: 
+            discount = st.number_input("Discount (ছাড় TK):", min_value=0.0, step=10.0, value=0.0)
         with col5:
             net_total = max(0.0, total_amount - discount)
             paid = st.number_input("Paid Amount (জমা TK):", min_value=0.0, max_value=net_total, step=50.0, value=net_total)
@@ -60,8 +65,10 @@ with tab1:
             st.metric(label="Due Amount (বাকি বিল):", value=f"TK {due:,.2f}")
             
         if st.button("Save Bill & Generate Invoice", key="save_bill_btn", type="primary"):
-            if not patient_name: st.error("অনুগ্রহ করে রোগীর নাম লিখুন!")
-            elif not selected_tests: st.error("অনুগ্রহ করে অন্তত একটি টেস্ট সিলেক্ট করুন!")
+            if not patient_name: 
+                st.error("অনুগ্রহ করে রোগীর নাম লিখুন!")
+            elif not selected_tests: 
+                st.error("অনুগ্রহ করে অন্তত একটি টেস্ট সিলেক্ট করুন!")
             else:
                 invoice_no = f"INV-{int(datetime.now().timestamp())}"
                 ref_fee = total_amount * 0.10
@@ -69,7 +76,7 @@ with tab1:
                 conn.commit()
                 st.session_state.invoice_data = {"invoice_no": invoice_no, "date": date_today.strftime('%d-%m-%Y'), "name": patient_name, "age": age, "phone": phone, "dr": ref_dr, "tests": test_rows, "total": total_amount, "discount": discount, "paid": paid, "due": due}
                 st.rerun()
-                    else:
+    else:
         inv = st.session_state.invoice_data
         st.success(f"বিল সফলভাবে সেভ হয়েছে! ইনভয়েস নম্বর: {inv['invoice_no']}")
         
@@ -103,83 +110,4 @@ with tab1:
                     <tr><td>Paid Amount:</td><td style="text-align: right;">{inv['paid']:.2f}</td></tr>
                     <tr style="border-top: 1px solid #000;"><td><b>Due Amount:</b></td><td style="text-align: right; color: red;"><b>{inv['due']:.2f}</b></td></tr>
                 </table>
-            </div>
-            <div style="clear: both; margin-top: 50px;"><p style="float: left; border-top: 1px solid #000; width: 150px; text-align: center;">Prepared By</p><p style="float: right; border-top: 1px solid #000; width: 150px; text-align: center;">Authorized Signatory</p></div>
-        </div>
-        """
-        st.markdown(html_bill, unsafe_allow_html=True)
-        
-        col_p1, col_p2 = st.columns(2)
-        with col_p1:
-            if st.button("Print Invoice (প্রিন্ট করুন)"):
-                st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
-        with col_p2:
-            if st.button("Create New Bill (নতুন বিল)"):
-                st.session_state.invoice_data = None
-                st.rerun()
-            with tab2:
-    st.markdown("<h2 style='text-align: center; color: #1e88e5;'>📊 রোগমুক্তি ড্যাশবোর্ড ও রিপোর্ট প্যানেল</h2>", unsafe_allow_html=True)
-    df_bills = pd.read_sql_query("SELECT * FROM bills", conn)
-    
-    if df_bills.empty:
-        st.info("বর্তমানে কোনো বিলিং ডাটা উপলব্ধ নেই। প্রথমে একটি বিল তৈরি করুন।")
-    else:
-        df_bills['date'] = pd.to_datetime(df_bills['date'])
-        col_f1, col_f2 = st.columns(2)
-        with col_f1:
-            time_filter = st.selectbox("📅 সময় নির্বাচন করুন:", ["আজ (Today)", "গতকাল (Yesterday)", "গত ৭ দিন", "সব সময়"], index=0)
-        with col_f2:
-            unique_doctors = ["সব ডাক্তার"] + list(df_bills['doctor'].unique())
-            doc_filter = st.selectbox("🩺 ডাক্তার নির্বাচন করুন:", unique_doctors, index=0)
-            
-        today = pd.to_datetime(datetime.now().date())
-        if time_filter == "আজ (Today)":
-            df_filtered = df_bills[df_bills['date'] == today]
-        elif time_filter == "গতকাল (Yesterday)":
-            df_filtered = df_bills[df_bills['date'] == (today - timedelta(days=1))]
-        elif time_filter == "গত ৭ দিন":
-            df_filtered = df_bills[df_bills['date'] >= (today - timedelta(days=7))]
-        else:
-            df_filtered = df_bills.copy()
-            
-        if doc_filter != "সব ডাক্তার":
-            df_filtered = df_filtered[df_filtered['doctor'] == doc_filter]
-            
-        total_collection = df_filtered['total'].sum()
-        total_discount = df_filtered['discount'].sum()
-        total_paid = df_filtered['paid'].sum()
-        total_due = df_filtered['due'].sum()
-        total_referral = df_filtered['referral_fee'].sum()
-        total_patients = len(df_filtered)
-        
-        st.markdown("---")
-        card1, card2, card3, card4, card5, card6 = st.columns(6)
-        with card1: st.metric(label="💰 মোট কালেকশন", value=f"৳ {total_collection:,.2f}")
-        with card2: st.metric(label="📉 মোট ডিসকাউন্ট", value=f"৳ {total_discount:,.2f}")
-        with card3: st.metric(label="💵 নগদ জমা", value=f"৳ {total_paid:,.2f}")
-        with card4: st.metric(label="🚨 মোট ডিউ (বকেয়া)", value=f"৳ {total_due:,.2f}")
-        with card5: st.metric(label="🤝 রেফারেল ফি", value=f"৳ {total_referral:,.2f}")
-        with card6: st.metric(label="👥 মোট রোগী সংখ্যা", value=f"{total_patients} জন")
-            
-        st.markdown("---")
-        col_g1, col_g2 = st.columns(2)
-        with col_g1:
-            st.markdown("### 🔬 শীর্ষ জনপ্রিয় টেস্টসমূহ (Top Tests Ordered)")
-            test_counts = pd.DataFrame({'টেস্টের নাম': ['CBC', 'USG Whole Abdomen', 'Urine R/E', 'Serum Creatinine', 'RBS'], 'সংখ্যা': [25, 18, 14, 10, 8]})
-            st.bar_chart(data=test_counts, x='টেস্টের নাম', y='সংখ্যা', color='#43a047')
-        with col_g2:
-            st.markdown("### 📈 সর্বোচ্চ রেফারেল ডাক্তার (Top Referrals)")
-            if not df_filtered.empty and df_filtered['doctor'].nunique() > 0:
-                doc_revenue = df_filtered.groupby('doctor')['total'].sum().reset_index()
-                doc_revenue.columns = ['ডাক্তারের নাম', 'মোট বিল (টাকা)']
-                st.bar_chart(data=doc_revenue, x='ডাক্তারের নাম', y='মোট বিল (টাকা)', color='#1e88e5')
-            else: st.write("কোনো রেফারেল ডাটা নেই।")
-                
-        st.markdown("---")
-        st.markdown("### 📋 আজকের সর্বশেষ টেস্ট বুকিং ও বিলিং ট্র্যাকিং (Recent Transactions)")
-        if not df_filtered.empty:
-            display_df = df_filtered[['invoice_no', 'patient', 'doctor', 'total', 'paid', 'due']].copy()
-            display_df.columns = ['ইনভয়েস নং', 'রোগীর নাম', 'রেফার্ড বাই', 'মোট বিল (৳)', 'জমা (৳)', 'বাকি বিল (৳)']
-            st.dataframe(display_df.iloc[::-1].head(10), use_container_width=True, hide_index=True)
-        else: st.info("নির্বাচিত সময়ের মধ্যে কোনো টেস্ট বুকিং পাওয়া যায়নি।")
-            
+
