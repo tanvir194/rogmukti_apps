@@ -123,30 +123,27 @@ with tab1:
             if st.button("Create New Bill (নতুন বিল)"):
                 st.session_state.invoice_data = None
                 st.rerun()
-        with tab2:
+            with tab2:
     st.markdown("<h2 style='text-align: center; color: #1e88e5;'>📊 রোগমুক্তি ড্যাশবোর্ড ও রিপোর্ট প্যানেল</h2>", unsafe_allow_html=True)
     df_bills = pd.read_sql_query("SELECT * FROM bills", conn)
     
     if df_bills.empty:
         st.info("বর্তমানে কোনো বিলিং ডাটা উপলব্ধ নেই। প্রথমে একটি বিল তৈরি করুন।")
     else:
-        # ডাটাবেজের ডেট ফরম্যাট রূপান্তর
         df_bills['date'] = pd.to_datetime(df_bills['date']).dt.date
         
-        # সার্চ ইঞ্জিন ও ফিল্টার লেআউট (৩টি কলাম)
+        # সার্চ ইঞ্জিন ও ফিল্টার সেকশন (৩টি কলামে আলাদা করা)
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
-            time_filter = st.selectbox("📅 সময় ফিল্টার:", ["আজ (Today)", "গতকাল (Yesterday)", "গত ৭ দিন", "কাস্টম তারিখ সিলেক্ট", "সব সময়"], index=0)
+            time_filter = st.selectbox("📅 সময় ফিল্টার করুন:", ["আজ (Today)", "গতকাল (Yesterday)", "গত ৭ দিন", "কাস্টম তারিখ সিলেক্ট", "সব সময়"], index=0)
         with col_f2:
-            # নির্দিষ্ট তারিখ সার্চ করার ইঞ্জিন
-            search_date = st.date_input("🔍 তারিখ দিয়ে খুঁজুন:", datetime.now().date())
+            search_date = st.date_input("🔍 তারিখ দিয়ে সার্চ করুন:", datetime.now().date())
         with col_f3:
             unique_doctors = ["সব ডাক্তার"] + list(df_bills['doctor'].unique())
-            doc_filter = st.selectbox("🩺 ডাক্তার ফিল্টার:", unique_doctors, index=0)
+            doc_filter = st.selectbox("🩺 ডাক্তার ফিল্টার করুন:", unique_doctors, index=0)
             
         today = datetime.now().date()
         
-        # ক্যালেন্ডার ও সার্চ ইঞ্জিন ডাটা লজিক
         if time_filter == "আজ (Today)":
             df_filtered = df_bills[df_bills['date'] == today]
         elif time_filter == "গতকাল (Yesterday)":
@@ -161,7 +158,6 @@ with tab1:
         if doc_filter != "সব ডাক্তার":
             df_filtered = df_filtered[df_filtered['doctor'] == doc_filter]
             
-        # সঠিক লাইভ হিসাব এগ্রিগেশন
         total_collection = df_filtered['total'].sum()
         total_discount = df_filtered['discount'].sum()
         total_paid = df_filtered['paid'].sum()
@@ -181,8 +177,7 @@ with tab1:
         st.markdown("---")
         col_g1, col_g2 = st.columns(2)
         with col_g1:
-            st.markdown("### 🔬 শীর্ষ আয়ের টেস্ট অ্যানালিটিক্স")
-            # ডাটাবেজ থেকে রিয়েল লাইভ ডাটা জেনারেট করে চার্ট তৈরি
+            st.markdown("### 🔬 শীর্ষ আয়ের টেস্ট প্যানেল")
             if not df_filtered.empty:
                 test_summary = pd.DataFrame({
                     'টেস্টের নাম': ['CBC প্যানেল', 'USG হোল অ্যাবডোমেন', 'ইউরিন R/E', 'সেরাম ক্রিয়েটিনিন', 'RBS টেস্ট'],
@@ -190,7 +185,7 @@ with tab1:
                 })
                 st.bar_chart(data=test_summary, x='টেস্টের নাম', y='মোট আয় (৳)', color='#43a047')
             else:
-                st.write("চার্ট দেখানোর জন্য পর্যাপ্ত ডাটা নেই।")
+                st.write("চার্ট দেখানোর জন্য কোনো ডাটা নেই।")
                 
         with col_g2:
             st.markdown("### 📈 সর্বোচ্চ রেফারেল ডাক্তার (Top Referrals)")
@@ -209,4 +204,4 @@ with tab1:
             st.dataframe(display_df.iloc[::-1].head(10), use_container_width=True, hide_index=True)
         else: 
             st.info("নির্বাচিত সময়ের মধ্যে কোনো টেস্ট বুকিং পাওয়া যায়নি।")
-        
+            
