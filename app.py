@@ -4,7 +4,8 @@ st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", la
 st.markdown("<style>.section-box-blue { background-color: #f1f8ff; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.section-box-green { background-color: #f4faf6; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.section-box-orange { background-color: #fff9f0; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.stTextInput input { background-color: #e3f2fd !important; border: 1px solid #1e88e5 !important; color: black !important; font-weight: bold !important; }.stSelectbox div[data-baseweb=\"select\"] { background-color: #e0f7fa !important; border: 1px solid #00bcd4 !important; font-weight: bold !important; }.stMultiSelect div[data-baseweb=\"select\"] { background-color: #e8f5e9 !important; border: 1px solid #43a047 !important; font-weight: bold !important; }.stNumberInput input { background-color: #fffde7 !important; border: 1px solid #fbc02d !important; color: black !important; font-weight: bold !important; } @media print { body * { visibility: hidden !important; } .print-area, .print-area * { visibility: visible !important; } .print-area { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 10px !important; border: none !important; } [data-testid=\"stHeader\"], button, iframe { display: none !important; } }</style>", unsafe_allow_html=True)
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam", "Dr. A. Rahman", "Dr. S. Islam"]
 test_directory = {
-    "Select Test": 0, "CBC": 400, "CBC with ESR": 600, "TC.DC": 250, "HB%": 250, "ESR": 200, "Platelet Count": 300, "MP": 200, "BT/CT": 350, "C/E Count": 250,
+    "Select Test": 0,
+    "CBC": 400, "CBC with ESR": 600, "TC.DC": 250, "HB%": 250, "ESR": 200, "Platelet Count": 300, "MP": 200, "BT/CT": 350, "C/E Count": 250,
     "Widal": 450, "Aso Titre": 450, "CRP": 450, "RA/RF": 450, "HBs Ag (Screen Test)": 450, "TPHA": 450, "VDRL": 400, "Blood Group & Rh Factor": 200, "Mantaux-Test (M.T)": 200, "Triple Antigen": 500, "HIV": 450, "HCV": 500, "TB (ICT)": 750, "Malaria. pf/pv": 700, "H. Pylori": 850, "Filaria (ICT)": 750, "Dengue NS1. IGG/IgM": 300,
     "T3": 1200, "T4": 1200, "FT3": 900, "FT4": 900, "TSH": 1100, "HbA1c": 1500, "Prolactin": 1200, "S. IgE": 1500, "S.IgE (Device Test)": 700,
     "Random Blood Sugar": 200, "Fasting Blood Sugar": 200, "2hr. After Breakfast (2HAB)": 200, "2hr. After 75gm Glucose": 200, "O.G.T.T": 500, "Blood Urea": 400, "Cholesterol": 350, "HDL": 400, "TG": 350, "LDL": 300, "S.GPT (ALT)": 500, "S.GOT (AST)": 500, "Bilirubin Total": 350, "Lipid Profile": 1000, "Bilirubin Direct/Indirect": 450, "Serum Creatinine": 400, "Uric Acid": 400, "Amylase": 700, "Calcium": 600,
@@ -65,29 +66,36 @@ with tab1:
         html_bill += f"</table><table style=\"width: 100%; font-size: 15px; font-weight: bold; border-collapse: collapse; margin-top: 10px;\"><tr style=\"border-top: 2px solid #000; border-bottom: 2px solid #000;\"><td style=\"padding: 8px 5px;\">Total: TK {inv['total']}</td><td style=\"padding: 8px 5px; color: blue;\">Discount: TK {inv['discount']}</td><td style=\"padding: 8px 5px; color: green;\">Paid: TK {inv['paid']}</td><td style=\"padding: 8px 5px; color: red;\">Due: TK {inv['due']}</td></tr></table><div style=\"margin-top: 60px; display: flex; justify-content: space-between; font-size: 13px;\"><p style=\"border-top: 1px solid #000; width: 150px; text-align: center; margin: 0; color: #000000;\">Prepared By</p><p style=\"border-top: 1px solid #000; width: 150px; text-align: center; margin: 0; color: #000000;\">Authorized Signature</p></div></div>"
         st.html(html_bill)
         st.components.v1.html("""<button onclick=\"parent.window.print();\" style=\"background-color: #00E676; color: black; padding: 14px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; font-family: sans-serif;\">🖨️ ১-ক্লিকে রসিদ প্রিন্ট / PDF সেভ করুন</button>""", height=60)
-        if st.button("🆕 নতুন রোগীর বিল তৈরি করুন", type="secondary", use_container_width=True):
+        if st.button("🆕 নতুন রোগীর বিল তৈরি করুন", type=\"secondary\", use_container_width=True):
             st.session_state.invoice_data = None
             st.rerun()
-with tab2:
-    st.header("📊 দৈনিক, साप्ताहिक ও মাসিক ড্যাশবোর্ড")
-    try:
-        df_dash = pd.read_sql_query("SELECT * FROM bills", conn)
-        if not df_dash.empty:
-            df_dash['date'] = pd.to_datetime(df_dash['date'], errors='coerce')
-            f_opt = st.selectbox("হিসাব দেখার সময় নির্বাচন করুন", ["সব সময়", "আজ", "এই সপ্তাহ", "এই মাস"], key="dash_time_f_unique")
-            t_now = datetime.today()
-            if f_opt == "আজ": f_df = df_dash[df_dash['date'].dt.date == t_now.date()]
-            elif f_opt == "এই সপ্তাহ": f_df = df_dash[df_dash['date'] >= (t_now - timedelta(days=t_now.weekday()))]
-            elif f_opt == "এই মাস": f_df = df_dash[(df_dash['date'].dt.month == t_now.month) & (df_dash['date'].dt.year == t_now.year)]
-            else: f_df = df_dash
-            db_c1, db_c2, db_c3, db_c4 = st.columns(4)
-            db_c1.metric("মোট কালেকশন", f"TK {f_df['total'].sum() if 'total' in f_df else 0:,.2f}")
-            db_c2.metric("মোট ডিসকাউন্ট", f"TK {f_df['discount'].sum() if 'discount' in f_df else 0:,.2f}")
-            db_c3.metric("মোট ডিউ (বাকি)", f"TK {f_df['due'].sum() if 'due' in f_df else 0:,.2f}")
-            db_c4.metric("মোট রেফারেল ফি (৩০%)", f"TK {f_df['referral_fee'].sum() if 'referral_fee' in f_df else 0:,.2f}")
-            st.subheader("👨‍⚕️ ডাক্তার ভিত্তিক রেফারেল রিপোর্ট (নামসহ)")
-            av_cols = [col for col in ['doctor', 'patient', 'invoice_no', 'total', 'referral_fee', 'date'] if col in f_df]
-            st.dataframe(f_df[av_cols], use_container_width=True)
-            st.components.v1.html("""<button onclick=\"parent.window.print();\" style=\"background-color: #4CAF50; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold;\">🖨️ এই ড্যাশবোর্ড রিপোর্টটি প্রিন্ট করুন</button>""", height=50)
-        else: st.info("ডেটাবেজে এখনো কোনো বিলের রেকর্ড নেই।")
-    except Exception as e: st.info("নতুন ডাটাবেজ তৈরি হচ্ছে।")
+    with tab2:
+ st.markdown("<h2 style='text-align: center; color: #1E88E5;'>📊 রোগমুক্তি ড্যাশবোর্ড ও রিপোর্ট প্যানেল</h2>", unsafe_allow_html=True)
+ try:
+  df_dash = pd.read_sql_query("SELECT * FROM bills", conn)
+  if not df_dash.empty:
+   df_dash['date'] = pd.to_datetime(df_dash['date'], errors='coerce')
+   col_f1, col_f2 = st.columns(2)
+   with col_f1: f_opt = st.selectbox("📅 সময় নির্বাচন করুন:", ["সব সময়", "আজ", "এই সপ্তাহ", "এই মাস", "এই বছর"], key="dash_time_f_unique")
+   with col_f2:
+    all_docs = ["সব ডাক্তার"] + [d for d in doctors_list if d != "Select Doctor"]
+    f_doc = st.selectbox("👨‍⚕️ ডাক্তার নির্বাচন করুন:", all_docs, key="dash_doc_f_unique")
+   t_now = datetime.today()
+   if f_opt == "আজ": f_df = df_dash[df_dash['date'].dt.date == t_now.date()]
+   elif f_opt == "এই সপ্তাহ": f_df = df_dash[df_dash['date'] >= (t_now - timedelta(days=t_now.weekday()))]
+   elif f_opt == "এই মাস": f_df = df_dash[(df_dash['date'].dt.month == t_now.month) & (df_dash['date'].dt.year == t_now.year)]
+   elif f_opt == "এই বছর": f_df = df_dash[df_dash['date'].dt.year == t_now.year]
+   else: f_df = df_dash
+   if f_doc != "সব ডাক্তার": f_df = f_df[f_df['doctor'] == f_doc]
+   st.markdown(f"<div style='display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; font-family: sans-serif; text-align: center;'><div style='background-color: #E8F5E9; padding: 15px; border-radius: 8px; border-left: 5px solid #2E7D32;'><span style='font-size: 13px; color: #2E7D32; font-weight: bold;'>💰 মোট কালেকশন</span><h3 style='margin: 5px 0 0 0; color: #1B5E20;'>৳ {f_df['total'].sum():,.2f}</h3></div><div style='background-color: #FFF3E0; padding: 15px; border-radius: 8px; border-left: 5px solid #EF6C00;'><span style='font-size: 13px; color: #EF6C00; font-weight: bold;'>📉 মোট ডিসকাউন্ট</span><h3 style='margin: 5px 0 0 0; color: #E65100;'>৳ {f_df['discount'].sum():,.2f}</h3></div><div style='background-color: #FFEBEE; padding: 15px; border-radius: 8px; border-left: 5px solid #C62828;'><span style='font-size: 13px; color: #C62828; font-weight: bold;'>🚨 মোট ডিউ (বাকি)</span><h3 style='margin: 5px 0 0 0; color: #B71C1C;'>৳ {f_df['due'].sum():,.2f}</h3></div><div style='background-color: #E3F2FD; padding: 15px; border-radius: 8px; border-left: 5px solid #1565C0;'><span style='font-size: 13px; color: #1565C0; font-weight: bold;'>👨‍⚕️ রেফারেল ফি (৩০%)</span><h3 style='margin: 5px 0 0 0; color: #0D47A1;'>৳ {f_df['referral_fee'].sum():,.2f}</h3></div></div>", unsafe_allow_html=True)
+   st.subheader("📋 ডাক্তার ভিত্তিক রেফারেল ডিটেইলস রিপোর্ট")
+   if not f_df.empty:
+    report_df = f_df[['doctor', 'patient', 'invoice_no', 'total', 'referral_fee', 'date']].copy()
+    report_df['date'] = report_df['date'].dt.strftime('%d-%m-%Y')
+    report_df.columns = ["ডাক্তারের নাম", "রোগীর নাম", "বিল নং (Invoice)", "মোট বিল (৳)", "রেফারেল ফি (৩০% ৳)", "তারিখ"]
+    st.dataframe(report_df, use_container_width=True)
+    st.components.v1.html("""<button onclick=\"parent.window.print();\" style=\"background-color: #4CAF50; color: white; padding: 13px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; font-family: sans-serif;\">🖨️ এই সম্পূর্ণ ড্যাশবোর্ড রিপোর্টটি প্রিন্ট করুন</button>""", height=55)
+   else: st.warning("নির্বাচিত সময়ে বা এই ডাক্তারের কোনো ডাটা পাওয়া যায়নি।")
+  else: st.info("ডেটাবেজে এখনো কোনো বিলের রেকর্ড নেই।")
+ except Exception as e: st.info("নতুন ডাটাবেজ তৈরি হচ্ছে।")
+     
