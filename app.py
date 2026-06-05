@@ -22,6 +22,7 @@ c.execute("CREATE TABLE IF NOT EXISTS bills (invoice_no TEXT PRIMARY KEY, date T
 conn.commit()
 
 tab1, tab2 = st.tabs(["📄 Billing / Cash Memo", "📊 Dashboard"])
+
 with tab1:
     if "invoice_data" not in st.session_state: 
         st.session_state.invoice_data = None
@@ -123,7 +124,8 @@ with tab1:
             if st.button("Create New Bill (নতুন বিল)"):
                 st.session_state.invoice_data = None
                 st.rerun()
-            with tab2:
+
+with tab2:
     st.markdown("<h2 style='text-align: center; color: #1e88e5;'>📊 রোগমুক্তি ড্যাশবোর্ড ও রিপোর্ট প্যানেল</h2>", unsafe_allow_html=True)
     df_bills = pd.read_sql_query("SELECT * FROM bills", conn)
     
@@ -132,7 +134,6 @@ with tab1:
     else:
         df_bills['date'] = pd.to_datetime(df_bills['date']).dt.date
         
-        # সার্চ ইঞ্জিন ও ফিল্টার সেকশন (৩টি কলামে আলাদা করা)
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
             time_filter = st.selectbox("📅 সময় ফিল্টার করুন:", ["আজ (Today)", "গতকাল (Yesterday)", "গত ৭ দিন", "কাস্টম তারিখ সিলেক্ট", "সব সময়"], index=0)
@@ -204,4 +205,4 @@ with tab1:
             st.dataframe(display_df.iloc[::-1].head(10), use_container_width=True, hide_index=True)
         else: 
             st.info("নির্বাচিত সময়ের মধ্যে কোনো টেস্ট বুকিং পাওয়া যায়নি।")
-            
+
