@@ -76,22 +76,9 @@ c.execute('''CREATE TABLE IF NOT EXISTS bills
              (invoice_no TEXT PRIMARY KEY, 
               date TEXT, 
               patient TEXT, 
-              age TEXT, 
-              phone TEXT,
-              doctor TEXT, 
-              total REAL, 
-              discount REAL, 
-              paid REAL, 
-              due REAL,
-              referral_fee REAL)''')
-conn.commit()
-
-try:
+              try:
     c.execute("ALTER TABLE bills ADD COLUMN due REAL DEFAULT 0")
-    conn.commit()
-except:
-    pass
-
+    ...
 tab1, tab2 = st.tabs(["📑 Billing / Cash Memo", "📊 Dashboard"])
 
 with tab1:
