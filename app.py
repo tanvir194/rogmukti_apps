@@ -31,13 +31,13 @@ c.execute("CREATE TABLE IF NOT EXISTS setup_tests (name TEXT UNIQUE, rate REAL)"
 conn.commit()
 
 c.execute("SELECT COUNT(*) FROM setup_doctors")
-if c.fetchone()[0] == 0:
+if c.fetchone() == 0:
     for doc in ["Select Doctor", "Self / Direct", "Dr. Saiful Islam", "Dr. A. Rahman", "Dr. S. Islam"]:
         c.execute("INSERT OR IGNORE INTO setup_doctors VALUES (?)", (doc,))
     conn.commit()
 
 c.execute("SELECT COUNT(*) FROM setup_tests")
-if c.fetchone()[0] == 0:
+if c.fetchone() == 0:
     default_tests = {
         "CBC": 400, "CBC with ESR": 600, "TC.DC": 250, "HB%": 250, "ESR": 200, "Platelet Count": 300,
         "Widal": 450, "CRP": 450, "Blood Group & Rh Factor": 200, "TSH": 1100, "Serum Creatinine": 400,
@@ -152,8 +152,7 @@ with tab1:
             if st.button("Create New Bill (নতুন বিল)"):
                 st.session_state.invoice_data = None
                 st.rerun()
-
-with tab2:
+    with tab2:
     st.markdown("<h2 style='text-align: center; color: #1e88e5;'>📊 রোগমুক্তি ড্যাশবোর্ড ও রিপোর্ট প্যানেল</h2>", unsafe_allow_html=True)
     df_bills = pd.read_sql_query("SELECT * FROM bills", conn)
     
@@ -256,5 +255,34 @@ with tab3:
                         st.rerun()
                     except: st.error("এই নাম ইতিমধ্যে তালিকায় আছে!")
                 else: st.warning("অনুগ্রহ করে নাম লিখুন।")
-                         else:
-                
+        else:
+            selectable_docs = [d for d in doctors_list if d not in ["Select Doctor", "Self / Direct"]]
+            doc_to_edit = st.selectbox("পরিবর্তন করার জন্য ডাক্তার সিলেক্ট করুন:", selectable_docs)
+            updated_doc_name = st.text_input("সংশোধিত নতুন নাম লিখুন:", value=doc_to_edit)
+            if st.button("📝 ডাক্তারের নাম আপডেট করুন", type="primary"):
+                if updated_doc_name and doc_to_edit:
+                    c.execute("UPDATE setup_doctors SET name = ? WHERE name = ?", (updated_doc_name.strip(), doc_to_edit))
+                    c.execute("UPDATE bills SET doctor = ? WHERE doctor = ?", (updated_doc_name.strip(), doc_to_edit))
+                    conn.commit()
+                    st.success("ডাক্তারের নাম সফলভাবে পরিবর্তন করা হয়েছে!")
+                    st.rerun()
+            
+    with col_setup2:
+        st.markdown("### 🔬 টেস্ট তালিকা ব্যবস্থাপনা (যোগ ও পরিবর্তন)")
+        exist_tests = ["-- নতুন টেস্ট তৈরি করুন --"] + list(test_directory.keys())
+        selected_edit_test = st.selectbox("টেস্ট সিলেক্ট করুন (দাম বদলাতে) অথবা নতুন নাম লিখুন:", exist_tests)
+        if selected_edit_test == "-- নতুন টেস্ট তৈরি করুন --":
+            test_input_name = st.text_input("নতুন টেস্টের নাম লিখুন:")
+            test_input_rate = st.number_input("টেস্টের ফি বা দাম (৳):", min_value=0.0, step=50.0, value=0.0)
+        else:
+            test_input_name = selected_edit_test
+            test_input_rate = st.number_input("টেস্টের পরিবর্তিত ফি বা দাম (৳):", min_value=0.0, step=50.0, value=test_directory[selected_edit_test])
+            
+        if st.button("💾 টেস্ট এবং রেট সেভ করুন", type="primary"):
+            if test_input_name:
+                c.execute("INSERT OR REPLACE INTO setup_tests VALUES (?, ?)", (test_input_name.strip(), test_input_rate))
+                conn.commit()
+                st.success(f"টেস্টের রেট সফলভাবে সেভ হয়েছে!")
+                st.rerun()
+            else: st.warning("টেস্টের নাম সঠিক নয়।")
+        
