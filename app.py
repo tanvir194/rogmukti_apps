@@ -1,9 +1,8 @@
 import streamlit as st, pandas as pd, sqlite3
 from datetime import datetime, timedelta
 st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="wide")
-st.markdown("<style>.section-box-blue { background-color: #f1f8ff; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.section-box-green { background-color: #f4faf6; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.section-box-orange { background-color: #fff9f0; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.stTextInput input { background-color: #e3f2fd !important; border: 1px solid #1e88e5 !important; color: black !important; font-weight: bold !important; }.stSelectbox div[data-baseweb=\"select\"] { background-color: #e0f7fa !important; border: 1px solid #00bcd4 !important; font-weight: bold !important; }.stMultiSelect div[data-baseweb=\"select\"] { background-color: #e8f5e9 !important; border: 1px solid #43a047 !important; font-weight: bold !important; }.stNumberInput input { background-color: #fffde7 !important; border: 1px solid #fbc02d !important; color: black !important; font-weight: bold !important; }</style>", unsafe_allow_html=True)
-st.markdown("<h1 style='text-align: center; color: red;'>ROGMUKTI DIAGNOSTIC CENTRE</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-weight: bold;'>Mollah Market, Galachipa, Patuakhali</p>", unsafe_allow_html=True)
+st.markdown("<style>.section-box-blue { background-color: #f1f8ff; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.section-box-green { background-color: #f4faf6; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.section-box-orange { background-color: #fff9f0; padding: 12px; border-radius: 5px; margin-bottom: 10px; }.stTextInput input { background-color: #e3f2fd !important; border: 1px solid #1e88e5 !important; color: black !important; font-weight: bold !important; }.stSelectbox div[data-baseweb=\"select\"] { background-color: #e0f7fa !important; border: 1px solid #00bcd4 !important; font-weight: bold !important; }.stMultiSelect div[data-baseweb=\"select\"] { background-color: #e8f5e9 !important; border: 1px solid #43a047 !important; font-weight: bold !important; }.stNumberInput input { background-color: #fffde7 !important; border: 1px solid #fbc02d !important; color: black !important; font-weight: bold !important; } @media print { .no-print, [data-testid=\"stSidebar\"], [data-testid=\"stHeader\"], button { display: none !important; } .print-area { display: block !important; border: none !important; width: 100% !important; } }</style>", unsafe_allow_html=True)
+st.markdown("<div class='no-print'><h1 style='text-align: center; color: red;'>ROGMUKTI DIAGNOSTIC CENTRE</h1><p style='text-align: center; font-weight: bold;'>Mollah Market, Galachipa, Patuakhali</p></div>", unsafe_allow_html=True)
 doctors_list = ["Select Doctor", "Self / Direct", "Dr. Saiful Islam", "Dr. A. Rahman", "Dr. S. Islam"]
 test_directory = {
     "Select Test": 0, "CBC": 400, "CBC with ESR": 600, "TC.DC": 250, "HB%": 250, "ESR": 200, "Platelet Count": 300, "MP": 200, "BT/CT": 350, "C/E Count": 250,
@@ -19,7 +18,7 @@ c.execute("CREATE TABLE IF NOT EXISTS bills (invoice_no TEXT PRIMARY KEY, date T
 conn.commit()
 tab1, tab2 = st.tabs(["📄 Billing / Cash Memo", "📊 Dashboard"])
 with tab1:
-    st.markdown('<div class="section-box-blue">✨ <b>Patient Information & Doctor List (রোগী ও ডাক্তার তালিকা)</b></div>', unsafe_allow_html=True)
+    st.markdown('<div class="no-print"><div class="section-box-blue">✨ <b>Patient Information & Doctor List (রোগী ও ডাক্তার তালিকা)</b></div></div>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
         patient_name = st.text_input("Patient Name:")
@@ -28,25 +27,25 @@ with tab1:
     with col2:
         ref_dr = st.selectbox("Referred By:", doctors_list, key="billing_doctor_select")
         date_today = st.date_input("Date:", datetime.now())
-    st.markdown('<div class="section-box-green">🔬 <b>Select Tests & Charges (টেস্ট নির্বাচন এবং ফি)</b></div>', unsafe_allow_html=True)
+    st.markdown('<div class="no-print"><div class="section-box-green">🔬 <b>Select Tests & Charges (টেস্ট নির্বাচন এবং ফি)</b></div></div>', unsafe_allow_html=True)
     available_tests = [test for test in test_directory.keys() if test != "Select Test"]
     selected_tests = st.multiselect("Select Tests:", available_tests)
     total_amount, test_rows = 0.0, []
     for i, test in enumerate(selected_tests):
         price = test_directory[test]
         total_amount += price
-        test_rows.append({"SL": i+1, "Test Name": test, "Rate (৳)": price})
+        test_rows.append({"SL": i+1, "Test Name": test, "Rate (TK)": price})
     if selected_tests: st.dataframe(pd.DataFrame(test_rows), use_container_width=True)
-    st.markdown('<div class="section-box-orange">💰 <b>Payment & Calculation (পেমেন্ট এবং হিসাব)</b></div>', unsafe_allow_html=True)
+    st.markdown('<div class="no-print"><div class="section-box-orange">💰 <b>Payment & Calculation (পেমেন্ট এবং হিসাব)</b></div></div>', unsafe_allow_html=True)
     col3, col4, col5, col6 = st.columns(4)
-    with col3: st.metric(label="Total Amount (মোট বিল):", value=f"৳ {total_amount:,.2f}")
-    with col4: discount = st.number_input("Discount (ছাড় ৳):", min_value=0.0, step=10.0, value=0.0)
+    with col3: st.metric(label="Total Amount (মোট বিল):", value=f"TK {total_amount:,.2f}")
+    with col4: discount = st.number_input("Discount (ছাড় TK):", min_value=0.0, step=10.0, value=0.0)
     with col5:
         net_total = max(0.0, total_amount - discount)
-        paid = st.number_input("Paid Amount (জমা ৳):", min_value=0.0, max_value=net_total, step=50.0, value=net_total)
+        paid = st.number_input("Paid Amount (জমা TK):", min_value=0.0, max_value=net_total, step=50.0, value=net_total)
     with col6:
         due = max(0.0, net_total - paid)
-        st.metric(label="Due Amount (বাকি বিল):", value=f"৳ {due:,.2f}")
+        st.metric(label="Due Amount (বাকি বিল):", value=f"TK {due:,.2f}")
     if st.button("Save Bill & Generate Invoice", key="save_bill_btn", type="primary"):
         if not patient_name: st.error("অনুগ্রহ করে রোগীর নাম লিখুন!")
         elif not selected_tests: st.error("অনুগ্রহ করে অন্তত একটি টেস্ট সিলেক্ট করুন!")
@@ -57,15 +56,17 @@ with tab1:
             conn.commit()
             st.success(f"বিল সফলভাবে সেভ হয়েছে! ইনভয়েস নম্বর: {invoice_no}")
             st.markdown("---")
-            memo_txt = f"=== ROGMUKTI DIAGNOSTIC CENTRE ===\nMollah Market, Galachipa\nMobile: 01646176947\n--------------------------------\nInvoice No: {invoice_no}\nDate: {date_today.strftime('%d-%m-%Y')}\nPatient Name: {patient_name}\nAge: {age} | Phone: {phone}\nRef By: {ref_dr}\n--------------------------------\n"
-            for row in test_rows: memo_txt += f"- {row['Test Name']}: ৳ {row['Rate (৳)']}\n"
-            memo_txt += f"--------------------------------\nTotal Amount: ৳ {total_amount}\nDiscount: ৳ {discount}\nPaid Amount: ৳ {paid}\nDue Amount: ৳ {due}\n================================"
-            st.html(f"<div style=\"border: 2px solid #000000; padding: 20px; background-color: #ffffff; color: #000000; font-family: 'Courier New', Courier, monospace;\"><div style=\"text-align: center; margin-bottom: 20px;\"><h1 style=\"color: #ff0000; margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 1px;\">ROGMUKTI DIAGNOSTIC CENTRE</h1><p style=\"margin: 5px 0 2px 0; font-size: 14px; font-weight: bold; color: #333333;\">Mollah Market, Galachipa, Patuakhali</p><p style=\"margin: 0; font-size: 13px; font-weight: bold; color: #555555;\">Mobile: 01646176947</p><div style=\"border-bottom: 2px double #000000; margin-top: 10px; margin-bottom: 5px;\"></div><span style=\"background-color: #000000; color: #ffffff; padding: 3px 15px; font-size: 13px; font-weight: bold;\">CASH MEMO / MONEY RECEIPT</span></div><table style=\"width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 14px; color: #000000;\"><tr><td style=\"padding: 5px; width: 18%; font-weight: bold;\">Invoice No:</td><td style=\"padding: 5px; width: 32%; border-bottom: 1px dotted #000;\">{invoice_no}</td><td style=\"padding: 5px; width: 15%; font-weight: bold; text-align: right;\">Date:</td><td style=\"padding: 5px; width: 35%; border-bottom: 1px dotted #000; text-align: center;\">{date_today.strftime('%d-%m-%Y')}</td></tr><tr><td style=\"padding: 5px; font-weight: bold;\">Patient Name:</td><td style=\"padding: 5px; border-bottom: 1px dotted #000; font-weight: bold;\">{patient_name}</td><td style=\"padding: 5px; font-weight: bold; text-align: right;\">Age/Sex:</td><td style=\"padding: 5px; border-bottom: 1px dotted #000; text-align: center;\">{age}</td></tr><tr><td style=\"padding: 5px; font-weight: bold;\">Mobile No:</td><td style=\"padding: 5px; border-bottom: 1px dotted #000;\">{phone}</td><td style=\"padding: 5px; font-weight: bold; text-align: right;\">Ref. By:</td><td style=\"padding: 5px; border-bottom: 1px dotted #000; font-weight: bold; text-align: center;\">{ref_dr}</td></tr></table><div style=\"border-bottom: 1px solid #000000; margin-bottom: 10px;\"></div><p style=\"margin: 0; font-weight: bold; font-size: 14px;\">🔬 INVESTIGATION LIST (টেস্টের বিবরণ):</p></div>")
-            st.dataframe(pd.DataFrame(test_rows), use_container_width=True)
-            st.html(f"<div style=\"border: 2px solid #000000; border-top: none; padding: 15px; background-color: #ffffff; color: #000000; font-family: 'Courier New', Courier, monospace;\"><table style=\"width: 100%; font-size: 15px; font-weight: bold; border-collapse: collapse;\"><tr style=\"border-top: 1px solid #000; border-bottom: 1px solid #000;\"><td style=\"padding: 8px 5px; width: 25;\">Total: ৳ {total_amount}</td><td style=\"padding: 8px 5px; width: 25%; color: blue;\">Discount: ৳ {discount}</td><td style=\"padding: 8px 5px; width: 25%; color: green;\">Paid: ৳ {paid}</td><td style=\"padding: 8px 5px; width: 25%; color: red;\">Due: ৳ {due}</td></tr></table><div style=\"margin-top: 40px; display: flex; justify-content: space-between; font-size: 12px;\"><p style=\"border-top: 1px solid #000; width: 140px; text-align: center; margin: 0; color: #000000;\">Prepared By</p><p style=\"border-top: 1px solid #000; width: 140px; text-align: center; margin: 0; color: #000000;\">Authorized Signature</p></div></div><br>")
-            st.download_button(label="📥 এই রসিদটি (Cash Memo) মোবাইলে ডাউনলোড করুন", data=memo_txt, file_name=f"Invoice_{invoice_no}.txt", mime="text/plain", use_container_width=True)
+            
+            # নিখুঁত A4 সাইজ প্রিন্টিং-এর জন্য সুন্দর এইচটিএমএল (HTML) ডিজাইন
+            html_bill = f"<div class='print-area' style=\"width: 790px; padding: 30px; background-color: #ffffff; color: #000000; font-family: 'Arial', sans-serif; line-height: 1.4;\"><div style=\"text-align: center; margin-bottom: 25px;\"><h1 style=\"color: #ff0000; margin: 0; font-size: 32px; font-weight: bold; font-family: sans-serif;\">ROGMUKTI DIAGNOSTIC CENTRE</h1><p style=\"margin: 5px 0 2px 0; font-size: 15px; font-weight: bold; color: #333333;\">Mollah Market, Galachipa, Patuakhali</p><p style=\"margin: 0; font-size: 14px; font-weight: bold; color: #555555;\">Mobile: 01646176947</p><div style=\"border-bottom: 3px double #000000; margin-top: 15px; margin-bottom: 10px;\"></div><span style=\"border: 1px solid #000; padding: 4px 20px; font-size: 14px; font-weight: bold; background-color: #f5f5f5;\">CASH MEMO / MONEY RECEIPT</span></div><table style=\"width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 15px; color: #000000;\"><tr><td style=\"padding: 6px; width: 15%; font-weight: bold;\">Invoice No:</td><td style=\"padding: 6px; width: 35%; border-bottom: 1px dotted #000;\">{invoice_no}</td><td style=\"padding: 6px; width: 15%; font-weight: bold; text-align: right;\">Date:</td><td style=\"padding: 6px; width: 35%; border-bottom: 1px dotted #000; text-align: center;\">{date_today.strftime('%d-%m-%Y')}</td></tr><tr><td style=\"padding: 6px; font-weight: bold;\">Patient Name:</td><td style=\"padding: 6px; border-bottom: 1px dotted #000; font-weight: bold;\">{patient_name}</td><td style=\"padding: 6px; font-weight: bold; text-align: right;\">Age/Sex:</td><td style=\"padding: 6px; border-bottom: 1px dotted #000; text-align: center;\">{age}</td></tr><tr><td style=\"padding: 6px; font-weight: bold;\">Mobile No:</td><td style=\"padding: 6px; border-bottom: 1px dotted #000;\">{phone}</td><td style=\"padding: 6px; font-weight: bold; text-align: right;\">Ref. By:</td><td style=\"padding: 6px; border-bottom: 1px dotted #000; font-weight: bold; text-align: center;\">{ref_dr}</td></tr></table><div style=\"border-bottom: 1px solid #000000; margin-bottom: 15px;\"></div><p style=\"margin: 0 0 10px 0; font-weight: bold; font-size: 15px;\">🔬 INVESTIGATION LIST (টেস্টের বিবরণ):</p><table style=\"width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 15px;\"><tr style=\"background-color: #f5f5f5; border-top: 1px solid #000; border-bottom: 1px solid #000;\"><th style=\"padding: 8px; text-align: left; width: 15%; border: 1px solid #000;\">SL</th><th style=\"padding: 8px; text-align: left; width: 60%; border: 1px solid #000;\">Test Name</th><th style=\"padding: 8px; text-align: right; width: 25%; border: 1px solid #000;\">Rate (TK)</th></tr>"
+            for row in test_rows: html_bill += f"<tr><td style=\"padding: 8px; border: 1px solid #000;\">{row['SL']}</td><td style=\"padding: 8px; border: 1px solid #000;\">{row['Test Name']}</td><td style=\"padding: 8px; text-align: right; border: 1px solid #000;\">{row['Rate (TK)']}</td></tr>"
+            html_bill += f"</table><table style=\"width: 100%; font-size: 16px; font-weight: bold; border-collapse: collapse; margin-top: 15px;\"><tr style=\"border-top: 2px solid #000; border-bottom: 2px solid #000;\"><td style=\"padding: 10px 5px;\">Total: TK {total_amount}</td><td style=\"padding: 10px 5px; color: blue;\">Discount: TK {discount}</td><td style=\"padding: 10px 5px; color: green;\">Paid: TK {paid}</td><td style=\"padding: 10px 5px; color: red;\">Due: TK {due}</td></tr></table><div style=\"margin-top: 80px; display: flex; justify-content: space-between; font-size: 14px;\"><p style=\"border-top: 1px solid #000; width: 160px; text-align: center; margin: 0; color: #000000;\">Prepared By</p><p style=\"border-top: 1px solid #000; width: 160px; text-align: center; margin: 0; color: #000000;\">Authorized Signature</p></div></div>"
+            st.html(html_bill)
+            
+            # একটি ইনজেক্টেড স্ক্রিপ্ট আইফ্রেম বাটন যা সিকিউরিটি বাইপাস করে সরাসরি A4 প্রিন্ট ডায়ালগ ওপেন করবে
+            st.components.v1.html("""<button onclick="parent.window.print();" style="background-color: #00E676; color: black; padding: 14px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; font-family: sans-serif;">🖨️ এই রসিদটি A4 সাইজে প্রিন্ট / PDF সেভ করুন</button>""", height=60)
 with tab2:
-    st.header("📊 দৈনিক, साप्ताहिक ও মাসিক ড্যাশবোর্ড")
+    st.markdown('<div class="no-print">📊 <b>দৈনিক, साप्ताहिक ও মাসিক ড্যাশবোর্ড</b></div>', unsafe_allow_html=True)
     try:
         df_dash = pd.read_sql_query("SELECT * FROM bills", conn)
         if not df_dash.empty:
@@ -77,13 +78,14 @@ with tab2:
             elif f_opt == "এই মাস": f_df = df_dash[(df_dash['date'].dt.month == t_now.month) & (df_dash['date'].dt.year == t_now.year)]
             else: f_df = df_dash
             db_c1, db_c2, db_c3, db_c4 = st.columns(4)
-            db_c1.metric("মোট কালেকশন", f"৳ {f_df['total'].sum() if 'total' in f_df else 0:,.2f}")
-            db_c2.metric("মোট ডিসকাউন্ট", f"৳ {f_df['discount'].sum() if 'discount' in f_df else 0:,.2f}")
-            db_c3.metric("মোট ডিউ (বাকি)", f"৳ {f_df['due'].sum() if 'due' in f_df else 0:,.2f}")
-            db_c4.metric("মোট রেফারেল ফি (৩০%)", f"৳ {f_df['referral_fee'].sum() if 'referral_fee' in f_df else 0:,.2f}")
+            db_c1.metric("মোট কালেকশন", f"TK {f_df['total'].sum() if 'total' in f_df else 0:,.2f}")
+            db_c2.metric("মোট ডিসকাউন্ট", f"TK {f_df['discount'].sum() if 'discount' in f_df else 0:,.2f}")
+            db_c3.metric("মোট ডিউ (বাকি)", f"TK {f_df['due'].sum() if 'due' in f_df else 0:,.2f}")
+            db_c4.metric("মোট রেফারেল ফি (৩০%)", f"TK {f_df['referral_fee'].sum() if 'referral_fee' in f_df else 0:,.2f}")
             st.subheader("👨‍⚕️ ডাক্তার ভিত্তিক রেফারেল রিপোর্ট (নামসহ)")
             av_cols = [col for col in ['doctor', 'patient', 'invoice_no', 'total', 'referral_fee', 'date'] if col in f_df]
             st.dataframe(f_df[av_cols], use_container_width=True)
-            st.markdown('<button onclick="window.print()" style="background-color: #4CAF50; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold;">🖨️ এই ড্যাশবোর্ড রিপোর্টটি প্রিন্ট করুন</button>', unsafe_allow_html=True)
+            st.components.v1.html("""<button onclick="parent.window.print();" style="background-color: #4CAF50; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold;">🖨️ এই ড্যাশবোর্ড রিপোর্টটি প্রিন্ট করুন</button>""", height=50)
         else: st.info("ডেটাবেজে এখনো কোনো বিলের রেকর্ড নেই। একটি নতুন বিল সেভ করলেই ড্যাশবোর্ড সচল হয়ে যাবে।")
     except Exception as e: st.info("নতুন ডাটাবেজ তৈরি হচ্ছে। একটি নতুন বিল সেভ করলেই ড্যাশবোর্ড সচল হয়ে যাবে।")
+        
