@@ -241,3 +241,110 @@ if st.session_state['user_role'] == "Admin":
             st.rerun()
 else:
     st.warning("Only Admins can delete invoices.")
+# ==============================================================================
+# পার্ট ৬: নতুন রোগীর মেমো তৈরি ও বিলিং সেকশন (New Billing & Invoice Generator)
+# ==============================================================================
+st.markdown("---")
+st.subheader("🏥 Create New Patient Bill & Memo")
+
+with st.form(key='new_billing_form', clear_on_submit=True):
+    col_b1, col_b2, col_b3 = st.columns(3)
+    
+    with col_b1:
+        # স্বয়ংক্রিয় ইউনিক ইনভয়েস নম্বর তৈরি
+        generated_invoice = f"INV-{int(datetime.now().timestamp())}"
+        st.info(f"**Generated Invoice No:** {generated_invoice}")
+        patient_name = st.text_input("Patient Name:", placeholder="Enter full name")
+        patient_phone = st.text_input("Mobile Number:", placeholder="01XXXXXXXXX")
+        
+    with col_b2:
+        patient_age = st.text_input("Age:", placeholder="e.g. 25 Years")
+        patient_gender = st.selectbox("Gender:", ["Male", "Female", "Others"])
+        
+        # ডাক্তার রেফারেল অপশন
+        try:
+            doc_options = [row[0] for row in c.execute("SELECT name FROM setup_doctors").fetchall()]
+        except:
+            doc_options = ["Self / Direct", "Dr. Saiful Islam", "Dr. Amit Das"]
+        referred_doctor = st.selectbox("Referred Doctor:", doc_options)
+
+    with col_b3:
+        # টেস্ট নির্বাচন এবং কাস্টম প্রাইস লেখার সহজ উপায়
+        st.write("**Select Tests & Enter Custom Prices:**")
+        
+        # ১. সিবিসি টেস্ট এবং প্রাইস
+        cbc_check = st.checkbox("CBC")
+        cbc_price = st.number_input("CBC Price (৳):", min_value=0, value=400, step=50) if cbc_check else 0
+        
+        # ২. ব্লাড গ্রুপ টেস্ট এবং প্রাইস
+        bg_check = st.checkbox("Blood Group & Rh Factor")
+        bg_price = st.number_input("Blood Group Price (৳):", min_value=0, value=200, step=50) if bg_check else 0
+        
+        # ৩. অন্য কোনো কাস্টম টেস্ট নিজে লেখার ব্যবস্থা (মেমোরি টেস্ট বা যেকোনো কিছু)
+        custom_test_name = st.text_input("Custom Test Name (If any):", placeholder="e.g. Memory Test")
+        custom_test_price = st.number_input("Custom Test Price (৳):", min_value=0, value=0, step=50) if custom_test_name else 0
+
+    st.markdown("#### Bill Accounts Details")
+    col_acc1, col_acc2, col_acc3 = st.columns(3)
+    
+    # টেস্টের মোট প্রাইস হিসাব করা
+    selected_tests_list = []
+    calculated_total = 0
+    
+    if cbc_check:
+        selected_tests_list.append(f"CBC (৳{cbc_price})")
+        calculated_total += cbc_price
+    if bg_check:
+        selected_tests_list.append(f"Blood Group (৳{bg_price})")
+        calculated_total += bg_price
+    if custom_test_name:
+        selected_tests_list.append(f"{custom_test_name} (৳{custom_test_price})")
+        calculated_total += custom_test_price
+        
+    all_selected_tests_string = ", ".join(selected_tests_list)
+
+    with col_acc1:
+        st.metric("Total Calculated Bill", f"৳ {calculated_total:,.2f}")
+        discount_input = st.number_input("Discount Allowed (৳):", min_value=0, value=0)
+        
+    with col_acc2:
+        net_payable = calculated_total - discount_input
+        st.metric("Net Payable Amount", f"৳ {net_payable:,.2f}")
+        paid_input = st.number_input("Paid Amount (৳):", min_value=0, value=0)
+        
+    with col_acc3:
+        due_calculated = net_payable - paid_input
+        st.metric("Total Due", f"৳ {due_calculated:,.2f}")
+        ref_fee = st.number_input("Doctor Referral Commission (৳):", min_value=0, value=0)
+
+    # সাবমিট বাটন যা ডাটাবেজে ডাটা সেভ করবে
+    submit_bill_button = st.form_submit_button(label="💾 Save Bill & Print Memo")
+    
+    if submit_bill_button:
+        if patient_name and all_selected_tests_string:
+            current_date_str = datetime.now().strftime("%Y/%m/%d")
+            
+            # আপনার পুরানো ডাটাবেজের কলাম নামের সাথে সামঞ্জস্য রেখে সেভ করার চেষ্টা
+            try:
+                c.execute("""
+                    INSERT INTO bills (invoice_no, date, patient_name, age, gender, phone, doctor, referral_type, referral_fees, total_amount, discount, net_amount, paid_amount, due_amount, tests) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (generated_invoice, current_date_str, patient_name, patient_age, patient_gender, patient_phone, referred_doctor, "Direct", ref_fee, calculated_total, discount_input, net_payable, paid_input, due_calculated, all_selected_tests_string))
+                conn.commit()
+                st.success(f"Success! Memo {generated_invoice} has been created and saved.")
+                st.rerun()
+            except Exception as e:
+                # যদি পুরানো ডাটাবেজে কলামের নাম ভিন্ন থাকে তবে বিকল্প কোয়েরি দিয়ে ট্রাই করবে
+                try:
+                    c.execute("""
+                        INSERT INTO bills (invoice_no, patient_name, total_amount, paid, due) 
+                        VALUES (?, ?, ?, ?, ?)
+                    """, (generated_invoice, patient_name, calculated_total, paid_input, due_calculated))
+                    conn.commit()
+                    st.success(f"Success! Memo {generated_invoice} saved in legacy table.")
+                    st.rerun()
+                except Exception as legacy_error:
+                    st.error(f"Database Save Error: {legacy_error}")
+        else:
+            st.warning("Please fill in the Patient Name and select at least one Test.")
+        
