@@ -53,8 +53,7 @@ st.sidebar.markdown("---")
 st.sidebar.write(f"Logged in as: **{st.session_state['user_role']}**")
 if st.sidebar.button("🚪 Log Out"):
     st.session_state['logged_in'] = False; st.session_state['user_role'] = None; st.rerun()
-
-# পিডিএফ রিপোর্ট মেকার ইঞ্জিন
+# পিডিএফ রিপোর্ট মেকার engine
 def generate_pdf_report(invoice_no, patient_name, tests, results_str):
     pdf = FPDF()
     pdf.add_page()
@@ -80,7 +79,8 @@ def generate_pdf_report(invoice_no, patient_name, tests, results_str):
     pdf.ln(20); pdf.cell(130, 6, ""); pdf.cell(60, 6, "_______________________", ln=True, align="C")
     pdf.cell(130, 6, ""); pdf.cell(60, 6, "Medical Officer Sign", ln=True, align="C")
     return pdf.output(dest="S")
-    # ১. প্রথম পেজ: ড্যাশবোর্ড ও বিলিং ট্র্যাকিং লিস্ট
+
+# ১. প্রথম পেজ: ড্যাশবোর্ড ও বিলিং ট্র্যাকিং লিস্ট
 if page == "📊 Dashboard & Reports":
     st.markdown("<h2 class='main-header'>📊 Rogmukti Dashboard & Report Panel</h2>", unsafe_allow_html=True)
     
@@ -98,8 +98,7 @@ if page == "📊 Dashboard & Reports":
     col_m2.metric("Cash Received", f"৳ {total_paid:,.2f}")
     col_m3.metric("Total Due", f"৳ {total_due:,.2f}")
     col_m4.metric("Total Patients", f"{total_pat} Persons")
-
-    st.markdown("---")
+        st.markdown("---")
     st.subheader("📋 Latest Invoice & Billing Tracking (Sorted)")
     
     # নতুন ইনভয়েস সবার ওপরে দেখানোর জন্য কাস্টম কোয়েরি
@@ -133,7 +132,6 @@ if page == "📊 Dashboard & Reports":
             report_data = c.fetchone()
             if report_data and not df_bills.empty:
                 patient_name_val = str(df_bills[df_bills['invoice_no']==print_inv]['patient_name'].values[0]) if 'patient_name' in df_bills.columns else "Patient"
-                # এখানে ফিক্স করা হলো (প্যারামিটার সঠিকভাবে পাঠানো হয়েছে)
                 pdf_bytes = generate_pdf_report(print_inv, patient_name_val, report_data[0], report_data[1])
                 st.download_button("📥 Download PDF Report", data=pdf_bytes, file_name=f"Report_{print_inv}.pdf", mime="application/pdf")
             else: st.error("No approved report found for this invoice number.")
@@ -171,3 +169,58 @@ if page == "💳 New Patient Billing":
         with col_test_panel:
             st.markdown("##### 🧪 Select Diagnostic Tests (100+ Catalogue)")
             test_catalogue = {
+                "CBC (Complete Blood Count)": 400, "CBC with ESR": 500, "Blood Grouping & Rh Factor": 200,
+                "HBsAg (Hepatitis B)": 350, "Widal Test (Typhoid)": 400, "Serum Creatinine": 300,
+                "Uric Acid": 350, "Blood Sugar / Glucose (RBS/FBS)": 150, "Lipid Profile": 1000,
+                "Serum Bilirubin": 250, "SGPT / ALT": 350, "SGOT / AST": 350, "Serum Electrolytes": 900,
+                "TSH (Thyroid)": 800, "FT4 / FT3": 750, "Urine R/M/E": 200, "Stool R/M/E": 200,
+                "USG of Whole Abdomen": 1200, "USG of Lower/Upper Abdomen": 800, "X-Ray Chest P/A View": 500,
+                "ECG (Electrocardiogram)": 400, "CRP (C-Reactive Protein)": 500, "Dengue NS1 Antigen": 600,
+                "Dengue IgG/IgM": 700, "Troponin I": 1200, "ASO Titre": 450, "RA Test": 400,
+                "Memory Test (Custom)": 500, "Vitamin D3 Test": 2500, "HbA1c": 600
+            }
+            selected_test_names = st.multiselect("Search & Select Multiple Tests:", list(test_catalogue.keys()))
+
+        total_bill = 0
+        tests_taken_list = []
+        if selected_test_names:
+            st.markdown("<div style='background-color:#f1f3f5; padding:10px; border-radius:5px;'><b>Selected Tests Price List:</b>", unsafe_allow_html=True)
+            for t_name in selected_test_names:
+                t_price = test_catalogue[t_name]
+                total_bill += t_price
+                tests_taken_list.append(f"{t_name} (৳{t_price})")
+                st.write(f"🔹 {t_name}: ৳ {t_price}")
+            st.markdown("</div>", unsafe_allow_html=True)
+        tests_string = ", ".join(tests_taken_list)
+        
+        st.markdown("---")
+        st.markdown(f"### Total Calculated Amount: ৳ {total_bill:,.2f}")
+        
+        col_acc1, col_acc2, col_acc3 = st.columns(3)
+        with col_acc1:
+            disc_val = st.number_input("Discount Allowed (৳)", min_value=0, max_value=int(total_bill) if total_bill > 0 else 0, value=0)
+        with col_acc2:
+            payable_net = total_bill - disc_val
+            paid_val = st.number_input("Paid Amount (৳)", min_value=0, max_value=int(payable_net) if payable_net > 0 else 0, value=0)
+        with col_acc3:
+            due_val = payable_net - paid_val
+            st.write(f"**Remaining Due:** ৳ {due_val:,.2f}")
+            ref_commission = st.number_input("Doctor Referral Commission (৳)", min_value=0, value=0)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.form_submit_button(label="💾 Save Bill & Print Memo"):
+            if pat_name and tests_string:
+                cur_date = datetime.now().strftime("%Y/%m/%d")
+                try:
+                    c.execute("""
+                        INSERT INTO bills (invoice_no, date, patient_name, age, gender, phone, doctor, referral_type, referral_fees, total_amount, discount, net_amount, paid_amount, due_amount, tests) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (gen_invoice, cur_date, pat_name, pat_age, pat_gender, pat_phone, ref_doctor, "Direct", ref_commission, total_bill, disc_val, payable_net, paid_val, due_val, tests_string))
+                    conn.commit(); st.success(f"🎉 Success! Memo {gen_invoice} saved."); st.rerun()
+                except:
+                    try:
+                        c.execute("INSERT INTO bills (invoice_no, patient_name, total_amount, paid, due) VALUES (?, ?, ?, ?, ?)", (gen_invoice, pat_name, total_bill, paid_val, due_val))
+                        conn.commit(); st.success(f"🎉 Success! Memo {gen_invoice} saved to legacy database."); st.rerun()
+                    except Exception as legacy_err: st.error(f"Database write error: {legacy_err}")
+            else: st.warning("Please input Patient Name and select at least one Test.")
+    st.markdown("</div>", unsafe_allow_html=True)
