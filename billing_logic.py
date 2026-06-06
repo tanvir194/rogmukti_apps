@@ -1,144 +1,121 @@
+import streamlit as st
 import pandas as pd
-
-def render_dashboard(st, conn, c):
-    st.title("📊 Rogmukti Dashboard & Report Panel")
-    df_bills = pd.read_sql_query("SELECT * FROM bills", conn)
-    if not df_bills.empty:
-        total_coll = df_bills['net_amount'].sum() if 'net_amount' in df_bills.columns else (df_bills['total_amount'].sum() if 'total_amount' in df_bills.columns else 0)
-        total_paid = df_bills['paid_amount'].sum() if 'paid_amount' in df_bills.columns else (df_bills['paid'].sum() if 'paid' in df_bills.columns else 0)
-        total_due = df_bills['due_amount'].sum() if 'due_amount' in df_bills.columns else (df_bills['due'].sum() if 'due' in df_bills.columns else 0)
-        total_pat = len(df_bills)
-    else:
-        total_coll = total_paid = total_due = total_pat = 0
-        
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Total Collection", f"৳ {total_coll:,.2f}")
-    c2.metric("Cash Received", f"৳ {total_paid:,.2f}")
-    c3.metric("Total Due", f"৳ {total_due:,.2f}")
-    c4.metric("Total Patients", f"{total_pat} Persons")
-    
-    st.markdown("---")
-    st.subheader("📋 Latest Invoice & Billing Tracking (Sorted)")
-    df_table = pd.read_sql_query("SELECT * FROM bills ORDER BY invoice_no DESC", conn)
-    if not df_table.empty:
-        p_col = 'patient_name' if 'patient_name' in df_table.columns else ('name' if 'name' in df_table.columns else df_table.columns)
-        cols = [col for col in ['invoice_no', p_col, 'total_amount', 'paid_amount', 'due_amount', 'paid', 'due', 'tests'] if col in df_table.columns]
-        st.dataframe(df_table[cols], use_container_width=True)
-
-def render_billing(st, conn, c, FPDF, datetime):
-    st.title("💳 Create New Patient Bill & Memo")
-    if 'last_saved_memo' not in st.session_state: 
-        st.session_state['last_saved_memo'] = None
-        
-    with st.form(key='billing_form'):
-        gen_invoice = f"INV-{int(datetime.now().timestamp())}"
-        st.write(f"### Invoice No: {gen_invoice}")
-        
-        pat_name = st.text_input("Patient Full Name *")
-        pat_phone = st.text_input("Mobile Number")
-        pat_age = st.text_input("Age")
-        pat_gender = st.selectbox("Gender", ["Male", "Female", "Others"])
-        
-        test_catalogue = {
-            "CBC (Complete Blood Count)": 400,
-            "Blood Grouping & Rh Factor": 200,
-            "Serum Creatinine": 300,
-            "HBsAg (Hepatitis B)": 350,
-            "Lipid Profile": 1000,
-            "USG of Whole Abdomen": 1200,
-            "Memory Test (Custom)": 500
-        }
-        selected_tests = st.multiselect("Select Tests:", list(test_catalogue.keys()))
-        
-        total_bill = sum([test_catalogue[t] for t in selected_tests])
-        st.write(f"### Total Bill: ৳ {total_bill}")
-        
-        disc_val = st.number_input("Discount (৳)", min_value=0, max_value=total_bill if total_bill > 0 else 0, value=0)
-        payable_net = total_bill - disc_val
-        paid_val = st.number_input("Paid Amount (৳)", min_value=0, max_value=payable_net if payable_net > 0 else 0, value=0)
-        due_val = payable_net - paid_val
-        st.write(f"#### Remaining Due: ৳ {due_val}")
-        
-        tests_string = ", ".join([f"{t} (৳{test_catalogue[t]})" for t in selected_tests])
-                if st.form_submit_button("💾 Save Bill & Generate Memo"):
-            if pat_name and selected_tests:
-                cur_date = datetime.now().strftime("%Y/%m/%d")
-                
-                try:
-                    db_table_info = pd.read_sql_query("SELECT * FROM bills LIMIT 1", conn)
-                    cols_in_db = list(db_table_info.columns)
-                except:
-                    cols_in_db = []
-                
-                name_key = 'patient_name' if 'patient_name' in cols_in_db else ('name' if 'name' in cols_in_db else 'patient_name')
-                paid_key = 'paid_amount' if 'paid_amount' in cols_in_db else ('paid' if 'paid' in cols_in_db else 'paid_amount')
-                due_key = 'due_amount' if 'due_amount' in cols_in_db else ('due' if 'due' in cols_in_db else 'due_amount')
-                total_key = 'total_amount' if 'total_amount' in cols_in_db else ('total' if 'total' in cols_in_db else 'total_amount')
-                
-                try:
-                    if 'net_amount' in cols_in_db:
-                        c.execute(f"INSERT INTO bills (invoice_no, date, {name_key}, age, gender, phone, total_amount, discount, net_amount, {paid_key}, {due_key}, tests) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-                                  (gen_invoice, cur_date, pat_name, pat_age, pat_gender, pat_phone, total_bill, disc_val, payable_net, paid_val, due_val, tests_string))
-                    else:
-                        query_dynamic = f"INSERT INTO bills (invoice_no, {name_key}, {total_key}, {paid_key}, {due_key}"
-                        values_list = [gen_invoice, pat_name, total_bill, paid_val, due_val]
-                        if 'tests' in cols_in_db: query_dynamic += ", tests"; values_list.append(tests_string)
-                        if 'date' in cols_in_db: query_dynamic += ", date"; values_list.append(cur_date)
-                        query_dynamic += f") VALUES ({','.join(['?']*len(values_list))})"
-                        c.execute(query_dynamic, tuple(values_list))
-                        
-                    conn.commit()
-                    st.session_state['last_saved_memo'] = {"inv": gen_invoice, "name": pat_name, "tests": tests_string, "total": total_bill, "paid": paid_val, "due": due_val, "disc": disc_val, "phone": pat_phone, "age": pat_age, "gender": pat_gender}
-                    st.success("🎉 Bill Saved Successfully!")
-                    st.rerun()
-                except Exception as save_err: 
-                    st.error(f"Database write error: {save_err}")
-            else: 
-                st.warning("Please input Patient Name and select at least one Test.")
-                
-    if st.session_state['last_saved_memo'] is not None:
-        m = st.session_state['last_saved_memo']
-        pdf = FPDF(orientation='P', unit='mm', format='A4')
-        pdf.add_page()
-        pdf.set_font("Helvetica", "B", 22); pdf.set_text_color(15, 76, 129)
-        pdf.cell(0, 10, "ROGMUKTI DIAGNOSTIC CENTRE", ln=True, align="C")
-        pdf.set_font("Helvetica", "", 10); pdf.set_text_color(100, 100, 100)
-        pdf.cell(0, 5, "Hospital Road, Dhaka | Phone: +880123456789", ln=True, align="C")
-        pdf.ln(4); pdf.set_draw_color(15, 76, 129); pdf.set_line_width(0.5); pdf.line(10, 32, 200, 32); pdf.ln(6)
-        
-        pdf.set_font("Helvetica", "B", 13); pdf.set_text_color(0, 0, 0)
-        pdf.cell(0, 8, "CASH MEMO / INVOICE", ln=True); pdf.set_font("Helvetica", "", 10)
-        pdf.cell(100, 6, f"Invoice No: {m['inv']}"); pdf.cell(90, 6, f"Date: {datetime.now().strftime('%d-%b-%Y %I:%M %p')}", ln=True)
-        pdf.cell(100, 6, f"Patient Name: {m['name']}"); pdf.cell(90, 6, f"Mobile No: {m['phone']}", ln=True); pdf.ln(6)
-        
-        pdf.set_fill_color(15, 76, 129); pdf.set_text_color(255, 255, 255); pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(20, 8, "SL No", border=1, fill=True, align="C")
-        pdf.cell(120, 8, "Diagnostic Test Name", border=1, fill=True)
-        pdf.cell(50, 8, "Price (TK)", border=1, fill=True, ln=True, align="R")
-        
-        pdf.set_text_color(0, 0, 0); pdf.set_font("Helvetica", "", 10)
-        sl = 1
-        for item in m["tests"].split(", "):
-            if " (৳" in item:
-                t_name, t_pr = item.split(" (৳")
-                t_pr = t_pr.replace(")", "").strip()
-            else:
-                t_name, t_pr = item, "0"
-            pdf.cell(20, 8, str(sl), border=1, align="C")
-            pdf.cell(120, 8, f" {t_name}", border=1)
-            pdf.cell(50, 8, f"{float(t_pr):,.2f} ", border=1, ln=True, align="R")
-            sl += 1
-            
-        pdf.ln(5)
-        pdf.cell(140, 6, "Total Amount:", align="R"); pdf.cell(50, 6, f"{float(m['total']):,.2f} TK ", ln=True, align="R")
-        if float(m['disc']) > 0:
-            pdf.cell(140, 6, "Discount:", align="R"); pdf.cell(50, 6, f"-{float(m['disc']):,.2f} TK ", ln=True, align="R")
-        pdf.cell(140, 6, "Paid Cash:", align="R"); pdf.cell(50, 6, f"{float(m['paid']):,.2f} TK ", ln=True, align="R")
-        pdf.cell(140, 8, "Remaining Due:", align="R"); pdf.cell(50, 8, f"{float(m['due']):,.2f} TK ", ln=True, align="R")
-        
-        pdf.ln(15); pdf.cell(130, 6, ""); pdf.cell(60, 6, "_______________________", ln=True, align="C")
-        pdf.cell(130, 6, ""); pdf.cell(60, 6, "Authorized Signature", ln=True, align="C")
-        
-        pdf_bytes = pdf.output(dest="S")
-        st.download_button(label="📥 DOWNLOAD A4 CASH MEMO (PDF)", data=pdf_bytes, file_name=f"Invoice_{m['inv']}.pdf", mime="application/pdf", use_container_width=True)
-                            
+import sqlite3
+import hashlib
+from datetime import datetime
+from fpdf import FPDF
+st.set_page_config(page_title="Rogmukti Diagnostic Centre", page_icon="🏥", layout="wide")
+st.markdown("<style>.stTextInput input, .stSelectbox div[data-baseweb='select'], .stNumberInput input, .stMultiSelect div[data-baseweb='select'] { background-color: #f8f9fa !important; border: 1px solid #ced4da !important; border-radius: 6px !important; } div[data-testid='stMetricValue'] { font-size: 1.5rem !important; font-weight: bold !important; color: #0f4c81; } .main-header { color: #0f4c81; font-weight: bold; margin-bottom: 20px; } .billing-card { background-color: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e9ecef; }</style>", unsafe_allow_html=True)
+conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
+c = conn.cursor()
+c.execute("CREATE TABLE IF NOT EXISTS test_reports (invoice_no TEXT PRIMARY KEY, test_name TEXT, result_values TEXT, status TEXT)")
+conn.commit()
+st.sidebar.title("🏥 Rogmukti Menu")
+page = st.sidebar.radio("Go to Page:", ["📊 Dashboard & Reports", "💳 New Patient Billing"])
+if page == "📊 Dashboard & Reports":
+st.title("📊 Rogmukti Dashboard & Report Panel")
+df_bills = pd.read_sql_query("SELECT * FROM bills", conn)
+if not df_bills.empty:
+total_coll = df_bills['net_amount'].sum() if 'net_amount' in df_bills.columns else (df_bills['total_amount'].sum() if 'total_amount' in df_bills.columns else 0)
+total_paid = df_bills['paid_amount'].sum() if 'paid_amount' in df_bills.columns else (df_bills['paid'].sum() if 'paid' in df_bills.columns else 0)
+total_due = df_bills['due_amount'].sum() if 'due_amount' in df_bills.columns else (df_bills['due'].sum() if 'due' in df_bills.columns else 0)
+total_pat = len(df_bills)
+else:
+total_coll = total_paid = total_due = total_pat = 0
+c1, c2, c3, c4 = st.columns(4)
+c1.metric("Total Collection", f"৳ {total_coll:,.2f}")
+c2.metric("Cash Received", f"৳ {total_paid:,.2f}")
+c3.metric("Total Due", f"৳ {total_due:,.2f}")
+c4.metric("Total Patients", f"{total_pat} Persons")
+st.markdown("---")
+st.subheader("📋 Latest Invoice & Billing Tracking (Sorted)")
+df_table = pd.read_sql_query("SELECT * FROM bills ORDER BY invoice_no DESC", conn)
+if not df_table.empty:
+p_col = 'patient_name' if 'patient_name' in df_table.columns else ('name' if 'name' in df_table.columns else df_table.columns)
+cols = [col for col in ['invoice_no', p_col, 'total_amount', 'paid_amount', 'due_amount', 'paid', 'due', 'tests'] if col in df_table.columns]
+st.dataframe(df_table[cols], use_container_width=True)
+if page == "💳 New Patient Billing":
+st.title("💳 Create New Patient Bill & Memo")
+if 'last_saved_memo' not in st.session_state: st.session_state['last_saved_memo'] = None
+with st.form(key='billing_form'):
+gen_invoice = f"INV-{int(datetime.now().timestamp())}"
+st.write(f"### Invoice No: {gen_invoice}")
+pat_name = st.text_input("Patient Full Name *")
+pat_phone = st.text_input("Mobile Number")
+pat_age = st.text_input("Age")
+pat_gender = st.selectbox("Gender", ["Male", "Female", "Others"])
+test_catalogue = {"CBC (Complete Blood Count)": 400, "Blood Grouping & Rh Factor": 200, "Serum Creatinine": 300, "HBsAg (Hepatitis B)": 350, "Lipid Profile": 1000, "USG of Whole Abdomen": 1200, "Memory Test (Custom)": 500}
+selected_tests = st.multiselect("Select Tests:", list(test_catalogue.keys()))
+total_bill = sum([test_catalogue[t] for t in selected_tests])
+st.write(f"### Total Bill: ৳ {total_bill}")
+disc_val = st.number_input("Discount (৳)", min_value=0, max_value=total_bill if total_bill > 0 else 0, value=0)
+payable_net = total_bill - disc_val
+paid_val = st.number_input("Paid Amount (৳)", min_value=0, max_value=payable_net if payable_net > 0 else 0, value=0)
+due_val = payable_net - paid_val
+st.write(f"#### Remaining Due: ৳ {due_val}")
+tests_string = ", ".join([f"{t} (৳{test_catalogue[t]})" for t in selected_tests])
+if st.form_submit_button("💾 Save Bill & Generate Memo"):
+if pat_name and selected_tests:
+cur_date = datetime.now().strftime("%Y/%m/%d")
+try:
+db_table_info = pd.read_sql_query("SELECT * FROM bills LIMIT 1", conn)
+cols_in_db = list(db_table_info.columns)
+except:
+cols_in_db = []
+name_key = 'patient_name' if 'patient_name' in cols_in_db else ('name' if 'name' in cols_in_db else 'patient_name')
+paid_key = 'paid_amount' if 'paid_amount' in cols_in_db else ('paid' if 'paid' in cols_in_db else 'paid_amount')
+due_key = 'due_amount' if 'due_amount' in cols_in_db else ('due' if 'due' in cols_in_db else 'due_amount')
+total_key = 'total_amount' if 'total_amount' in cols_in_db else ('total' if 'total' in cols_in_db else 'total_amount')
+try:
+if 'net_amount' in cols_in_db:
+c.execute(f"INSERT INTO bills (invoice_no, date, {name_key}, age, gender, phone, total_amount, discount, net_amount, {paid_key}, {due_key}, tests) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (gen_invoice, cur_date, pat_name, pat_age, pat_gender, pat_phone, total_bill, disc_val, payable_net, paid_val, due_val, tests_string))
+else:
+query_dynamic = f"INSERT INTO bills (invoice_no, {name_key}, {total_key}, {paid_key}, {due_key}"
+values_list = [gen_invoice, pat_name, total_bill, paid_val, due_val]
+if 'tests' in cols_in_db: query_dynamic += ", tests"; values_list.append(tests_string)
+if 'date' in cols_in_db: query_dynamic += ", date"; values_list.append(cur_date)
+query_dynamic += f") VALUES ({','.join(['?']*len(values_list))})"
+c.execute(query_dynamic, tuple(values_list))
+conn.commit()
+st.session_state['last_saved_memo'] = {"inv": gen_invoice, "name": pat_name, "tests": tests_string, "total": total_bill, "paid": paid_val, "due": due_val, "disc": disc_val, "phone": pat_phone, "age": pat_age, "gender": pat_gender}
+st.success("🎉 Bill Saved Successfully!")
+st.rerun()
+except Exception as save_err: st.error(f"Database write error: {save_err}")
+else: st.warning("Please input Patient Name and select at least one Test.")
+if st.session_state['last_saved_memo'] is not None:
+m = st.session_state['last_saved_memo']
+pdf = FPDF(orientation='P', unit='mm', format='A4')
+pdf.add_page()
+pdf.set_font("Helvetica", "B", 22); pdf.set_text_color(15, 76, 129)
+pdf.cell(0, 10, "ROGMUKTI DIAGNOSTIC CENTRE", ln=True, align="C")
+pdf.set_font("Helvetica", "", 10); pdf.set_text_color(100, 100, 100)
+pdf.cell(0, 5, "Hospital Road, Dhaka | Phone: +880123456789", ln=True, align="C")
+pdf.ln(4); pdf.set_draw_color(15, 76, 129); pdf.set_line_width(0.5); pdf.line(10, 32, 200, 32); pdf.ln(6)
+pdf.set_font("Helvetica", "B", 13); pdf.set_text_color(0, 0, 0)
+pdf.cell(0, 8, "CASH MEMO / INVOICE", ln=True); pdf.set_font("Helvetica", "", 10)
+pdf.cell(100, 6, f"Invoice No: {m['inv']}"); pdf.cell(90, 6, f"Date: {datetime.now().strftime('%d-%b-%Y %I:%M %p')}", ln=True)
+pdf.cell(100, 6, f"Patient Name: {m['name']}"); pdf.cell(90, 6, f"Mobile No: {m['phone']}", ln=True); pdf.ln(6)
+pdf.set_fill_color(15, 76, 129); pdf.set_text_color(255, 255, 255); pdf.set_font("Helvetica", "B", 10)
+pdf.cell(20, 8, "SL No", border=1, fill=True, align="C")
+pdf.cell(120, 8, "Diagnostic Test Name", border=1, fill=True)
+pdf.cell(50, 8, "Price (TK)", border=1, fill=True, ln=True, align="R")
+pdf.set_text_color(0, 0, 0); pdf.set_font("Helvetica", "", 10)
+sl = 1
+for item in m["tests"].split(", "):
+if " (৳" in item: t_name, t_pr = item.split(" (৳")
+else: t_name, t_pr = item, "0"
+t_pr = t_pr.replace(")", "").strip()
+pdf.cell(20, 8, str(sl), border=1, align="C")
+pdf.cell(120, 8, f" {t_name}", border=1)
+pdf.cell(50, 8, f"{float(t_pr):,.2f} ", border=1, ln=True, align="R")
+sl += 1
+pdf.ln(5)
+pdf.cell(140, 6, "Total Amount:", align="R"); pdf.cell(50, 6, f"{float(m['total']):,.2f} TK ", ln=True, align="R")
+if float(m['disc']) > 0: pdf.cell(140, 6, "Discount:", align="R"); pdf.cell(50, 6, f"-{float(m['disc']):,.2f} TK ", ln=True, align="R")
+pdf.cell(140, 6, "Paid Cash:", align="R"); pdf.cell(50, 6, f"{float(m['paid']):,.2f} TK ", ln=True, align="R")
+pdf.cell(140, 8, "Remaining Due:", align="R"); pdf.cell(50, 8, f"{float(m['due']):,.2f} TK ", ln=True, align="R")
+pdf.ln(15); pdf.cell(130, 6, ""); pdf.cell(60, 6, "_______________________", ln=True, align="C")
+pdf.cell(130, 6, ""); pdf.cell(60, 6, "Authorized Signature", ln=True, align="C")
+pdf_bytes = pdf.output(dest="S")
+st.markdown("---")
+st.download_button(label="📥 DOWNLOAD A4 CASH MEMO (PDF)", data=pdf_bytes, file_name=f"Invoice_{m['inv']}.pdf", mime="application/pdf", use_container_width=True)
