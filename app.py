@@ -3,14 +3,16 @@ import sqlite3
 from datetime import datetime
 import pandas as pd
 
-# Page configuration
-st.set_page_config(page_title="Rog Mukti Diagnostic Centre", layout="wide")
-
-# Database Connection
+# Page Configuration
+st.set_page_config(
+    page_title="Rog Mukti Diagnostic Centre", 
+    layout="wide"
+)
+# Database Connection Setup
 conn = sqlite3.connect("rogmukti_clinic_final.db", check_same_thread=False)
 c = conn.cursor()
 
-# Create Patients Table
+# Create Patients Table Structure
 c.execute("""
 CREATE TABLE IF NOT EXISTS patients (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,7 +30,7 @@ CREATE TABLE IF NOT EXISTS patients (
 """)
 conn.commit()
 
-# Function to save patient details to database
+# Function to Insert Patient Record
 def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, date):
     c.execute('''
         INSERT INTO patients (name, age, phone, doctor, tests, total_amount, discount, advance, due, date)
@@ -36,7 +38,7 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     ''', (name, age, phone, doctor, tests, total, discount, advance, due, date))
     conn.commit()
     return c.lastrowid
-# Comprehensive list of tests and standard prices
+# Master Price List Dictionary
 TEST_PRICES = {
     # --- Haematology & Blood ---
     "CBC (Complete Blood Count)": 600.0,
@@ -54,14 +56,14 @@ TEST_PRICES = {
     "HbA1c": 1200.0,
     "Serum Creatinine": 450.0,
     "Serum Bilirubin (Total/Direct)": 550.0,
-    "SGPT (ALT)": 450.0,
-    "SGOT (AST)": 450.0,
-    "Serum Alkaline Phosphatase": 650.0,
+    "SGPT (ALT)": 500.0,
+    "SGOT (AST)": 500.0,
+    "Serum Alkaline Phosphatase": 700.0,
     "Lipid Profile (Full)": 1000.0,
-    "Serum Cholesterol": 450.0,
+    "Serum Cholesterol": 350.0,
     "Serum Triglycerides": 450.0,
     "Serum Uric Acid": 450.0,
-    "Serum Urea / BUN": 400.0,
+    "Serum Urea / BUN": 300.0,
     "Serum Electrolytes (Na, K, Cl)": 1000.0,
     "Serum Calcium": 800.0,
     
@@ -70,14 +72,14 @@ TEST_PRICES = {
     "Anti-HCV": 600.0,
     "HIV I & II": 500.0,
     "Widal Test (Typhoid)": 450.0,
-    "ASO Titre": 450.0,
-    "RA Factor": 450.0,
+    "ASO Titre": 400.0,
+    "RA Factor": 400.0,
     "CRP (C-Reactive Protein)": 500.0,
-    "Dengue NS1 Antigen": 300.0,
-    "Dengue IgG/IgM": 300.0,
+    "Dengue NS1 Antigen": 600.0,
+    "Dengue IgG/IgM": 700.0,
     "Chikungunya IgM": 800.0,
     "Troponin I (Cardiac)": 1200.0,
-    "Triple antigen (T.A)": 1000.0,
+    "Triple antigen (TA)": 1000.0,
     
     # --- Urine & Stool ---
     "Urine R/M/E": 200.0,
@@ -87,11 +89,11 @@ TEST_PRICES = {
     
     # --- Thyroid & Hormone Panel ---
     "TSH (Thyroid Stimulating Hormone)": 600.0,
-    "FT4 (Free Thyroxine)": 900.0,
-    "FT3 (Free Triiodothyronine)": 900.0,
-    "T3 (Total Triiodothyronine)": 900.0,
-    "T4 (Total Thyroxine)": 900.0,
-    "Serum Prolactin": 1200.0,
+    "FT4 (Free Thyroxine)": 600.0,
+    "FT3 (Free Triiodothyronine)": 600.0,
+    "T3 (Total Triiodothyronine)": 500.0,
+    "T4 (Total Thyroxine)": 500.0,
+    "Serum Prolactin": 800.0,
     "Serum Testosterone": 900.0,
     "PSA (Prostate Specific Antigen)": 1200.0,
     "Beta-HCG": 1000.0,
@@ -122,9 +124,9 @@ TEST_PRICES = {
     # --- Custom Test Option ---
     "Custom Test / Others (Type Name & Price Below)": 0.0
 }
-# Sidebar Navigation
+# Sidebar Navigation Menu Options
 st.sidebar.title("🧭 Navigation")
-page = st.sidebar.radio("Go to:", ["New Patient Entry", "Patient Database"])
+page = st.sidebar.radio("Go to:", ["New Patient Entry", "Patient Database", "Doctors Report"])
 
 if page == "New Patient Entry":
     st.title("🏥 Rog Mukti Diagnostic Centre")
@@ -133,7 +135,7 @@ if page == "New Patient Entry":
     if "receipt_data" not in st.session_state:
         st.session_state.receipt_data = None
 
-    # Patient & Doctor Info Section
+    # Patient Demographic Fields
     st.subheader("👤 Patient & Doctor Information")
     
     col1, col2 = st.columns(2)
@@ -146,11 +148,10 @@ if page == "New Patient Entry":
         doctor = st.selectbox("REFd By. Dr", doctor_list)
         date_input = st.date_input("Date", datetime.now())
         date_str = date_input.strftime("%Y-%m-%d")
-        
     st.markdown("---")
-    
-    # Test Selection Section
     st.subheader("🧪 Tests & Billing Selection")
+    
+    # Form-independent dropdown for live counter updates
     selected_tests = st.multiselect("Description (Search or select tests)", sorted(list(TEST_PRICES.keys())))
     
     custom_test_active = "Custom Test / Others (Type Name & Price Below)" in selected_tests
@@ -168,7 +169,7 @@ if page == "New Patient Entry":
         if custom_test_active:
             custom_price = st.number_input("Enter Custom Test Price (TK):", min_value=0.0, value=0.0, step=50.0)
     
-    # Live billing calculations
+    # Live billing math
     sub_total = sum(TEST_PRICES[test] for test in selected_tests) + custom_price
 
     col3, col4 = st.columns(2)
@@ -184,7 +185,7 @@ if page == "New Patient Entry":
 
     st.markdown("---")
     
-    # Submit Bill Button
+    # Save button trigger
     if st.button("💾 Save Bill and Generate Receipt", type="primary", use_container_width=True):
         if name and selected_tests:
             final_tests_list = [t for t in selected_tests if t != "Custom Test / Others (Type Name & Price Below)"]
@@ -221,110 +222,90 @@ if page == "New Patient Entry":
             st.error("Please enter the Patient's Name.")
         elif not selected_tests:
             st.error("Please select at least one test.")
-      # Receipt UI Rendering
+                # Receipt View Generator & Native 1-Click Browser Print Trigger
     if st.session_state.receipt_data:
         r = st.session_state.receipt_data
-        
         table_rows = ""
         for i, item in enumerate(r['tests'], 1):
-            table_rows += f"""
-            <tr style="border-bottom: 1px solid #ddd;">
-                <td style="padding: 8px; color: #1e293b;">{i}</td>
-                <td style="padding: 8px; color: #1e293b;">{item['name']}</td>
-                <td style="padding: 8px; text-align: right; color: #1e293b;">{item['price']:.2f} ৳</td>
-            </tr>
-            """
+            table_rows += f"<tr><td>{i}</td><td>{item['name']}</td><td style='text-align:right;'>{item['price']:.2f} ৳</td></tr>"
 
         html_receipt = f"""
-        <div style="border: 3px solid #1e3a8a; padding: 25px; border-radius: 12px; background-color: #f8fafc; font-family: 'Segoe UI', Arial, sans-serif; max-width: 650px; margin: 0 auto;">
+        <div style="border: 3px solid #1e3a8a; padding: 25px; border-radius: 12px; background-color: #f8fafc; font-family: sans-serif; max-width: 650px; margin: 0 auto;">
             <div style="text-align: center; background-color: #1e3a8a; color: white; padding: 15px; border-radius: 8px 8px 0 0; margin: -25px -25px 20px -25px;">
-                <h2 style="margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px;">Rog Mukti Diagnostic Centre</h2>
-                <p style="margin: 5px 0 0 0; font-size: 13px; opacity: 0.9;">Mollah Stand, Auliapur, Patuakhali</p>
+                <h2 style="margin: 0; font-size: 24px;">Rog Mukti Diagnostic Centre</h2>
+                <p style="margin: 5px 0 0 0; font-size: 13px;">Mollah Stand, Auliapur, Patuakhali</p>
                 <p style="margin: 2px 0 0 0; font-size: 13px; font-weight: bold;">📞 Phone: 01711867637</p>
             </div>
-            
-            <div style="text-align: center; margin-bottom: 15px;">
-                <span style="background-color: #e2e8f0; padding: 5px 18px; font-weight: bold; border-radius: 20px; color: #0f172a; font-size: 14px; letter-spacing: 1px;">MONEY RECEIPT</span>
-            </div>
-            
+            <div style="text-align: center; margin-bottom: 15px;"><span style="background-color: #e2e8f0; padding: 5px 18px; font-weight: bold; border-radius: 20px; color: #0f172a; font-size: 14px;">MONEY RECEIPT</span></div>
             <table style="width: 100%; font-size: 13px; margin-bottom: 15px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                <tr>
-                    <td style="padding: 4px; color: #1e293b;"><b>Invoice No:</b> <span style="color:#1e3a8a; font-weight:bold;">{r['inv_no']}</span></td>
-                    <td style="text-align: right; padding: 4px; color: #1e293b;"><b>Date:</b> {r['date']}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px; color: #1e293b;"><b>Patient Name:</b> {r['name']}</td>
-                    <td style="text-align: right; padding: 4px; color: #1e293b;"><b>Age:</b> {r['age']} Years</td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px; color: #1e293b;"><b>Phone Number:</b> {r['phone']}</td>
-                    <td style="text-align: right; padding: 4px; color: #1e293b;"><b>Refd By:</b> {r['doctor']}</td>
-                </tr>
+                <tr><td><b>Invoice No:</b> {r['inv_no']}</td><td style="text-align: right;"><b>Date:</b> {r['date']}</td></tr>
+                <tr><td><b>Patient Name:</b> {r['name']}</td><td style="text-align: right;"><b>Age:</b> {r['age']} Years</td></tr>
+                <tr><td><b>Phone Number:</b> {r['phone']}</td><td style="text-align: right;"><b>Refd By:</b> {r['doctor']}</td></tr>
             </table>
-            
             <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
-                <thead>
-                    <tr style="background-color: #3b82f6; color: white; font-size: 14px;">
-                        <th style="text-align: left; padding: 8px; width: 10%;">SL</th>
-                        <th style="text-align: left; padding: 8px; width: 65%;">Description (Test Name)</th>
-                        <th style="text-align: right; padding: 8px; width: 25%;">Amount</th>
-                    </tr>
-                </thead>
+                <thead><tr style="background-color: #3b82f6; color: white; font-size: 14px;"><th style="padding: 8px; text-align: left;">SL</th><th style="padding: 8px; text-align: left;">Description</th><th style="padding: 8px; text-align: right;">Amount</th></tr></thead>
                 <tbody style="font-size: 13px;">
                     {table_rows}
-                    <tr style="background-color: #f1f5f9; font-weight: bold;">
-                        <td></td>
-                        <td style="text-align: right; padding: 8px; color: #1e293b;">Total Amount:</td>
-                        <td style="text-align: right; padding: 8px; color: #1e293b;">{r['total']:.2f} ৳</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="text-align: right; padding: 6px; color: #475569;">Discount ({r['discount_pct']}%):</td>
-                        <td style="text-align: right; padding: 6px; color: #475569;">- {r['discount_amt']:.2f} ৳</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="text-align: right; padding: 6px; color: #16a34a;">Advance Paid:</td>
-                        <td style="text-align: right; padding: 6px; color: #16a34a;">{r['advance']:.2f} ৳</td>
-                    </tr>
-                    <tr style="background-color: #fee2e2; color: #b91c1c; font-weight: bold; font-size: 15px; border-top: 2px solid #f87171;">
-                        <td></td>
-                        <td style="text-align: right; padding: 8px;">Due Amount:</td>
-                        <td style="text-align: right; padding: 8px;">{r['due']:.2f} ৳</td>
-                    </tr>
+                    <tr style="background-color: #f1f5f9; font-weight: bold;"><td></td><td style="text-align: right; padding: 8px;">Total Amount:</td><td style="text-align: right; padding: 8px;">{r['total']:.2f} ৳</td></tr>
+                    <tr><td></td><td style="text-align: right; padding: 6px; color: #475569;">Discount ({r['discount_pct']}%):</td><td style="text-align: right; padding: 6px; color: #475569;">- {r['discount_amt']:.2f} ৳</td></tr>
+                    <tr><td></td><td style="text-align: right; padding: 6px; color: #16a34a;">Advance Paid:</td><td style="text-align: right; padding: 6px; color: #16a34a;">{r['advance']:.2f} ৳</td></tr>
+                    <tr style="background-color: #fee2e2; color: #b91c1c; font-weight: bold; font-size: 15px; border-top: 2px solid #f87171;"><td></td><td style="text-align: right; padding: 8px;">Due Amount:</td><td style="text-align: right; padding: 8px;">{r['due']:.2f} ৳</td></tr>
                 </tbody>
             </table>
-            
-            <div style="margin-top: 50px; display: flex; justify-content: flex-end;">
-                <div style="text-align: center; width: 150px;">
-                    <hr style="border: none; border-top: 1px solid #475569; margin-bottom: 5px;">
-                    <span style="font-size: 12px; font-weight: bold; color: #475569;">Authorized Signature</span>
-                </div>
-            </div>
+            <div style="margin-top: 50px; display: flex; justify-content: flex-end;"><div style="text-align: center; width: 150px;"><hr style="border: none; border-top: 1px solid #475569; margin-bottom: 5px;"><span style="font-size: 12px; font-weight: bold; color: #475569;">Authorized Signature</span></div></div>
         </div>
         """
-        
         st.subheader("🖨️ Receipt Action Menu")
-        
-        # Streamlit official way to prompt native print dialog
         if st.button("🖨️ Print Receipt Now", type="secondary", use_container_width=True):
             st.components.v1.html("<script>window.print();</script>", height=0, width=0)
-            
-        # Preview layout box
         st.components.v1.html(html_receipt, height=580, scrolling=True)
 
+# --- PAGE 2: PATIENT DATABASE ---
 elif page == "Patient Database":
     st.title("📋 Patient Record Database")
     st.markdown("---")
-    
     c.execute("SELECT * FROM patients ORDER BY id DESC")
     data = c.fetchall()
-    
     if data:
         columns = ["INV ID", "Patient Name", "Age", "Phone Number", "Referred Doctor", "Selected Tests", "Total Bill", "Discount (%)", "Advance Paid", "Due Amount", "Date"]
         df = pd.DataFrame(data, columns=columns)
         df["INV ID"] = df["INV ID"].apply(lambda x: f"{x:05d}")
         st.dataframe(df, use_container_width=True)
-    else:
-        st.info("No records found in the database yet.")
+    else: st.info("No records found in the database yet.")
+
+# --- PAGE 3: DOCTORS REPORT DASHBOARD ---
+elif page == "Doctors Report":
+    st.title("🩺 Doctors Referral & Collection Dashboard")
+    st.markdown("---")
+    REFERRAL_PERCENTAGE = 10.0 
+    c.execute("SELECT * FROM patients ORDER BY id DESC")
+    data = c.fetchall()
+    if data:
+        columns = ["INV ID", "Patient Name", "Age", "Phone Number", "Referred Doctor", "Selected Tests", "Total Bill", "Discount (%)", "Advance Paid", "Due Amount", "Date"]
+        df = pd.DataFrame(data, columns=columns)
+        df["Date"] = pd.to_datetime(df["Date"]).dt.date
+        st.subheader("🗓️ Filter by Date Range")
+        col_f1, col_f2 = st.columns(2)
+        with col_f1: start_date = st.date_input("Start Date", value=df["Date"].min())
+        with col_f2: end_date = st.date_input("End Date", value=df["Date"].max())
+        filtered_df = df[(df["Date"] >= start_date) & (df["Date"] <= end_date)]
+        st.markdown("---")
+        st.subheader("📊 Doctors Summary")
+        if not filtered_df.empty:
+            doc_summary = filtered_df.groupby("Referred Doctor")["Total Bill"].sum().reset_index()
+            doc_summary.columns = ["Doctor Name", "Total Test Value (TK)"]
+            doc_summary[f"Referral Fee ({REFERRAL_PERCENTAGE}%)"] = doc_summary["Total Test Value (TK)"] * (REFERRAL_PERCENTAGE / 100.0)
+            total_filtered_bill = filtered_df["Total Bill"].sum()
+            total_referral_fee = total_filtered_bill * (REFERRAL_PERCENTAGE / 100.0)
+            col_m1, col_m2 = st.columns(2)
+            with col_m1: st.metric(label="Total Business Volume (Selected Range)", value=f"{total_filtered_bill:.2f} TK")
+            with col_m2: st.metric(label="Total Referral Commission Payable", value=f"{total_referral_fee:.2f} TK")
+            st.dataframe(doc_summary, use_container_width=True)
+            st.markdown("---")
+            st.subheader("📋 Patient Lists under Selected Range")
+            display_filtered = filtered_df.copy()
+            display_filtered["INV ID"] = display_filtered["INV ID"].apply(lambda x: f"{x:05d}")
+            st.dataframe(display_filtered, use_container_width=True)
+        else: st.warning("No data found for the selected date range.")
+    else: st.info("No data available in database to generate reports.")
     
