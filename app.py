@@ -8,7 +8,6 @@ st.set_page_config(
     page_title="Rog Mukti Diagnostic Centre", 
     layout="wide"
 )
-
 # 2. Database Connection Setup
 conn = sqlite3.connect("rogmukti_clinic_final.db", check_same_thread=False)
 c = conn.cursor()
@@ -39,11 +38,9 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     ''', (name, age, phone, doctor, tests, total, discount, advance, due, date))
     conn.commit()
     return c.lastrowid
-
 # 3. Master Price List Dictionary
 TEST_PRICES = {
-
-# --- Haematology & Blood ---
+    # --- Haematology & Blood ---
     "CBC (Complete Blood Count)": 400.0,
     "Hgb (Hemoglobin)": 150.0,
     "ESR (Erythrocyte Sedimentation Rate)": 150.0,
@@ -69,7 +66,6 @@ TEST_PRICES = {
     "Serum Urea / BUN": 300.0,
     "Serum Electrolytes (Na, K, Cl)": 1000.0,
     "Serum Calcium": 400.0,
-    
     # --- Serology & Immunology ---
     "HBsAg (Screening / ELISA)": 350.0,
     "Anti-HCV": 600.0,
@@ -120,8 +116,7 @@ if page == "New Patient Entry":
         doctor = st.selectbox("REFd By. Dr", doctor_list)
         date_input = st.date_input("Date", datetime.now())
         date_str = date_input.strftime("%Y-%m-%d")
-
-    st.markdown("---")
+            st.markdown("---")
     st.subheader("🧪 Tests & Billing Selection")
     selected_tests = st.multiselect("Description (Search or select tests)", sorted(list(TEST_PRICES.keys())))
     
@@ -167,7 +162,7 @@ if page == "New Patient Entry":
             st.error("Please enter the Patient's Name.")
         elif not selected_tests: 
             st.error("Please select at least one test.")
-if st.session_state.receipt_data:
+                if st.session_state.receipt_data:
         r = st.session_state.receipt_data
         table_rows = "".join([f"<tr><td>{i}</td><td>{item['name']}</td><td style='text-align:right;'>{item['price']:.2f} ৳</td></tr>" for i, item in enumerate(r['tests'], 1)])
         html_receipt = f"""<div style='border: 3px solid #1e3a8a; padding: 25px; border-radius: 12px; background-color: #f8fafc; font-family: sans-serif; max-width: 650px; margin: 0 auto;'><div style='text-align: center; background-color: #1e3a8a; color: white; padding: 15px; border-radius: 8px 8px 0 0; margin: -25px -25px 20px -25px;'><h2 style='margin: 0;'>Rog Mukti Diagnostic Centre</h2><p style='margin: 5px 0 0 0; font-size: 13px;'>Mollah Stand, Patuakhali</p></div><div style='text-align: center; margin-bottom: 15px;'><span style='background-color: #e2e8f0; padding: 5px 18px; font-weight: bold; border-radius: 20px; color: #0f172a; font-size: 14px;'>MONEY RECEIPT</span></div><table style='width: 100%; font-size: 13px; margin-bottom: 15px;'><tr><td><b>Inv No:</b> {r['inv_no']}</td><td style='text-align: right;'><b>Date:</b> {r['date']}</td></tr><tr><td><b>Name:</b> {r['name']}</td><td style='text-align: right;'><b>Age:</b> {r['age']} Yrs</td></tr><tr><td><b>Phone:</b> {r['phone']}</td><td style='text-align: right;'><b>Refd By:</b> {r['doctor']}</td></tr></table><table style='width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;'><thead><tr style='background-color: #3b82f6; color: white;'><th style='padding: 8px; text-align: left;'>SL</th><th style='padding: 8px; text-align: left;'>Description</th><th style='padding: 8px; text-align: right;'>Amount</th></tr></thead><tbody>{table_rows}<tr style='background-color: #f1f5f9; font-weight: bold;'><td></td><td style='text-align: right; padding: 8px;'>Total:</td><td style='text-align: right; padding: 8px;'>{r['total']:.2f} ৳</td></tr><tr><td></td><td style='text-align: right; padding: 6px;'>Discount ({r['discount_pct']}%):</td><td style='text-align: right; padding: 6px;'>- {r['discount_amt']:.2f} ৳</td></tr><tr><td></td><td style='text-align: right; padding: 6px;'>Advance:</td><td style='text-align: right; padding: 6px;'>{r['advance']:.2f} ৳</td></tr><tr style='background-color: #fee2e2; color: #b91c1c; font-weight: bold;'><td></td><td style='text-align: right; padding: 8px;'>Due:</td><td style='text-align: right; padding: 8px;'>{r['due']:.2f} ৳</td></tr></tbody></table></div>"""
@@ -186,3 +181,44 @@ elif page == "Patient Database":
         columns = ["INV ID", "Patient Name", "Age", "Phone Number", "Referred Doctor", "Selected Tests", "Total Bill", "Discount (%)", "Advance Paid", "Due Amount", "Date"]
         df = pd.DataFrame(data, columns=columns)
         df["INV ID"] = df["INV ID"].apply(lambda x: f"{x:05d}")
+        st.dataframe(df, use_container_width=True)
+    else: 
+        st.info("ℹ️ No records found in the database yet. Please add a patient first from 'New Patient Entry'.")
+
+# --- PAGE 3: DOCTORS REPORT ---
+elif page == "Doctors Report":
+    st.title("🩺 Doctors Referral & Collection Dashboard")
+    st.markdown("---")
+    c.execute("SELECT * FROM patients ORDER BY id DESC")
+    data = c.fetchall()
+    if data:
+        columns = ["INV ID", "Patient Name", "Age", "Phone Number", "Referred Doctor", "Selected Tests", "Total Bill", "Discount (%)", "Advance Paid", "Due Amount", "Date"]
+        df = pd.DataFrame(data, columns=columns)
+        df["Date"] = pd.to_datetime(df["Date"]).dt.date
+        st.subheader("🗓️ Settings & Date Range Filter")
+        col_f1, col_f2, col_f3 = st.columns(3)
+        with col_f1: start_date = st.date_input("Start Date", value=df["Date"].min())
+        with col_f2: end_date = st.date_input("End Date", value=df["Date"].max())
+        with col_f3: REFERRAL_PERCENTAGE = st.selectbox("Select Referral Commission Rate", [25.0, 30.0, 35.0, 10.0, 15.0, 20.0])
+        filtered_df = df[(df["Date"] >= start_date) & (df["Date"] <= end_date)]
+        st.markdown("---")
+        st.subheader("📊 Doctors Summary")
+        if not filtered_df.empty:
+            doc_summary = filtered_df.groupby("Referred Doctor")["Total Bill"].sum().reset_index()
+            doc_summary.columns = ["Doctor Name", "Total Test Value (TK)"]
+            doc_summary[f"Referral Fee ({REFERRAL_PERCENTAGE}%)"] = doc_summary["Total Test Value (TK)"] * (REFERRAL_PERCENTAGE / 100.0)
+            total_filtered_bill = filtered_df["Total Bill"].sum()
+            total_referral_fee = total_filtered_bill * (REFERRAL_PERCENTAGE / 100.0)
+            col_m1, col_m2 = st.columns(2)
+            with col_m1: st.metric(label="Total Business Volume", value=f"{total_filtered_bill:.2f} TK")
+            with col_m2: st.metric(label="Total Commission Payable", value=f"{total_referral_fee:.2f} TK")
+            st.dataframe(doc_summary, use_container_width=True)
+            st.markdown("---")
+            st.subheader("📋 Patient Lists under Selected Range")
+            display_filtered = filtered_df.copy()
+            display_filtered["INV ID"] = display_filtered["INV ID"].apply(lambda x: f"{x:05d}")
+            st.dataframe(display_filtered, use_container_width=True)
+        else: st.warning("No data found for the selected date range.")
+    else: 
+        st.info("ℹ️ No patient records available to generate reports. Please add a patient first from 'New Patient Entry'.")
+        
