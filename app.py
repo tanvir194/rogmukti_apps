@@ -53,29 +53,37 @@ st.sidebar.markdown("---")
 st.sidebar.write(f"Logged in as: **{st.session_state['user_role']}**")
 if st.sidebar.button("🚪 Log Out"):
     st.session_state['logged_in'] = False; st.session_state['user_role'] = None; st.rerun()
-    # টেবিল ফরম্যাটে ক্যাশ মেমো এবং রিপোর্ট জেনারেটর পিডিএফ ইঞ্জিন
-def generate_pdf_report(invoice_no, patient_name, tests_str, total, paid, due, disc=0):
-    pdf = FPDF()
+   # A4 কাগজের জন্য টেবিল ফরম্যাটে ক্যাশ মেমো জেনারেটর পিডিএফ ইঞ্জিন
+def generate_pdf_report(invoice_no, patient_name, tests_str, total, paid, due, disc=0, phone="-", age="-", gender="-"):
+    pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
     
-    # হাসপাতালের হেডার
-    pdf.set_font("Helvetica", "B", 22); pdf.set_text_color(15, 76, 129)
-    pdf.cell(0, 10, "ROGMUKTI DIAGNOSTIC CENTRE", ln=True, align="C")
+    # হাসপাতালের হেডার (A4 স্ট্যান্ডার্ড)
+    pdf.set_font("Helvetica", "B", 24); pdf.set_text_color(15, 76, 129)
+    pdf.cell(0, 12, "ROGMUKTI DIAGNOSTIC CENTRE", ln=True, align="C")
     pdf.set_font("Helvetica", "", 10); pdf.set_text_color(100, 100, 100)
-    pdf.cell(0, 5, "Hospital Road, Dhaka | Phone: +880123456789", ln=True, align="C")
-    pdf.ln(4); pdf.set_draw_color(15, 76, 129); pdf.line(10, 30, 200, 30); pdf.ln(6)
+    pdf.cell(0, 5, "Hospital Road, Dhaka | Phone: +880123456789 | Email: info@rogmukti.com", ln=True, align="C")
+    pdf.ln(4); pdf.set_draw_color(15, 76, 129); pdf.set_line_width(0.5); pdf.line(10, 32, 200, 32); pdf.ln(6)
     
-    # মেমোর টাইটেল ও রোগীর বেসিক তথ্য
-    pdf.set_font("Helvetica", "B", 13); pdf.set_text_color(0, 0, 0)
-    pdf.cell(0, 8, "CASH MEMO / INVOICE", ln=True); pdf.set_font("Helvetica", "", 10)
-    pdf.cell(100, 6, f"Invoice No: {invoice_no}"); pdf.cell(90, 6, f"Date: {datetime.now().strftime('%d-%b-%Y %I:%M %p')}", ln=True)
-    pdf.cell(100, 6, f"Patient Name: {patient_name}"); pdf.cell(90, 6, f"Referred By: Self / Direct", ln=True); pdf.ln(6)
+    # মেমোর টাইটেল ও রোগীর প্রফেশনাল ইনফো ব্লক
+    pdf.set_font("Helvetica", "B", 14); pdf.set_text_color(0, 0, 0)
+    pdf.cell(0, 8, "INVOICE / CASH MEMO", ln=True); pdf.ln(2)
     
-    # আপনার রিকোয়েস্ট করা টেবিল হেডার (SL No, Test, Price)
+    pdf.set_font("Helvetica", "B", 10); pdf.set_text_color(50, 50, 50)
+    pdf.cell(30, 6, "Invoice No:"); pdf.set_font("Helvetica", ""); pdf.cell(70, 6, str(invoice_no))
+    pdf.set_font("Helvetica", "B"); pdf.cell(30, 6, "Date & Time:"); pdf.set_font("Helvetica", ""); pdf.cell(60, 6, datetime.now().strftime('%d-%b-%Y %I:%M %p'), ln=True)
+    
+    pdf.set_font("Helvetica", "B"); pdf.cell(30, 6, "Patient Name:"); pdf.set_font("Helvetica", ""); pdf.cell(70, 6, str(patient_name))
+    pdf.set_font("Helvetica", "B"); pdf.cell(30, 6, "Mobile No:"); pdf.set_font("Helvetica", ""); pdf.cell(60, 6, str(phone), ln=True)
+    
+    pdf.set_font("Helvetica", "B"); pdf.cell(30, 6, "Age / Gender:"); pdf.set_font("Helvetica", ""); pdf.cell(70, 6, f"{age} / {gender}")
+    pdf.set_font("Helvetica", "B"); pdf.cell(30, 6, "Referred By:"); pdf.set_font("Helvetica", ""); pdf.cell(60, 6, "Self / Direct", ln=True); pdf.ln(6)
+    
+    # টেবিল হেডার (SL No, Test, Price)
     pdf.set_fill_color(15, 76, 129); pdf.set_text_color(255, 255, 255); pdf.set_font("Helvetica", "B", 10)
-    pdf.cell(20, 8, "SL No", border=1, fill=True, align="C")
-    pdf.cell(120, 8, "Diagnostic Test Name", border=1, fill=True)
-    pdf.cell(50, 8, "Price (TK)", border=1, fill=True, ln=True, align="R")
+    pdf.cell(20, 9, "SL No", border=1, fill=True, align="C")
+    pdf.cell(120, 9, "Diagnostic Test Name", border=1, fill=True, align="L")
+    pdf.cell(50, 9, "Price (TK)", border=1, fill=True, ln=True, align="R")
     
     # টেবিল ডাটা রো (Rows)
     pdf.set_text_color(0, 0, 0); pdf.set_font("Helvetica", "", 10)
@@ -83,31 +91,44 @@ def generate_pdf_report(invoice_no, patient_name, tests_str, total, paid, due, d
     sl = 1
     
     for item in items:
-        if "(" in item and "৳" in item:
+        if " (Tk" in item:
+            t_name, t_pr = item.split(" (Tk")
+            t_pr = t_pr.replace(")", "").strip()
+        elif " (৳" in item:
             t_name, t_pr = item.split(" (৳")
             t_pr = t_pr.replace(")", "").strip()
         else:
             t_name, t_pr = item, "0"
             
+        try: t_pr_float = float(t_pr)
+        except: t_pr_float = 0.0
+            
         pdf.cell(20, 8, str(sl), border=1, align="C")
-        pdf.cell(120, 8, f" {t_name}", border=1)
-        pdf.cell(50, 8, f"{float(t_pr):,.2f} ", border=1, ln=True, align="R")
+        pdf.cell(120, 8, f" {t_name}", border=1, align="L")
+        pdf.cell(50, 8, f"{t_pr_float:,.2f} ", border=1, ln=True, align="R")
         sl += 1
         
     pdf.ln(4)
     
-    # টোটাল, পেইড, ডু হিসাবের নিচের সেকশন
+    # রাইট অ্যালাইন্ড হিসাবপত্র
     pdf.set_font("Helvetica", "B", 10)
     pdf.cell(140, 6, "Total Amount:", align="R"); pdf.cell(50, 6, f"{float(total):,.2f} TK ", ln=True, align="R")
     if float(disc) > 0:
-        pdf.cell(140, 6, "Discount:", align="R"); pdf.cell(50, 6, f"-{float(disc):,.2f} TK ", ln=True, align="R")
-    pdf.cell(140, 6, "Paid Cash:", align="R"); pdf.cell(50, 6, f"{float(paid):,.2f} TK ", ln=True, align="R")
-    pdf.set_draw_color(15, 76, 129); pdf.line(140, pdf.get_y()+2, 200, pdf.get_y()+2)
+        pdf.cell(140, 6, "Discount Given:", align="R"); pdf.cell(50, 6, f"-{float(disc):,.2f} TK ", ln=True, align="R")
+    pdf.cell(140, 6, "Paid Amount:", align="R"); pdf.cell(50, 6, f"{float(paid):,.2f} TK ", ln=True, align="R")
+    pdf.set_draw_color(15, 76, 129); pdf.set_line_width(0.3); pdf.line(140, pdf.get_y()+1, 200, pdf.get_y()+1)
     pdf.cell(140, 8, "Remaining Due:", align="R"); pdf.cell(50, 8, f"{float(due):,.2f} TK ", ln=True, align="R")
     
-    # সিগনেচার
-    pdf.ln(15); pdf.cell(130, 6, ""); pdf.cell(60, 6, "_______________________", ln=True, align="C")
-    pdf.cell(130, 6, ""); pdf.cell(60, 6, "Authorized Signature", ln=True, align="C")
+    # A4 কাগজের নিচের দিকে সিগনেচার এরিয়া
+    pdf.ln(25)
+    pdf.cell(60, 6, "_______________________", align="C")
+    pdf.cell(70, 6, "")
+    pdf.cell(60, 6, "_______________________", ln=True, align="C")
+    
+    pdf.cell(60, 5, "Patient / Receiver Sign", align="C")
+    pdf.cell(70, 5, "")
+    pdf.cell(60, 5, "Authorized Accountant Sign", ln=True, align="C")
+    
     return pdf.output(dest="S")
 
 # ১. প্রথম পেজ: ড্যাশবোর্ড ও বিলিং ট্র্যাকিং লিস্ট
@@ -116,8 +137,6 @@ if page == "📊 Dashboard & Reports":
     
     df_bills = pd.read_sql_query("SELECT * FROM bills", conn)
     if not df_bills.empty:
-        # কলামের নাম পুরানো বা নতুন যাই হোক ডাটা ডাইনামিক হ্যান্ডেল হবে
-        p_col = 'patient_name' if 'patient_name' in df_bills.columns else ('name' if 'name' in df_bills.columns else df_bills.columns[1])
         total_coll = df_bills['net_amount'].sum() if 'net_amount' in df_bills.columns else (df_bills['total_amount'].sum() if 'total_amount' in df_bills.columns else 0)
         total_paid = df_bills['paid_amount'].sum() if 'paid_amount' in df_bills.columns else (df_bills['paid'].sum() if 'paid' in df_bills.columns else 0)
         total_due = df_bills['due_amount'].sum() if 'due_amount' in df_bills.columns else (df_bills['due'].sum() if 'due' in df_bills.columns else 0)
@@ -129,13 +148,13 @@ if page == "📊 Dashboard & Reports":
     col_m2.metric("Cash Received", f"৳ {total_paid:,.2f}")
     col_m3.metric("Total Due", f"৳ {total_due:,.2f}")
     col_m4.metric("Total Patients", f"{total_pat} Persons")
-    st.markdown("---")
+            st.markdown("---")
     st.subheader("📋 Latest Invoice & Billing Tracking (Sorted)")
     
     query_sorted = "SELECT * FROM bills ORDER BY invoice_no DESC"
     df_table = pd.read_sql_query(query_sorted, conn)
     if not df_table.empty:
-        p_col = 'patient_name' if 'patient_name' in df_table.columns else ('name' if 'name' in df_table.columns else df_table.columns[1])
+        p_col = 'patient_name' if 'patient_name' in df_table.columns else ('name' if 'name' in df_table.columns else df_table.columns)
         cols_to_display = [col for col in ['invoice_no', p_col, 'total_amount', 'paid_amount', 'due_amount', 'paid', 'due', 'tests'] if col in df_table.columns]
         st.dataframe(df_table[cols_to_display], use_container_width=True)
     else: st.info("No data found in database table.")
@@ -156,28 +175,33 @@ if page == "📊 Dashboard & Reports":
                     conn.commit(); st.success("Report Saved Successfully!")
                     
     with col_right_print:
-        st.subheader("🖨️ Print / Download Report")
-        print_inv = st.text_input("Enter Invoice Number to Print:")
-        if print_inv:
-            c.execute("SELECT r.test_name, r.result_values FROM test_reports r WHERE r.invoice_no = ?", (print_inv,))
-            report_data = c.fetchone()
-            if report_data and not df_bills.empty:
-                p_col = 'patient_name' if 'patient_name' in df_bills.columns else ('name' if 'name' in df_bills.columns else df_bills.columns[1])
-                patient_name_val = str(df_bills[df_bills['invoice_no']==print_inv][p_col].values[0])
-                t_val = str(df_bills[df_bills['invoice_no']==print_inv]['tests'].values[0]) if 'tests' in df_bills.columns else "Diagnostic Tests"
-                tot = df_bills[df_bills['invoice_no']==print_inv]['total_amount'].values[0] if 'total_amount' in df_bills.columns else 0
-                p_val = df_bills[df_bills['invoice_no']==print_inv]['paid_amount'].values[0] if 'paid_amount' in df_bills.columns else 0
-                d_val = df_bills[df_bills['invoice_no']==print_inv]['due_amount'].values[0] if 'due_amount' in df_bills.columns else 0
-                
-                pdf_bytes = generate_pdf_report(print_inv, patient_name_val, t_val, tot, p_val, d_val)
-                st.download_button("📥 Download PDF Memo", data=pdf_bytes, file_name=f"Memo_{print_inv}.pdf", mime="application/pdf")
-            else: st.error("No invoice data found for this invoice number.")
-                    # ২. দ্বিতীয় পেজ: ১০০+ টেস্টের ড্রপডাউন এবং ডাইনামিক ক্যাশ মেমো জেনারেটর
+        st.subheader("🖨️ Print Reprints / Old Memo")
+        print_inv = st.text_input("Enter Invoice Number to Reprint Memo:")
+        if print_inv and not df_bills.empty and print_inv in df_bills['invoice_no'].values:
+            p_col = 'patient_name' if 'patient_name' in df_bills.columns else ('name' if 'name' in df_bills.columns else df_bills.columns)
+            p_row = df_bills[df_bills['invoice_no'] == print_inv]
+            
+            patient_name_val = str(p_row[p_col].values[0])
+            t_val = str(p_row['tests'].values[0]) if 'tests' in df_bills.columns else "Diagnostic Tests"
+            tot = float(p_row['total_amount'].values[0]) if 'total_amount' in df_bills.columns else (float(p_row['total'].values[0]) if 'total' in df_bills.columns else 0.0)
+            p_val = float(p_row['paid_amount'].values[0]) if 'paid_amount' in df_bills.columns else (float(p_row['paid'].values[0]) if 'paid' in df_bills.columns else 0.0)
+            d_val = float(p_row['due_amount'].values[0]) if 'due_amount' in df_bills.columns else (float(p_row['due'].values[0]) if 'due' in df_bills.columns else 0.0)
+            disc_val_old = float(p_row['discount'].values[0]) if 'discount' in df_bills.columns else 0.0
+            ph_old = str(p_row['phone'].values[0]) if 'phone' in df_bills.columns else "-"
+            age_old = str(p_row['age'].values[0]) if 'age' in df_bills.columns else "-"
+            g_old = str(p_row['gender'].values[0]) if 'gender' in df_bills.columns else "-"
+            
+            pdf_bytes = generate_pdf_report(print_inv, patient_name_val, t_val, tot, p_val, d_val, disc_val_old, ph_old, age_old, g_old)
+            st.download_button("📥 Download Old A4 Memo PDF", data=pdf_bytes, file_name=f"Memo_{print_inv}.pdf", mime="application/pdf")
+            # ২. দ্বিতীয় পেজ: ১০০+ টেস্টের ড্রপডাউন এবং ডাইনামিক ক্যাশ মেমো জেনারেটর
 if page == "💳 New Patient Billing":
     st.markdown("<h2 class='main-header'>💳 Create New Patient Bill & Memo</h2>", unsafe_allow_html=True)
     st.markdown("<div class='billing-card'>", unsafe_allow_html=True)
     
-    with st.form(key='new_billing_form_clean_v4', clear_on_submit=True):
+    # সেশন স্টেটে মেমো ডাটা ধরে রাখার ব্যবস্থা (যাতে সেভ করার পর প্রিন্ট বাটন স্ক্রিনে আটকে থাকে)
+    if 'last_saved_memo' not in st.session_state: st.session_state['last_saved_memo'] = None
+    
+    with st.form(key='new_billing_form_clean_v5', clear_on_submit=False):
         gen_invoice = f"INV-{int(datetime.now().timestamp())}"
         st.markdown(f"<h4>Invoice No: <span style='color:#0f4c81;'>{gen_invoice}</span></h4>", unsafe_allow_html=True)
         st.markdown("---")
@@ -200,19 +224,34 @@ if page == "💳 New Patient Billing":
 
         with col_test_panel:
             st.markdown("##### 🧪 Select Diagnostic Tests (100+ Catalogue)")
+            
+            # আপনার ল্যাবের নাম ম্যাচিং করা ১০০% ফিক্সড ক্যাটালগ (স্ক্রিনশটের সাথে মিলিয়ে)
             test_catalogue = {
-                "CBC (Complete Blood Count)": 400, "CBC with ESR": 500, "Blood Grouping & Rh Factor": 200,
-                "HBsAg (Hepatitis B)": 350, "Widal Test (Typhoid)": 400, "Serum Creatinine": 300,
-                "Uric Acid": 350, "Blood Sugar / Glucose (RBS/FBS)": 150, "Lipid Profile": 1000,
-                "Serum Bilirubin": 250, "SGPT / ALT": 350, "SGOT / AST": 350, "Serum Electrolytes": 900,
-                "TSH (Thyroid)": 800, "FT4 / FT3": 750, "Urine R/M/E": 200, "Stool R/M/E": 200,
-                "USG of Whole Abdomen": 1200, "USG of Lower/Upper Abdomen": 800, "X-Ray Chest P/A View": 500,
-                "ECG (Electrocardiogram)": 400, "CRP (C-Reactive Protein)": 500, "Dengue NS1 Antigen": 600,
-                "Dengue IgG/IgM": 700, "Troponin I": 1200, "ASO Titre": 450, "RA Test": 400,
-                "Memory Test (Custom)": 500, "Vitamin D3 Test": 2500, "HbA1c": 600
+                "CBC (Complete Blood Count)": 400,
+                "Blood Grouping & Rh Factor": 200,
+                "Serum Creatinine": 300,
+                "HBsAg (Hepatitis B)": 350,
+                "Lipid Profile": 1000,
+                "CBC with ESR": 500,
+                "Widal Test (Typhoid)": 400,
+                "Uric Acid": 350,
+                "Blood Sugar / Glucose (RBS/FBS)": 150,
+                "Serum Bilirubin": 250,
+                "SGPT / ALT": 350,
+                "SGOT / AST": 350,
+                "Serum Electrolytes": 900,
+                "TSH (Thyroid)": 800,
+                "Urine R/M/E": 200,
+                "USG of Whole Abdomen": 1200,
+                "X-Ray Chest P/A View": 500,
+                "ECG (Electrocardiogram)": 400,
+                "CRP (C-Reactive Protein)": 500,
+                "Dengue NS1 Antigen": 600,
+                "Memory Test (Custom)": 500
             }
             selected_test_names = st.multiselect("Search & Select Multiple Tests:", list(test_catalogue.keys()))
 
+        # লাইভ রেট ও প্রাইস যোগ করা (ফিক্সড)
         total_bill = 0
         tests_taken_list = []
         if selected_test_names:
@@ -240,46 +279,55 @@ if page == "💳 New Patient Billing":
             ref_commission = st.number_input("Doctor Referral Commission (৳)", min_value=0, value=0)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.form_submit_button(label="💾 Save Bill & Print Memo"):
+        save_clicked = st.form_submit_button(label="💾 Save Bill & Generate Memo")
+        
+        if save_clicked:
             if pat_name and tests_string:
                 cur_date = datetime.now().strftime("%Y/%m/%d")
-                
-                # আপনার পুরানো ডাটাবেজ স্ট্রাকচার ডাইনামিকালি রিড করে এররমুক্ত সেভ করার কোড
                 db_table_info = pd.read_sql_query("SELECT * FROM bills LIMIT 1", conn)
                 cols_in_db = list(db_table_info.columns)
                 
-                # সঠিক কলাম ম্যাচিং লজিক
-                name_key = 'patient_name' if 'patient_name' in cols_in_db else ('name' if 'name' in cols_in_db else cols_in_db[1])
+                name_key = 'patient_name' if 'patient_name' in cols_in_db else ('name' if 'name' in cols_in_db else cols_in_db)
                 paid_key = 'paid_amount' if 'paid_amount' in cols_in_db else ('paid' if 'paid' in cols_in_db else 'paid_amount')
                 due_key = 'due_amount' if 'due_amount' in cols_in_db else ('due' if 'due' in cols_in_db else 'due_amount')
                 total_key = 'total_amount' if 'total_amount' in cols_in_db else ('total' if 'total' in cols_in_db else 'total_amount')
                 
                 try:
-                    # যদি ডাটাবেজে সম্পূর্ণ নতুন কলাম স্ট্রাকচার অলরেডি রিড করা যায়
                     if 'net_amount' in cols_in_db:
                         c.execute(f"""
                             INSERT INTO bills (invoice_no, date, {name_key}, age, gender, phone, doctor, referral_type, referral_fees, total_amount, discount, net_amount, {paid_key}, {due_key}, tests) 
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """, (gen_invoice, cur_date, pat_name, pat_age, pat_gender, pat_phone, ref_doctor, "Direct", ref_commission, total_bill, disc_val, payable_net, paid_val, due_val, tests_string))
                     else:
-                        # পুরানো লিগ্যাসি ডাটাবেজ টেবিলের ব্যাকআপ রাইট
                         query_dynamic = f"INSERT INTO bills (invoice_no, {name_key}, {total_key}, {paid_key}, {due_key}"
                         values_list = [gen_invoice, pat_name, total_bill, paid_val, due_val]
-                        
-                        if 'tests' in cols_in_db:
-                            query_dynamic += ", tests"; values_list.append(tests_string)
-                        if 'date' in cols_in_db:
-                            query_dynamic += ", date"; values_list.append(cur_date)
-                            
+                        if 'tests' in cols_in_db: query_dynamic += ", tests"; values_list.append(tests_string)
+                        if 'date' in cols_in_db: query_dynamic += ", date"; values_list.append(cur_date)
                         query_dynamic += f") VALUES ({','.join(['?']*len(values_list))})"
                         c.execute(query_dynamic, tuple(values_list))
                         
                     conn.commit()
-                    st.success(f"🎉 Success! Memo {gen_invoice} saved successfully.")
-                    st.rerun()
-                except Exception as save_err:
-                    st.error(f"Database write error: {save_err}")
-            else:
-                st.warning("Please input Patient Name and select at least one Test.")
+                    # সেশন স্টেটে ডাটা পাস করা হলো প্রিন্ট বাটনের জন্য
+                    st.session_state['last_saved_memo'] = {
+                        "inv": gen_invoice, "name": pat_name, "tests": tests_string, "total": total_bill, "paid": paid_val, "due": due_val, "disc": disc_val, "phone": pat_phone, "age": pat_age, "gender": pat_gender
+                    }
+                    st.success(f"🎉 Bill Saved! Click the print button below to get A4 Invoice.")
+                except Exception as save_err: st.error(f"Database write error: {save_err}")
+            else: st.warning("Please input Patient Name and select at least one Test.")
+            
+    # ফর্মের ঠিক বাইরে লাইভ প্রফেশনাল প্রিন্ট বাটন (A4 সাইজ মেমো প্রিন্ট দেওয়ার জন্য)
+    if st.session_state['last_saved_memo'] is not None:
+        m_data = st.session_state['last_saved_memo']
+        pdf_bytes = generate_pdf_report(m_data["inv"], m_data["name"], m_data["tests"], m_data["total"], m_data["paid"], m_data["due"], m_data["disc"], m_data["phone"], m_data["age"], m_data["gender"])
+        
+        st.markdown("---")
+        st.markdown(f"### 🖨️ Print Section for Invoice: {m_data['inv']}")
+        st.download_button(
+            label="📥 PRINT / DOWNLOAD A4 CASH MEMO (PDF)",
+            data=pdf_bytes,
+            file_name=f"Rogmukti_Invoice_{m_data['inv']}.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
     st.markdown("</div>", unsafe_allow_html=True)
-                    
+                
