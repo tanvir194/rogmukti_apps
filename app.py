@@ -53,7 +53,8 @@ st.sidebar.markdown("---")
 st.sidebar.write(f"Logged in as: **{st.session_state['user_role']}**")
 if st.sidebar.button("🚪 Log Out"):
     st.session_state['logged_in'] = False; st.session_state['user_role'] = None; st.rerun()
-   # A4 কাগজের জন্য টেবিল ফরম্যাটে ক্যাশ মেমো জেনারেটর পিডিএফ ইঞ্জিন
+
+# A4 কাগজের জন্য টেবিল ফরম্যাটে ক্যাশ মেমো জেনারেটর পিডিএফ ইঞ্জিন
 def generate_pdf_report(invoice_no, patient_name, tests_str, total, paid, due, disc=0, phone="-", age="-", gender="-"):
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
@@ -148,7 +149,8 @@ if page == "📊 Dashboard & Reports":
     col_m2.metric("Cash Received", f"৳ {total_paid:,.2f}")
     col_m3.metric("Total Due", f"৳ {total_due:,.2f}")
     col_m4.metric("Total Patients", f"{total_pat} Persons")
-            st.markdown("---")
+
+    st.markdown("---")
     st.subheader("📋 Latest Invoice & Billing Tracking (Sorted)")
     
     query_sorted = "SELECT * FROM bills ORDER BY invoice_no DESC"
@@ -159,7 +161,6 @@ if page == "📊 Dashboard & Reports":
         st.dataframe(df_table[cols_to_display], use_container_width=True)
     else: st.info("No data found in database table.")
 
-    # ল্যাব রিপোর্ট এন্ট্রি ফর্ম ও ডাউনলোড এরিয়া
     st.markdown("---")
     col_left_form, col_right_print = st.columns(2)
     with col_left_form:
@@ -182,152 +183,4 @@ if page == "📊 Dashboard & Reports":
             p_row = df_bills[df_bills['invoice_no'] == print_inv]
             
             patient_name_val = str(p_row[p_col].values[0])
-            t_val = str(p_row['tests'].values[0]) if 'tests' in df_bills.columns else "Diagnostic Tests"
-            tot = float(p_row['total_amount'].values[0]) if 'total_amount' in df_bills.columns else (float(p_row['total'].values[0]) if 'total' in df_bills.columns else 0.0)
-            p_val = float(p_row['paid_amount'].values[0]) if 'paid_amount' in df_bills.columns else (float(p_row['paid'].values[0]) if 'paid' in df_bills.columns else 0.0)
-            d_val = float(p_row['due_amount'].values[0]) if 'due_amount' in df_bills.columns else (float(p_row['due'].values[0]) if 'due' in df_bills.columns else 0.0)
-            disc_val_old = float(p_row['discount'].values[0]) if 'discount' in df_bills.columns else 0.0
-            ph_old = str(p_row['phone'].values[0]) if 'phone' in df_bills.columns else "-"
-            age_old = str(p_row['age'].values[0]) if 'age' in df_bills.columns else "-"
-            g_old = str(p_row['gender'].values[0]) if 'gender' in df_bills.columns else "-"
-            
-            pdf_bytes = generate_pdf_report(print_inv, patient_name_val, t_val, tot, p_val, d_val, disc_val_old, ph_old, age_old, g_old)
-            st.download_button("📥 Download Old A4 Memo PDF", data=pdf_bytes, file_name=f"Memo_{print_inv}.pdf", mime="application/pdf")
-            # ২. দ্বিতীয় পেজ: ১০০+ টেস্টের ড্রপডাউন এবং ডাইনামিক ক্যাশ মেমো জেনারেটর
-if page == "💳 New Patient Billing":
-    st.markdown("<h2 class='main-header'>💳 Create New Patient Bill & Memo</h2>", unsafe_allow_html=True)
-    st.markdown("<div class='billing-card'>", unsafe_allow_html=True)
-    
-    # সেশন স্টেটে মেমো ডাটা ধরে রাখার ব্যবস্থা (যাতে সেভ করার পর প্রিন্ট বাটন স্ক্রিনে আটকে থাকে)
-    if 'last_saved_memo' not in st.session_state: st.session_state['last_saved_memo'] = None
-    
-    with st.form(key='new_billing_form_clean_v5', clear_on_submit=False):
-        gen_invoice = f"INV-{int(datetime.now().timestamp())}"
-        st.markdown(f"<h4>Invoice No: <span style='color:#0f4c81;'>{gen_invoice}</span></h4>", unsafe_allow_html=True)
-        st.markdown("---")
         
-        col_input1, col_input2 = st.columns(2)
-        with col_input1:
-            pat_name = st.text_input("Patient Full Name *", placeholder="Enter patient name")
-            pat_phone = st.text_input("Mobile Number", placeholder="01XXXXXXXXX")
-        with col_input2:
-            pat_age = st.text_input("Age (e.g., 28 Years)")
-            pat_gender = st.selectbox("Gender", ["Male", "Female", "Others"])
-            
-        st.markdown("---")
-        col_doctor_panel, col_test_panel = st.columns(2)
-        
-        with col_doctor_panel:
-            st.markdown("##### 🩺 Referred Doctor")
-            db_doctors = ["Self / Direct", "Dr. Saiful Islam", "Dr. Amit Das", "Dr. Nasrin Sultana", "Dr. Rahman Ali"]
-            ref_doctor = st.selectbox("Select Referred Doctor:", db_doctors)
-
-        with col_test_panel:
-            st.markdown("##### 🧪 Select Diagnostic Tests (100+ Catalogue)")
-            
-            # আপনার ল্যাবের নাম ম্যাচিং করা ১০০% ফিক্সড ক্যাটালগ (স্ক্রিনশটের সাথে মিলিয়ে)
-            test_catalogue = {
-                "CBC (Complete Blood Count)": 400,
-                "Blood Grouping & Rh Factor": 200,
-                "Serum Creatinine": 300,
-                "HBsAg (Hepatitis B)": 350,
-                "Lipid Profile": 1000,
-                "CBC with ESR": 500,
-                "Widal Test (Typhoid)": 400,
-                "Uric Acid": 350,
-                "Blood Sugar / Glucose (RBS/FBS)": 150,
-                "Serum Bilirubin": 250,
-                "SGPT / ALT": 350,
-                "SGOT / AST": 350,
-                "Serum Electrolytes": 900,
-                "TSH (Thyroid)": 800,
-                "Urine R/M/E": 200,
-                "USG of Whole Abdomen": 1200,
-                "X-Ray Chest P/A View": 500,
-                "ECG (Electrocardiogram)": 400,
-                "CRP (C-Reactive Protein)": 500,
-                "Dengue NS1 Antigen": 600,
-                "Memory Test (Custom)": 500
-            }
-            selected_test_names = st.multiselect("Search & Select Multiple Tests:", list(test_catalogue.keys()))
-
-        # লাইভ রেট ও প্রাইস যোগ করা (ফিক্সড)
-        total_bill = 0
-        tests_taken_list = []
-        if selected_test_names:
-            st.markdown("<div style='background-color:#f1f3f5; padding:10px; border-radius:5px;'><b>Selected Tests Price List:</b>", unsafe_allow_html=True)
-            for t_name in selected_test_names:
-                t_price = test_catalogue[t_name]
-                total_bill += t_price
-                tests_taken_list.append(f"{t_name} (৳{t_price})")
-                st.write(f"🔹 {t_name}: ৳ {t_price}")
-            st.markdown("</div>", unsafe_allow_html=True)
-        tests_string = ", ".join(tests_taken_list)
-        
-        st.markdown("---")
-        st.markdown(f"### Total Calculated Amount: ৳ {total_bill:,.2f}")
-        
-        col_acc1, col_acc2, col_acc3 = st.columns(3)
-        with col_acc1:
-            disc_val = st.number_input("Discount Allowed (৳)", min_value=0, max_value=int(total_bill) if total_bill > 0 else 0, value=0)
-        with col_acc2:
-            payable_net = total_bill - disc_val
-            paid_val = st.number_input("Paid Amount (৳)", min_value=0, max_value=int(payable_net) if payable_net > 0 else 0, value=0)
-        with col_acc3:
-            due_val = payable_net - paid_val
-            st.write(f"**Remaining Due:** ৳ {due_val:,.2f}")
-            ref_commission = st.number_input("Doctor Referral Commission (৳)", min_value=0, value=0)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        save_clicked = st.form_submit_button(label="💾 Save Bill & Generate Memo")
-        
-        if save_clicked:
-            if pat_name and tests_string:
-                cur_date = datetime.now().strftime("%Y/%m/%d")
-                db_table_info = pd.read_sql_query("SELECT * FROM bills LIMIT 1", conn)
-                cols_in_db = list(db_table_info.columns)
-                
-                name_key = 'patient_name' if 'patient_name' in cols_in_db else ('name' if 'name' in cols_in_db else cols_in_db)
-                paid_key = 'paid_amount' if 'paid_amount' in cols_in_db else ('paid' if 'paid' in cols_in_db else 'paid_amount')
-                due_key = 'due_amount' if 'due_amount' in cols_in_db else ('due' if 'due' in cols_in_db else 'due_amount')
-                total_key = 'total_amount' if 'total_amount' in cols_in_db else ('total' if 'total' in cols_in_db else 'total_amount')
-                
-                try:
-                    if 'net_amount' in cols_in_db:
-                        c.execute(f"""
-                            INSERT INTO bills (invoice_no, date, {name_key}, age, gender, phone, doctor, referral_type, referral_fees, total_amount, discount, net_amount, {paid_key}, {due_key}, tests) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (gen_invoice, cur_date, pat_name, pat_age, pat_gender, pat_phone, ref_doctor, "Direct", ref_commission, total_bill, disc_val, payable_net, paid_val, due_val, tests_string))
-                    else:
-                        query_dynamic = f"INSERT INTO bills (invoice_no, {name_key}, {total_key}, {paid_key}, {due_key}"
-                        values_list = [gen_invoice, pat_name, total_bill, paid_val, due_val]
-                        if 'tests' in cols_in_db: query_dynamic += ", tests"; values_list.append(tests_string)
-                        if 'date' in cols_in_db: query_dynamic += ", date"; values_list.append(cur_date)
-                        query_dynamic += f") VALUES ({','.join(['?']*len(values_list))})"
-                        c.execute(query_dynamic, tuple(values_list))
-                        
-                    conn.commit()
-                    # সেশন স্টেটে ডাটা পাস করা হলো প্রিন্ট বাটনের জন্য
-                    st.session_state['last_saved_memo'] = {
-                        "inv": gen_invoice, "name": pat_name, "tests": tests_string, "total": total_bill, "paid": paid_val, "due": due_val, "disc": disc_val, "phone": pat_phone, "age": pat_age, "gender": pat_gender
-                    }
-                    st.success(f"🎉 Bill Saved! Click the print button below to get A4 Invoice.")
-                except Exception as save_err: st.error(f"Database write error: {save_err}")
-            else: st.warning("Please input Patient Name and select at least one Test.")
-            
-    # ফর্মের ঠিক বাইরে লাইভ প্রফেশনাল প্রিন্ট বাটন (A4 সাইজ মেমো প্রিন্ট দেওয়ার জন্য)
-    if st.session_state['last_saved_memo'] is not None:
-        m_data = st.session_state['last_saved_memo']
-        pdf_bytes = generate_pdf_report(m_data["inv"], m_data["name"], m_data["tests"], m_data["total"], m_data["paid"], m_data["due"], m_data["disc"], m_data["phone"], m_data["age"], m_data["gender"])
-        
-        st.markdown("---")
-        st.markdown(f"### 🖨️ Print Section for Invoice: {m_data['inv']}")
-        st.download_button(
-            label="📥 PRINT / DOWNLOAD A4 CASH MEMO (PDF)",
-            data=pdf_bytes,
-            file_name=f"Rogmukti_Invoice_{m_data['inv']}.pdf",
-            mime="application/pdf",
-            use_container_width=True
-        )
-    st.markdown("</div>", unsafe_allow_html=True)
-                
