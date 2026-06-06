@@ -68,7 +68,9 @@ TEST_PRICES = {
     "Malaria pf/pv": 700.0,
     "H. Pylori": 850.0,
     "Febrile Antigen / Fallarlia (ICT)": 750.0,
-    "Dengue NS1, IgG/IgM": 300.0,
+    "Dengue NS1": 300.0,
+    "IgE (Screen Test)": 750.0,
+    "Dengue (IgG/IgM)": 300.0,
     
     # --- X-RAY DIGITAL ---
     "X-Ray Chest": 500.0,
