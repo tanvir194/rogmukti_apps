@@ -61,7 +61,7 @@ if not st.session_state['logged_in']:
             st.rerun()
         else:
             st.error("Invalid Username or Password")
-    st.stop() # লগইন না হওয়া পর্যন্ত নিচের কোনো কোড দেখাবে না
+    st.stop()
 
 # সাইডবারে লগআউট বাটন
 st.sidebar.title(f"User: {st.session_state['user_role']}")
@@ -69,34 +69,13 @@ if st.sidebar.button("Log Out"):
     st.session_state['logged_in'] = False
     st.session_state['user_role'] = None
     st.rerun()
-# ডাটাবেজ কানেকশন
+    # ডাটাবেজ কানেকশন
 conn = sqlite3.connect('rogmukti.db', check_same_thread=False)
 c = conn.cursor()
 
-# টেবিল তৈরি (নতুন রিপোর্ট টেবিল সহ)
-c.execute("CREATE TABLE IF NOT EXISTS bills (invoice_no TEXT PRIMARY KEY, date TEXT, patient_name TEXT, age TEXT, gender TEXT, phone TEXT, doctor TEXT, referral_type TEXT, referral_fees REAL, total_amount REAL, discount REAL, net_amount REAL, paid_amount REAL, due_amount REAL, tests TEXT)")
-c.execute("CREATE TABLE IF NOT EXISTS setup_doctors (name TEXT UNIQUE)")
-c.execute("CREATE TABLE IF NOT EXISTS setup_tests (name TEXT UNIQUE, rate REAL)")
+# নতুন ল্যাব রিপোর্ট টেবিল তৈরি (পুরানো বিলিং টেবিল অক্ষত থাকবে)
 c.execute("CREATE TABLE IF NOT EXISTS test_reports (invoice_no TEXT PRIMARY KEY, test_name TEXT, result_values TEXT, status TEXT)")
 conn.commit()
-
-# ডিফল্ট ডাটা ইনসার্ট (ইংরেজি)
-c.execute("SELECT COUNT(*) FROM setup_doctors")
-if c.fetchone() == 0:
-    for doc in ["Select Doctor", "Self / Direct", "Dr. Saiful Islam", "Dr. Amit Das"]:
-        c.execute("INSERT OR IGNORE INTO setup_doctors VALUES (?)", (doc,))
-    conn.commit()
-
-c.execute("SELECT COUNT(*) FROM setup_tests")
-if c.fetchone() == 0:
-    default_tests = {
-        "CBC": 400, "CBC with ESR": 600, "TC.DC": 250, "HB%": 250, "ESR": 200,
-        "Widal": 450, "CRP": 450, "Blood Group & Rh Factor": 200, "TSH": 1100,
-        "X-Ray Chest": 500, "Urine R/E": 250, "USG Whole Abdomen": 1000
-    }
-    for t_name, t_rate in default_tests.items():
-        c.execute("INSERT OR IGNORE INTO setup_tests VALUES (?, ?)", (t_name, t_rate))
-    conn.commit()
 
 # পিডিএফ জেনারেটর ফাংশন
 def generate_pdf_report(invoice_no, patient_name, tests, results_str):
@@ -143,7 +122,7 @@ def generate_pdf_report(invoice_no, patient_name, tests, results_str):
     pdf.cell(130, 6, "", border=0)
     pdf.cell(60, 6, "Medical Officer / Pathologist", border=0, ln=True, align="C")
     return pdf.output(dest="S")
-st.title("📊 Rogmukti Dashboard & Report Panel")
+    st.title("📊 Rogmukti Dashboard & Report Panel")
 
 # ফিল্টার সেকশন
 col_f1, col_f2, col_f3 = st.columns(3)
@@ -152,17 +131,22 @@ with col_f1:
 with col_f2:
     search_date = st.date_input("Select Date:", datetime.now().date())
 with col_f3:
-    doc_filter = st.selectbox("Filter Doctor:", ["All Doctors"] + [row[0] for row in c.execute("SELECT name FROM setup_doctors").fetchall()])
+    # ডাটাবেজে setup_doctors টেবিল না থাকলে এরর এড়াতে ট্রাই-ক্যাচ ব্যবহার করা হলো
+    try:
+        doctors_list = [row[0] for row in c.execute("SELECT name FROM setup_doctors").fetchall()]
+    except:
+        doctors_list = ["Self / Direct"]
+    doc_filter = st.selectbox("Filter Doctor:", ["All Doctors"] + doctors_list)
 
-# ডাটা লোড ও ক্যালকুলেশন
+# ডাটা লোড ও সেফ ক্যালকুলেশন (কলামের নাম পুরানো হোক বা নতুন, এরর আসবে না)
 df_bills = pd.read_sql_query("SELECT * FROM bills", conn)
 
 if not df_bills.empty:
-    total_coll = df_bills['net_amount'].sum()
-    total_disc = df_bills['discount'].sum()
-    total_paid = df_bills['paid_amount'].sum()
-    total_due = df_bills['due_amount'].sum()
-    total_ref = df_bills['referral_fees'].sum()
+    total_coll = df_bills['net_amount'].sum() if 'net_amount' in df_bills.columns else (df_bills['total_amount'].sum() if 'total_amount' in df_bills.columns else 0)
+    total_disc = df_bills['discount'].sum() if 'discount' in df_bills.columns else 0
+    total_paid = df_bills['paid_amount'].sum() if 'paid_amount' in df_bills.columns else (df_bills['paid'].sum() if 'paid' in df_bills.columns else 0)
+    total_due = df_bills['due_amount'].sum() if 'due_amount' in df_bills.columns else (df_bills['due'].sum() if 'due' in df_bills.columns else 0)
+    total_ref = df_bills['referral_fees'].sum() if 'referral_fees' in df_bills.columns else 0
     total_pat = len(df_bills)
 else:
     total_coll = total_disc = total_paid = total_due = total_ref = total_pat = 0
@@ -180,13 +164,17 @@ st.markdown("---")
 st.subheader("📋 Today's Latest Test Booking & Billing Tracking")
 
 # ORDER BY invoice_no DESC দিয়ে ইনভয়েস ক্রমানুসারে নতুনগুলো ওপরে সাজানো হলো
-query_sorted = "SELECT invoice_no, patient_name, referral_type, total_amount, paid_amount, due_amount FROM bills ORDER BY invoice_no DESC"
+query_sorted = "SELECT * FROM bills ORDER BY invoice_no DESC"
 df_table = pd.read_sql_query(query_sorted, conn)
-df_table.columns = ["Invoice No", "Patient Name", "Referral Type", "Total Bill (৳)", "Paid (৳)", "Due (৳)"]
 
-st.dataframe(df_table, use_container_width=True)
+if not df_table.empty:
+    # ডাটাবেজে যে কলামগুলোই থাকুক তা ডাইনামিক ফিল্টার করবে
+    cols_to_show = [col for col in ['invoice_no', 'patient_name', 'referral_type', 'total_amount', 'paid_amount', 'due_amount', 'paid', 'due', 'tests'] if col in df_table.columns]
+    df_display = df_table[cols_to_show]
+    st.dataframe(df_display, use_container_width=True)
+else:
+    st.info("No invoice data found.")
 st.markdown("---")
-# দুটি কলাম তৈরি করে একপাশে এন্ট্রি ফর্ম এবং অন্যপাশে ডাউনলোড অপশন রাখা হলো
 col_form, col_print = st.columns(2)
 
 with col_form:
@@ -194,10 +182,15 @@ with col_form:
     search_inv = st.text_input("Enter Invoice Number to Add Report:", placeholder="INV-1780682177")
     
     if search_inv:
-        c.execute("SELECT invoice_no, patient_name, tests FROM bills WHERE invoice_no=?", (search_inv,))
-        patient_data = c.fetchone()
-        if patient_data:
-            inv, p_name, p_tests = patient_data
+        # পুরানো ডাটাবেজে রোগীর নাম এবং টেস্ট কলাম ডাইনামিক খোঁজা
+        c.execute("SELECT * FROM bills WHERE invoice_no=?", (search_inv,))
+        patient_row = c.fetchone()
+        
+        if patient_row:
+            # কলাম ইনডেক্স এরর এড়াতে ডাটাফ্রেম থেকে নাম তুলে আনা
+            p_name = df_bills[df_bills['invoice_no']==search_inv]['patient_name'].values[0] if 'patient_name' in df_bills.columns else "Patient"
+            p_tests = df_bills[df_bills['invoice_no']==search_inv]['tests'].values[0] if 'tests' in df_bills.columns else "General Tests"
+            
             st.info(f"**Patient:** {p_name} | **Tests:** {p_tests}")
             
             with st.form(key='report_form'):
@@ -218,19 +211,23 @@ with col_print:
     print_inv = st.text_input("Enter Invoice Number to Print:", placeholder="INV-1780682177", key="print_key")
     
     if print_inv:
-        c.execute("SELECT b.patient_name, b.tests, r.result_values FROM bills b JOIN test_reports r ON b.invoice_no = r.invoice_no WHERE b.invoice_no = ?", (print_inv,))
-        report_data = c.fetchone()
-        if report_data:
-            p_name, p_tests, r_values = report_data
-            st.success(f"Report Ready for {p_name}")
+        try:
+            c.execute("SELECT r.test_name, r.result_values FROM test_reports r WHERE r.invoice_no = ?", (print_inv,))
+            report_data = c.fetchone()
             
-            # পিডিএফ জেনারেট ও ডাউনলোড বাটন
-            pdf_bytes = generate_pdf_report(print_inv, p_name, p_tests, r_values)
-            st.download_button(label="📥 Download PDF Report", data=pdf_bytes, file_name=f"Report_{print_inv}.pdf", mime="application/pdf")
-        else:
-            st.error("No approved report found.")
+            if report_data:
+                p_name = df_bills[df_bills['invoice_no']==print_inv]['patient_name'].values[0] if 'patient_name' in df_bills.columns else "Patient"
+                p_tests, r_values = report_data
+                st.success(f"Report Ready for {p_name}")
+                
+                pdf_bytes = generate_pdf_report(print_inv, p_name, p_tests, r_values)
+                st.download_button(label="📥 Download PDF Report", data=pdf_bytes, file_name=f"Report_{print_inv}.pdf", mime="application/pdf")
+            else:
+                st.error("No approved report found for this Invoice.")
+        except:
+            st.error("Report processing error.")
 
-# ডিলিট প্যানেল (অ্যাডমিন রোল থাকলে শুধু কাজ করবে)
+# ডিলিট প্যানেল
 st.markdown("---")
 st.subheader("🗑️ Admin Settings & Invoice Delete Panel")
 if st.session_state['user_role'] == "Admin":
