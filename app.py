@@ -66,7 +66,7 @@ TEST_PRICES = {
     "Serum Urea / BUN": 300.0,
     "Serum Electrolytes (Na, K, Cl)": 1000.0,
     "Serum Calcium": 400.0,
-        # --- Serology & Immunology ---
+    # --- Serology & Immunology ---
     "HBsAg (Screening / ELISA)": 350.0,
     "Anti-HCV": 600.0,
     "HIV I & II": 500.0,
@@ -156,7 +156,7 @@ if page == "New Patient Entry":
             st.success("Data saved successfully! Print menu and invoice are available below.")
         elif not name: st.error("Please enter the Patient's Name.")
         elif not selected_tests: st.error("Please select at least one test.")
-                if st.session_state.receipt_data:
+            if st.session_state.receipt_data:
         r = st.session_state.receipt_data
         table_rows = "".join([f"<tr><td>{i}</td><td>{item['name']}</td><td style='text-align:right;'>{item['price']:.2f} ৳</td></tr>" for i, item in enumerate(r['tests'], 1)])
         html_receipt = f"""<div style='border: 3px solid #1e3a8a; padding: 25px; border-radius: 12px; background-color: #f8fafc; font-family: sans-serif; max-width: 650px; margin: 0 auto;'><div style='text-align: center; background-color: #1e3a8a; color: white; padding: 15px; border-radius: 8px 8px 0 0; margin: -25px -25px 20px -25px;'><h2 style='margin: 0;'>Rog Mukti Diagnostic Centre</h2><p style='margin: 5px 0 0 0; font-size: 13px;'>Mollah Stand, Patuakhali</p></div><div style='text-align: center; margin-bottom: 15px;'><span style='background-color: #e2e8f0; padding: 5px 18px; font-weight: bold; border-radius: 20px; color: #0f172a; font-size: 14px;'>MONEY RECEIPT</span></div><table style='width: 100%; font-size: 13px; margin-bottom: 15px;'><tr><td><b>Inv No:</b> {r['inv_no']}</td><td style='text-align: right;'><b>Date:</b> {r['date']}</td></tr><tr><td><b>Name:</b> {r['name']}</td><td style='text-align: right;'><b>Age:</b> {r['age']} Yrs</td></tr><tr><td><b>Phone:</b> {r['phone']}</td><td style='text-align: right;'><b>Refd By:</b> {r['doctor']}</td></tr></table><table style='width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;'><thead><tr style='background-color: #3b82f6; color: white;'><th style='padding: 8px; text-align: left;'>SL</th><th style='padding: 8px; text-align: left;'>Description</th><th style='padding: 8px; text-align: right;'>Amount</th></tr></thead><tbody>{table_rows}<tr style='background-color: #f1f5f9; font-weight: bold;'><td></td><td style='text-align: right; padding: 8px;'>Total:</td><td style='text-align: right; padding: 8px;'>{r['total']:.2f} ৳</td></tr><tr><td></td><td style='text-align: right; padding: 6px;'>Discount ({r['discount_pct']}%):</td><td style='text-align: right; padding: 6px;'>- {r['discount_amt']:.2f} ৳</td></tr><tr><td></td><td style='text-align: right; padding: 6px;'>Advance:</td><td style='text-align: right; padding: 6px;'>{r['advance']:.2f} ৳</td></tr><tr style='background-color: #fee2e2; color: #b91c1c; font-weight: bold;'><<td></td><td style='text-align: right; padding: 8px;'>Due:</td><td style='text-align: right; padding: 8px;'>{r['due']:.2f} ৳</td></tr></tbody></table></div>"""
