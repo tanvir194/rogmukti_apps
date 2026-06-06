@@ -3,14 +3,14 @@ import sqlite3
 from datetime import datetime
 import pandas as pd
 
-# পেজ কনফিগারেশন
+# Page configuration
 st.set_page_config(page_title="Rog Mukti Diagnostic Centre", layout="wide")
 
-# ডাটাবেজ কানেকশন
+# Database Connection
 conn = sqlite3.connect("rogmukti_clinic_final.db", check_same_thread=False)
 c = conn.cursor()
 
-# টেবিল তৈরি
+# Create Patients Table
 c.execute("""
 CREATE TABLE IF NOT EXISTS patients (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS patients (
 """)
 conn.commit()
 
-# ডাটাবেজে তথ্য সেভ করার ফাংশন
+# Function to save patient details to database
 def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, date):
     c.execute('''
         INSERT INTO patients (name, age, phone, doctor, tests, total_amount, discount, advance, due, date)
@@ -36,7 +36,7 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     ''', (name, age, phone, doctor, tests, total, discount, advance, due, date))
     conn.commit()
     return c.lastrowid
-# টেস্টের নাম এবং স্ট্যান্ডার্ড দামের তালিকা
+# Comprehensive list of tests and standard prices
 TEST_PRICES = {
     # --- Haematology & Blood ---
     "CBC (Complete Blood Count)": 600.0,
@@ -45,38 +45,39 @@ TEST_PRICES = {
     "WBC Count & DC": 250.0,
     "Platelet Count": 200.0,
     "Blood Grouping & Rh Typing": 200.0,
-    "BT & CT (Bleeding & Clotting Time)": 350.0,
+    "BT & CT (Bleeding & Clotting Time)": 200.0,
     "PBF (Peripheral Blood Film)": 450.0,
     "Malaria Parasite (MP)": 500.0,
     
     # --- Biochemistry & Diabetes ---
-    "Blood Sugar (RBS / Fasting / 22HAB)": 200.0,
+    "Blood Sugar (RBS / Fasting / 2H HAB)": 200.0,
     "HbA1c": 1200.0,
     "Serum Creatinine": 450.0,
     "Serum Bilirubin (Total/Direct)": 550.0,
-    "SGPT (ALT)": 550.0,
-    "SGOT (AST)": 550.0,
+    "SGPT (ALT)": 450.0,
+    "SGOT (AST)": 450.0,
     "Serum Alkaline Phosphatase": 650.0,
     "Lipid Profile (Full)": 1000.0,
     "Serum Cholesterol": 450.0,
     "Serum Triglycerides": 450.0,
     "Serum Uric Acid": 450.0,
-    "Serum Urea / BUN": 600.0,
+    "Serum Urea / BUN": 400.0,
     "Serum Electrolytes (Na, K, Cl)": 1000.0,
-    "Serum Calcium": 700.0,
+    "Serum Calcium": 800.0,
     
     # --- Serology & Immunology ---
     "HBsAg (Screening / ELISA)": 450.0,
     "Anti-HCV": 600.0,
     "HIV I & II": 500.0,
     "Widal Test (Typhoid)": 450.0,
-    "ASO Titre": 400.0,
-    "RA Factor": 400.0,
+    "ASO Titre": 450.0,
+    "RA Factor": 450.0,
     "CRP (C-Reactive Protein)": 500.0,
     "Dengue NS1 Antigen": 300.0,
     "Dengue IgG/IgM": 300.0,
     "Chikungunya IgM": 800.0,
     "Troponin I (Cardiac)": 1200.0,
+    "Triple antigen (T.A)": 1000.0,
     
     # --- Urine & Stool ---
     "Urine R/M/E": 200.0,
@@ -85,13 +86,13 @@ TEST_PRICES = {
     "Stool for Occult Blood Test (OBT)": 250.0,
     
     # --- Thyroid & Hormone Panel ---
-    "TSH (Thyroid Stimulating Hormone)": 900.0,
+    "TSH (Thyroid Stimulating Hormone)": 600.0,
     "FT4 (Free Thyroxine)": 900.0,
     "FT3 (Free Triiodothyronine)": 900.0,
     "T3 (Total Triiodothyronine)": 900.0,
     "T4 (Total Thyroxine)": 900.0,
     "Serum Prolactin": 1200.0,
-    "Serum Testosterone": 1000.0,
+    "Serum Testosterone": 900.0,
     "PSA (Prostate Specific Antigen)": 1200.0,
     "Beta-HCG": 1000.0,
     
@@ -118,74 +119,75 @@ TEST_PRICES = {
     "X-Ray Cervical Spine A/P & Lat": 800.0,
     "X-Ray KUB View": 500.0,
     
-    # --- কাস্টম অপশন ---
-    "Custom Test / অন্যান্য (নিচে নাম ও দাম লিখুন)": 0.0
+    # --- Custom Test Option ---
+    "Custom Test / Others (Type Name & Price Below)": 0.0
 }
-# সাইডবার মেনু নেভিগেশন
-st.sidebar.title("🧭 নেভিগেশন মেনু")
-page = st.sidebar.radio("অপশন সিলেক্ট করুন:", ["নতুন পেশেন্ট এন্ট্রি", "পেশেন্ট ডাটাবেজ"])
+# Sidebar Navigation
+st.sidebar.title("🧭 Navigation")
+page = st.sidebar.radio("Go to:", ["New Patient Entry", "Patient Database"])
 
-if page == "নতুন পেশেন্ট এন্ট্রি":
+if page == "New Patient Entry":
     st.title("🏥 Rog Mukti Diagnostic Centre")
     st.markdown("---")
     
     if "receipt_data" not in st.session_state:
         st.session_state.receipt_data = None
 
-    # ১. পেশেন্ট এবং ডাক্তারের তথ্য (লাইভ এবং সিঙ্গেল স্ক্রিন এন্ট্রি)
-    st.subheader("👤 পেশেন্ট এবং বিলিং তথ্য")
+    # Patient & Doctor Info Section
+    st.subheader("👤 Patient & Doctor Information")
     
     col1, col2 = st.columns(2)
     with col1:
-        name = st.text_input("Name of the PT (পেশেন্টের নাম) *")
-        age = st.number_input("Age (বয়স)", min_value=0, max_value=120, value=25)
-        phone = st.text_input("Phone (মোবাইল নম্বর)")
+        name = st.text_input("Name of the PT *")
+        age = st.number_input("Age (Years)", min_value=0, max_value=120, value=25)
+        phone = st.text_input("Phone Number")
     with col2:
-        doctor_list = ["ডা. সাইদুল ইসলাম", "ডা. নাসরিন সুলতানা", "ডা. মোতালেব হোসেন", "Self / অন্যান্য"]
-        doctor = st.selectbox("REFd By. Dr (ডাক্তকার সিলেক্ট করুন)", doctor_list)
-        date_input = st.date_input("Date (তারিখ)", datetime.now())
+        doctor_list = ["Dr. Saidul Islam", "Dr. Nasrin Sultana", "Dr. Motaleb Hossain", "Self / Others"]
+        doctor = st.selectbox("REFd By. Dr", doctor_list)
+        date_input = st.date_input("Date", datetime.now())
         date_str = date_input.strftime("%Y-%m-%d")
         
     st.markdown("---")
     
-    # ২. টেস্ট ড্রপডাউন সিলেকশন
-    selected_tests = st.multiselect("Description (এখান থেকে টেস্ট সার্চ বা সিলেক্ট করুন)", sorted(list(TEST_PRICES.keys())))
+    # Test Selection Section
+    st.subheader("🧪 Tests & Billing Selection")
+    selected_tests = st.multiselect("Description (Search or select tests)", sorted(list(TEST_PRICES.keys())))
     
-    custom_test_active = "Custom Test / অন্যান্য (নিচে নাম ও দাম লিখুন)" in selected_tests
+    custom_test_active = "Custom Test / Others (Type Name & Price Below)" in selected_tests
     custom_name = ""
     custom_price = 0.0
     
     if custom_test_active:
-        st.info("💡 কাস্টম টেস্টের ফিল্ড সচল হয়েছে। নিচে নাম ও দাম লিখুন।")
+        st.info("💡 Custom Test is active. Please enter name and price below.")
         
     col_c1, col_c2 = st.columns(2)
     with col_c1:
         if custom_test_active:
-            custom_name = st.text_input("কাস্টম টেস্টের নাম লিখুন:")
+            custom_name = st.text_input("Enter Custom Test Name:")
     with col_c2:
         if custom_test_active:
-            custom_price = st.number_input("কাস্টম টেস্টের দাম (টাকা):", min_value=0.0, value=0.0, step=50.0)
+            custom_price = st.number_input("Enter Custom Test Price (TK):", min_value=0.0, value=0.0, step=50.0)
     
-    # লাইভ কাউন্টার লজিক
+    # Live billing calculations
     sub_total = sum(TEST_PRICES[test] for test in selected_tests) + custom_price
 
     col3, col4 = st.columns(2)
     with col3:
-        st.markdown(f"### 🧮 লাইভ টোটাল ফি: `{sub_total}` টাকা")
+        st.markdown(f"### 🧮 Live Total Fee: `{sub_total}` TK")
         discount_pct = st.number_input("Discount (%)", min_value=0.0, max_value=100.0, value=0.0, step=1.0)
-        advance = st.number_input("Advance (অগ্রিম পরিশোধ)", min_value=0.0, value=0.0, step=50.0)
+        advance = st.number_input("Advance Paid (TK)", min_value=0.0, value=0.0, step=50.0)
     with col4:
         discount_amount = sub_total * (discount_pct / 100)
         due = sub_total - (discount_amount + advance)
-        st.write(f"**ডিসকাউন্ট প্রদেয়:** {discount_amount} টাকা")
-        st.metric(label="Due (মোট বাকি টাকা)", value=f"{due} টাকা")
+        st.write(f"**Discount Amount:** {discount_amount} TK")
+        st.metric(label="Due (Total Remaining Balance)", value=f"{due} TK")
 
     st.markdown("---")
     
-    # ডাটা সেভ করার বাটন
-    if st.button("💾 বিল সেভ করুন এবং রিসিট তৈরি করুন", type="primary", use_container_width=True):
+    # Submit Bill Button
+    if st.button("💾 Save Bill and Generate Receipt", type="primary", use_container_width=True):
         if name and selected_tests:
-            final_tests_list = [t for t in selected_tests if t != "Custom Test / অন্যান্য (নিচে নাম ও দাম লিখুন)"]
+            final_tests_list = [t for t in selected_tests if t != "Custom Test / Others (Type Name & Price Below)"]
             if custom_test_active and custom_name:
                 final_tests_list.append(f"{custom_name} (Custom)")
             
@@ -194,7 +196,7 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
             
             receipt_tests = []
             for test in selected_tests:
-                if test == "Custom Test / অন্যান্য (নিচে নাম ও দাম লিখুন)":
+                if test == "Custom Test / Others (Type Name & Price Below)":
                     if custom_name:
                         receipt_tests.append({"name": custom_name, "price": custom_price})
                 else:
@@ -214,8 +216,12 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
                 "advance": advance,
                 "due": due
             }
-            st.success("সফলভাবে ডাটা ডাটাবেজে সেভ হয়েছে! নিচে প্রিন্ট বাটন চাপুন।")
-    # রিসিট প্রিন্টিং ও প্রিভিউ এরিয়া
+            st.success("Data saved successfully! Print menu and invoice are available below.")
+        elif not name:
+            st.error("Please enter the Patient's Name.")
+        elif not selected_tests:
+            st.error("Please select at least one test.")
+      # Receipt UI Rendering
     if st.session_state.receipt_data:
         r = st.session_state.receipt_data
         
@@ -283,7 +289,7 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
                     </tr>
                     <tr style="background-color: #fee2e2; color: #b91c1c; font-weight: bold; font-size: 15px; border-top: 2px solid #f87171;">
                         <td></td>
-                        <td style="text-align: right; padding: 8px;">Due (বাকি টাকা):</td>
+                        <td style="text-align: right; padding: 8px;">Due Amount:</td>
                         <td style="text-align: right; padding: 8px;">{r['due']:.2f} ৳</td>
                     </tr>
                 </tbody>
@@ -298,27 +304,27 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
         </div>
         """
         
-        st.subheader("🖨️ রিসিট অ্যাকশন মেনু")
+        st.subheader("🖨️ Receipt Action Menu")
         
-        # অফিশিয়াল ১-ক্লিক প্রিন্ট বাটন (যা সম্পূর্ণ ব্রাউজার প্রিন্ট ডায়ালগ অন করবে)
-        if st.button("🖨️ প্রিন্ট করুন (Print Now)", type="secondary", use_container_width=True):
+        # Streamlit official way to prompt native print dialog
+        if st.button("🖨️ Print Receipt Now", type="secondary", use_container_width=True):
             st.components.v1.html("<script>window.print();</script>", height=0, width=0)
             
-        # রিসিট প্রিভিউ শো করা
+        # Preview layout box
         st.components.v1.html(html_receipt, height=580, scrolling=True)
 
-elif page == "পেশেন্ট ডাটাবেজ":
-    st.title("📋 রোগমুক্তি ক্লিনিক ডাটাবেজ")
+elif page == "Patient Database":
+    st.title("📋 Patient Record Database")
     st.markdown("---")
     
     c.execute("SELECT * FROM patients ORDER BY id DESC")
     data = c.fetchall()
     
     if data:
-        columns = ["INV ID", "পেশেন্টের নাম", "বয়স", "মোবাইল নম্বর", "রেফার্ড ডাক্তার", "সিলেক্টেড টেস্ট", "মোট বিল", "ছাড় (%)", "অগ্রিম জমা", "বাকি টাকা", "তারিখ"]
+        columns = ["INV ID", "Patient Name", "Age", "Phone Number", "Referred Doctor", "Selected Tests", "Total Bill", "Discount (%)", "Advance Paid", "Due Amount", "Date"]
         df = pd.DataFrame(data, columns=columns)
         df["INV ID"] = df["INV ID"].apply(lambda x: f"{x:05d}")
         st.dataframe(df, use_container_width=True)
     else:
-        st.info("এখনো ডাটাবেজে কোনো পেশেন্টের তথ্য রেকর্ড করা হয়নি।")
-
+        st.info("No records found in the database yet.")
+    
