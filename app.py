@@ -53,7 +53,7 @@ st.sidebar.markdown("---")
 st.sidebar.write(f"Logged in as: **{st.session_state['user_role']}**")
 if st.sidebar.button("🚪 Log Out"):
     st.session_state['logged_in'] = False; st.session_state['user_role'] = None; st.rerun()
-# পিডিএফ রিপোর্ট মেকার engine
+    # পিডিএফ রিপোর্ট মেকার ইঞ্জিন
 def generate_pdf_report(invoice_no, patient_name, tests, results_str):
     pdf = FPDF()
     pdf.add_page()
@@ -98,7 +98,7 @@ if page == "📊 Dashboard & Reports":
     col_m2.metric("Cash Received", f"৳ {total_paid:,.2f}")
     col_m3.metric("Total Due", f"৳ {total_due:,.2f}")
     col_m4.metric("Total Patients", f"{total_pat} Persons")
-        st.markdown("---")
+    st.markdown("---")
     st.subheader("📋 Latest Invoice & Billing Tracking (Sorted)")
     
     # নতুন ইনভয়েস সবার ওপরে দেখানোর জন্য কাস্টম কোয়েরি
@@ -131,11 +131,11 @@ if page == "📊 Dashboard & Reports":
             c.execute("SELECT r.test_name, r.result_values FROM test_reports r WHERE r.invoice_no = ?", (print_inv,))
             report_data = c.fetchone()
             if report_data and not df_bills.empty:
-                patient_name_val = str(df_bills[df_bills['invoice_no']==print_inv]['patient_name'].values[0]) if 'patient_name' in df_bills.columns else "Patient"
-                pdf_bytes = generate_pdf_report(print_inv, patient_name_val, report_data[0], report_data[1])
+                patient_name_val = str(df_bills[df_bills['invoice_no']==print_inv]['patient_name'].values) if 'patient_name' in df_bills.columns else "Patient"
+                pdf_bytes = generate_pdf_report(print_inv, patient_name_val, report_data, report_data)
                 st.download_button("📥 Download PDF Report", data=pdf_bytes, file_name=f"Report_{print_inv}.pdf", mime="application/pdf")
             else: st.error("No approved report found for this invoice number.")
-# ২. দ্বিতীয় পেজ: ১০০+ টেস্টের ড্রপডাউন এবং ডাইনামিক ক্যাশ মেমো জেনারেটর
+                # ২. দ্বিতীয় পেজ: ১০০+ টেস্টের ড্রপডাউন এবং ডাইনামিক ক্যাশ মেমো জেনারেটর
 if page == "💳 New Patient Billing":
     st.markdown("<h2 class='main-header'>💳 Create New Patient Bill & Memo</h2>", unsafe_allow_html=True)
     st.markdown("<div class='billing-card'>", unsafe_allow_html=True)
@@ -224,3 +224,4 @@ if page == "💳 New Patient Billing":
                     except Exception as legacy_err: st.error(f"Database write error: {legacy_err}")
             else: st.warning("Please input Patient Name and select at least one Test.")
     st.markdown("</div>", unsafe_allow_html=True)
+        
