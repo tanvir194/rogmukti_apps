@@ -144,7 +144,7 @@ if page == "New Patient Entry":
         age = st.number_input("Age (Years)", min_value=0, max_value=120, value=25)
         phone = st.text_input("Phone Number")
     with col2:
-        doctor_list = ["Dr. Saidul Islam", "Dr. Nasrin Sultana", "Dr. Motaleb Hossain", "Self / Others"]
+        doctor_list = ["Dr. MD. MOSHIUR RAHMAN MBBS BCS PGT RMO - PATUAKHALI HOSPITAL", "Dr.Sakhter simu MBBS DMU", "Dr. Md. Abdur Rahman R M P", "Self "]
         doctor = st.selectbox("REFd By. Dr", doctor_list)
         date_input = st.date_input("Date", datetime.now())
         date_str = date_input.strftime("%Y-%m-%d")
