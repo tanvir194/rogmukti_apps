@@ -40,13 +40,13 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     return c.lastrowid
 # Master Price List Dictionary
 TEST_PRICES = {
-    "CBC (Complete Blood Count)": 400.0,
+    "CBC (Complete Blood Count)": 600.0,
     "CBC with ESR": 600.0,
     "TC.DC": 250.0,
-    "HB% (Hemoglobin)": 250.0,
+    "HB% (Hemoglobin)": 350.0,
     "ESR": 200.0,
     "Platelet Count": 300.0,
-    "MP (Malaria Parasite)": 200.0,
+    "MP (Malaria Parasite)": 500.0,
     "BT/CT (Bleeding & Clotting Time)": 350.0,
     "C/E Count": 250.0,
     
@@ -60,7 +60,7 @@ TEST_PRICES = {
     "VDRL": 400.0,
     "Blood Group & Rh Factor": 200.0,
     "Mantaux-Test (M.T)": 200.0,
-    "Triple Antigen": 500.0,
+    "Triple Antigen": 1050.0,
     "R.Fever": 400.0,
     "HIV I & II": 450.0,
     "HCV": 500.0,
@@ -101,7 +101,7 @@ TEST_PRICES = {
     "Hormone TSH": 1100.0,
     "Hormone HbA1c": 1500.0,
     "Hormone Prolactin": 1200.0,
-    "Hormone S. IgE": 1500.0,
+    "Amaylaiz S. IgE": 1500.0,
     "Hormone S.IgE (Device Test)": 700.0,
     
     # --- BIO CHEMICAL ANALYSIS ---
@@ -113,11 +113,11 @@ TEST_PRICES = {
     "Blood Urea": 400.0,
     "Cholesterol": 350.0,
     "HDL": 400.0,
-    "TG (Triglycerides)": 350.0,
+    "TG (Triglycerides)": 450.0,
     "LDL": 300.0,
     "S.GPT (ALT)": 500.0,
     "S.GOT (AST)": 500.0,
-    "Bilirubin Total": 350.0,
+    "Bilirubin Total": 450.0,
     "Lipid Profile (Full)": 1000.0,
     "Bilirubin Direct/Indirect": 450.0,
     "Serum Creatinine": 400.0,
@@ -143,7 +143,7 @@ TEST_PRICES = {
     "USG Color Doppler": 1500.0,
     
     # --- Custom Test Option ---
-    "Custom Test / Others (Type Name & Price Below)": 0.0
+    "Custom Test / Others (Type Name & Price Below + )": 0.0 
 }
 # Sidebar Navigation Menu Options
 st.sidebar.title("🧭 Navigation")
