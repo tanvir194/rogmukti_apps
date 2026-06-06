@@ -21,7 +21,7 @@ def render_dashboard(st, conn, c):
     st.subheader("📋 Latest Invoice & Billing Tracking (Sorted)")
     df_table = pd.read_sql_query("SELECT * FROM bills ORDER BY invoice_no DESC", conn)
     if not df_table.empty:
-        p_col = 'patient_name' if 'patient_name' in df_table.columns else ('name' if 'name' in df_table.columns else df_table.columns[0])
+        p_col = 'patient_name' if 'patient_name' in df_table.columns else ('name' if 'name' in df_table.columns else df_table.columns)
         cols = [col for col in ['invoice_no', p_col, 'total_amount', 'paid_amount', 'due_amount', 'paid', 'due', 'tests'] if col in df_table.columns]
         st.dataframe(df_table[cols], use_container_width=True)
 
@@ -60,45 +60,85 @@ def render_billing(st, conn, c, FPDF, datetime):
         st.write(f"#### Remaining Due: ৳ {due_val}")
         
         tests_string = ", ".join([f"{t} (৳{test_catalogue[t]})" for t in selected_tests])
-        
-        if st.form_submit_button("💾 Save Bill & Generate Memo"):
+                if st.form_submit_button("💾 Save Bill & Generate Memo"):
             if pat_name and selected_tests:
                 cur_date = datetime.now().strftime("%Y/%m/%d")
+                
                 try:
-                    c.execute("INSERT INTO bills (invoice_no, date, patient_name, age, gender, phone, total_amount, discount, net_amount, paid_amount, due_amount, tests) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-                              (gen_invoice, cur_date, pat_name, pat_age, pat_gender, pat_phone, total_bill, disc_val, payable_net, paid_val, due_val, tests_string))
+                    db_table_info = pd.read_sql_query("SELECT * FROM bills LIMIT 1", conn)
+                    cols_in_db = list(db_table_info.columns)
                 except:
-                    c.execute("INSERT INTO bills (invoice_no, total_amount, paid, due) VALUES (?,?,?,?)", (gen_invoice, total_bill, paid_val, due_val))
-                conn.commit()
-                st.session_state['last_saved_memo'] = {"inv": gen_invoice, "name": pat_name, "tests": tests_string, "total": total_bill, "paid": paid_val, "due": due_val, "disc": disc_val, "phone": pat_phone, "age": pat_age, "gender": pat_gender}
-                st.success("🎉 Bill Saved Successfully!")
-                st.rerun()
+                    cols_in_db = []
+                
+                name_key = 'patient_name' if 'patient_name' in cols_in_db else ('name' if 'name' in cols_in_db else 'patient_name')
+                paid_key = 'paid_amount' if 'paid_amount' in cols_in_db else ('paid' if 'paid' in cols_in_db else 'paid_amount')
+                due_key = 'due_amount' if 'due_amount' in cols_in_db else ('due' if 'due' in cols_in_db else 'due_amount')
+                total_key = 'total_amount' if 'total_amount' in cols_in_db else ('total' if 'total' in cols_in_db else 'total_amount')
+                
+                try:
+                    if 'net_amount' in cols_in_db:
+                        c.execute(f"INSERT INTO bills (invoice_no, date, {name_key}, age, gender, phone, total_amount, discount, net_amount, {paid_key}, {due_key}, tests) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+                                  (gen_invoice, cur_date, pat_name, pat_age, pat_gender, pat_phone, total_bill, disc_val, payable_net, paid_val, due_val, tests_string))
+                    else:
+                        query_dynamic = f"INSERT INTO bills (invoice_no, {name_key}, {total_key}, {paid_key}, {due_key}"
+                        values_list = [gen_invoice, pat_name, total_bill, paid_val, due_val]
+                        if 'tests' in cols_in_db: query_dynamic += ", tests"; values_list.append(tests_string)
+                        if 'date' in cols_in_db: query_dynamic += ", date"; values_list.append(cur_date)
+                        query_dynamic += f") VALUES ({','.join(['?']*len(values_list))})"
+                        c.execute(query_dynamic, tuple(values_list))
+                        
+                    conn.commit()
+                    st.session_state['last_saved_memo'] = {"inv": gen_invoice, "name": pat_name, "tests": tests_string, "total": total_bill, "paid": paid_val, "due": due_val, "disc": disc_val, "phone": pat_phone, "age": pat_age, "gender": pat_gender}
+                    st.success("🎉 Bill Saved Successfully!")
+                    st.rerun()
+                except Exception as save_err: 
+                    st.error(f"Database write error: {save_err}")
+            else: 
+                st.warning("Please input Patient Name and select at least one Test.")
                 
     if st.session_state['last_saved_memo'] is not None:
         m = st.session_state['last_saved_memo']
         pdf = FPDF(orientation='P', unit='mm', format='A4')
         pdf.add_page()
-        pdf.set_font("Helvetica", "B", 20)
+        pdf.set_font("Helvetica", "B", 22); pdf.set_text_color(15, 76, 129)
         pdf.cell(0, 10, "ROGMUKTI DIAGNOSTIC CENTRE", ln=True, align="C")
-        pdf.set_font("Helvetica", "", 10)
-        pdf.cell(0, 5, f"Invoice No: {m['inv']} | Patient: {m['name']} | Phone: {m['phone']}", ln=True, align="C")
-        pdf.ln(5)
-        pdf.cell(20, 8, "SL", border=1)
-        pdf.cell(120, 8, "Test Name", border=1)
-        pdf.cell(50, 8, "Price", border=1, ln=True)
+        pdf.set_font("Helvetica", "", 10); pdf.set_text_color(100, 100, 100)
+        pdf.cell(0, 5, "Hospital Road, Dhaka | Phone: +880123456789", ln=True, align="C")
+        pdf.ln(4); pdf.set_draw_color(15, 76, 129); pdf.set_line_width(0.5); pdf.line(10, 32, 200, 32); pdf.ln(6)
         
+        pdf.set_font("Helvetica", "B", 13); pdf.set_text_color(0, 0, 0)
+        pdf.cell(0, 8, "CASH MEMO / INVOICE", ln=True); pdf.set_font("Helvetica", "", 10)
+        pdf.cell(100, 6, f"Invoice No: {m['inv']}"); pdf.cell(90, 6, f"Date: {datetime.now().strftime('%d-%b-%Y %I:%M %p')}", ln=True)
+        pdf.cell(100, 6, f"Patient Name: {m['name']}"); pdf.cell(90, 6, f"Mobile No: {m['phone']}", ln=True); pdf.ln(6)
+        
+        pdf.set_fill_color(15, 76, 129); pdf.set_text_color(255, 255, 255); pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(20, 8, "SL No", border=1, fill=True, align="C")
+        pdf.cell(120, 8, "Diagnostic Test Name", border=1, fill=True)
+        pdf.cell(50, 8, "Price (TK)", border=1, fill=True, ln=True, align="R")
+        
+        pdf.set_text_color(0, 0, 0); pdf.set_font("Helvetica", "", 10)
         sl = 1
         for item in m["tests"].split(", "):
-            t_name, t_pr = item.split(" (৳")
-            pdf.cell(20, 8, str(sl), border=1)
-            pdf.cell(120, 8, t_name, border=1)
-            pdf.cell(50, 8, t_pr.replace(")", ""), border=1, ln=True)
+            if " (৳" in item:
+                t_name, t_pr = item.split(" (৳")
+                t_pr = t_pr.replace(")", "").strip()
+            else:
+                t_name, t_pr = item, "0"
+            pdf.cell(20, 8, str(sl), border=1, align="C")
+            pdf.cell(120, 8, f" {t_name}", border=1)
+            pdf.cell(50, 8, f"{float(t_pr):,.2f} ", border=1, ln=True, align="R")
             sl += 1
             
         pdf.ln(5)
-        pdf.cell(140, 6, "Total Amount:", align="R"); pdf.cell(50, 6, f"{m['total']}.00 TK", ln=True, align="R")
-        pdf.cell(140, 6, "Paid Cash:", align="R"); pdf.cell(50, 6, f"{m['paid']}.00 TK", ln=True, align="R")
-        pdf.cell(140, 6, "Remaining Due:", align="R"); pdf.cell(50, 6, f"{m['due']}.00 TK", ln=True, align="R")
+        pdf.cell(140, 6, "Total Amount:", align="R"); pdf.cell(50, 6, f"{float(m['total']):,.2f} TK ", ln=True, align="R")
+        if float(m['disc']) > 0:
+            pdf.cell(140, 6, "Discount:", align="R"); pdf.cell(50, 6, f"-{float(m['disc']):,.2f} TK ", ln=True, align="R")
+        pdf.cell(140, 6, "Paid Cash:", align="R"); pdf.cell(50, 6, f"{float(m['paid']):,.2f} TK ", ln=True, align="R")
+        pdf.cell(140, 8, "Remaining Due:", align="R"); pdf.cell(50, 8, f"{float(m['due']):,.2f} TK ", ln=True, align="R")
+        
+        pdf.ln(15); pdf.cell(130, 6, ""); pdf.cell(60, 6, "_______________________", ln=True, align="C")
+        pdf.cell(130, 6, ""); pdf.cell(60, 6, "Authorized Signature", ln=True, align="C")
+        
         pdf_bytes = pdf.output(dest="S")
         st.download_button(label="📥 DOWNLOAD A4 CASH MEMO (PDF)", data=pdf_bytes, file_name=f"Invoice_{m['inv']}.pdf", mime="application/pdf", use_container_width=True)
-              
+                            
