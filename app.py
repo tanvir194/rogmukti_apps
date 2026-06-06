@@ -71,7 +71,7 @@ TEST_PRICES = {
     "HBsAg (Screening / ELISA)": 450.0,
     "Anti-HCV": 600.0,
     "HIV I & II": 500.0,
-    "Widal Test (Typhoid)": 350.0,
+    "Widal Test (Typhoid)": 450.0,
     "ASO Titre": 400.0,
     "RA Factor": 400.0,
     "CRP (C-Reactive Protein)": 500.0,
@@ -79,6 +79,7 @@ TEST_PRICES = {
     "Dengue IgG/IgM": 300.0,
     "Chikungunya IgM": 800.0,
     "Troponin I (Cardiac)": 1200.0,
+    "triple antigen Test (T.A)": 850.0,
     
     # --- Urine & Stool ---
     "Urine R/M/E": 200.0,
