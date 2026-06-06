@@ -52,7 +52,9 @@ TEST_PRICES = {
     "Malaria Parasite (MP)": 500.0,
     
     # --- Biochemistry & Diabetes ---
-    "Blood Sugar (RBS / Fasting / 2H HAB)": 200.0,
+    "Blood Sugar (/ 2H )": 200.0,
+    "Blood Sugar (Fasting)": 200.0,
+    "Blood Sugar (RBS)": 200.0,
     "HbA1c": 1200.0,
     "Serum Creatinine": 400.0,
     "Serum Bilirubin (Total/Direct)": 550.0,
@@ -68,7 +70,7 @@ TEST_PRICES = {
     "Serum Calcium": 700.0,
     
     # --- Serology & Immunology ---
-    "HBsAg (Screening / ELISA)": 450.0,
+    "HBsAg (Screening)": 450.0,
     "Anti-HCV": 600.0,
     "HIV I & II": 500.0,
     "Widal Test (Typhoid)": 450.0,
