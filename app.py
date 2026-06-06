@@ -143,7 +143,7 @@ TEST_PRICES = {
     "USG Color Doppler": 1500.0,
     
     # --- Custom Test Option ---
-    "Custom Test / Others (Type Name & Price Below )": 0.0 
+    "Custom Test / Others (Type Name & Price Below)": 0.0 
 }
 # Sidebar Navigation Menu Options
 st.sidebar.title("🧭 Navigation")
