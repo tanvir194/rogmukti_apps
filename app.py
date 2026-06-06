@@ -36,32 +36,32 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     ''', (name, age, phone, doctor, tests, total, discount, advance, due, date))
     conn.commit()
     return c.lastrowid
-    # টেস্টের নাম এবং স্ট্যান্ডার্ড দামের তালিকা
+# টেস্টের নাম এবং স্ট্যান্ডার্ড দামের তালিকা
 TEST_PRICES = {
     # --- Haematology & Blood ---
     "CBC (Complete Blood Count)": 600.0,
-    "Hgb (Hemoglobin)": 250.0,
+    "Hgb (Hemoglobin)": 350.0,
     "ESR (Erythrocyte Sedimentation Rate)": 150.0,
     "WBC Count & DC": 250.0,
     "Platelet Count": 200.0,
-    "Blood Grouping & Rh Typing": 250.0,
-    "BT & CT (Bleeding & Clotting Time)": 300.0,
+    "Blood Grouping & Rh Typing": 200.0,
+    "BT & CT (Bleeding & Clotting Time)": 350.0,
     "PBF (Peripheral Blood Film)": 450.0,
     "Malaria Parasite (MP)": 500.0,
     
     # --- Biochemistry & Diabetes ---
     "Blood Sugar (RBS / Fasting / 22HAB)": 200.0,
-    "HbA1c": 1000.0,
+    "HbA1c": 1200.0,
     "Serum Creatinine": 450.0,
-    "Serum Bilirubin (Total/Direct)": 450.0,
-    "SGPT (ALT)": 450.0,
-    "SGOT (AST)": 450.0,
-    "Serum Alkaline Phosphatase": 550.0,
+    "Serum Bilirubin (Total/Direct)": 550.0,
+    "SGPT (ALT)": 550.0,
+    "SGOT (AST)": 550.0,
+    "Serum Alkaline Phosphatase": 650.0,
     "Lipid Profile (Full)": 1000.0,
     "Serum Cholesterol": 450.0,
     "Serum Triglycerides": 450.0,
-    "Serum Uric Acid": 550.0,
-    "Serum Urea / BUN": 500.0,
+    "Serum Uric Acid": 450.0,
+    "Serum Urea / BUN": 600.0,
     "Serum Electrolytes (Na, K, Cl)": 1000.0,
     "Serum Calcium": 700.0,
     
@@ -70,8 +70,8 @@ TEST_PRICES = {
     "Anti-HCV": 600.0,
     "HIV I & II": 500.0,
     "Widal Test (Typhoid)": 450.0,
-    "ASO Titre": 450.0,
-    "RA Factor": 4500.0,
+    "ASO Titre": 400.0,
+    "RA Factor": 400.0,
     "CRP (C-Reactive Protein)": 500.0,
     "Dengue NS1 Antigen": 300.0,
     "Dengue IgG/IgM": 300.0,
@@ -85,13 +85,13 @@ TEST_PRICES = {
     "Stool for Occult Blood Test (OBT)": 250.0,
     
     # --- Thyroid & Hormone Panel ---
-    "TSH (Thyroid Stimulating Hormone)": 950.0,
-    "FT4 (Free Thyroxine)": 950.0,
-    "FT3 (Free Triiodۆthyronine)": 950.0,
-    "T3 (Total Triiodothyronine)": 500.0,
+    "TSH (Thyroid Stimulating Hormone)": 900.0,
+    "FT4 (Free Thyroxine)": 900.0,
+    "FT3 (Free Triiodothyronine)": 900.0,
+    "T3 (Total Triiodothyronine)": 900.0,
     "T4 (Total Thyroxine)": 900.0,
-    "Serum Prolactin": 1000.0,
-    "Serum Testosterone": 1200.0,
+    "Serum Prolactin": 1200.0,
+    "Serum Testosterone": 1000.0,
     "PSA (Prostate Specific Antigen)": 1200.0,
     "Beta-HCG": 1000.0,
     
@@ -132,27 +132,23 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
     if "receipt_data" not in st.session_state:
         st.session_state.receipt_data = None
 
-    st.subheader("👤 পেশেন্ট এবং ডাক্তারের তথ্য")
+    # ১. পেশেন্ট এবং ডাক্তারের তথ্য (লাইভ এবং সিঙ্গেল স্ক্রিন এন্ট্রি)
+    st.subheader("👤 পেশেন্ট এবং বিলিং তথ্য")
     
-    # রোগীর সাধারণ তথ্যের আলাদা ফর্ম
-    with st.form("patient_info_form"):
-        col1, col2 = st.columns(2)
-        with col1:
-            name = st.text_input("Name of the PT (পেশেন্টের নাম) *")
-            age = st.number_input("Age (বয়স)", min_value=0, max_value=120, value=25)
-            phone = st.text_input("Phone (মোবাইল নম্বর)")
-        with col2:
-            doctor_list = ["ডা. সাইদুল ইসলাম", "ডা. নাসরিন সুলতানা", "ডা. মোতালেব হোসেন", "Self / অন্যান্য"]
-            doctor = st.selectbox("REFd By. Dr (ডাক্তার সিলেক্ট করুন)", doctor_list)
-            date_input = st.date_input("Date (তারিখ)", datetime.now())
-            date_str = date_input.strftime("%Y-%m-%d")
+    col1, col2 = st.columns(2)
+    with col1:
+        name = st.text_input("Name of the PT (পেশেন্টের নাম) *")
+        age = st.number_input("Age (বয়স)", min_value=0, max_value=120, value=25)
+        phone = st.text_input("Phone (মোবাইল নম্বর)")
+    with col2:
+        doctor_list = ["ডা. সাইদুল ইসলাম", "ডা. নাসরিন সুলতানা", "ডা. মোতালেব হোসেন", "Self / অন্যান্য"]
+        doctor = st.selectbox("REFd By. Dr (ডাক্তকার সিলেক্ট করুন)", doctor_list)
+        date_input = st.date_input("Date (তারিখ)", datetime.now())
+        date_str = date_input.strftime("%Y-%m-%d")
         
-        info_submit = st.form_submit_button("পেশেন্ট তথ্য নিশ্চিত করুন")
-
     st.markdown("---")
-    st.subheader("🧪 টেস্ট এবং বিলিং সেকশন")
     
-    # ফর্মের বাইরে স্বাধীন টেস্ট ড্রপডাউন (লাইভ কাউন্টারের জন্য)
+    # ২. টেস্ট ড্রপডাউন সিলেকশন
     selected_tests = st.multiselect("Description (এখান থেকে টেস্ট সার্চ বা সিলেক্ট করুন)", sorted(list(TEST_PRICES.keys())))
     
     custom_test_active = "Custom Test / অন্যান্য (নিচে নাম ও দাম লিখুন)" in selected_tests
@@ -170,7 +166,7 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
         if custom_test_active:
             custom_price = st.number_input("কাস্টম টেস্টের দাম (টাকা):", min_value=0.0, value=0.0, step=50.0)
     
-    # লাইভ কাউন্টার ক্যালকুলেশন
+    # লাইভ কাউন্টার লজিক
     sub_total = sum(TEST_PRICES[test] for test in selected_tests) + custom_price
 
     col3, col4 = st.columns(2)
@@ -184,8 +180,10 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
         st.write(f"**ডিসকাউন্ট প্রদেয়:** {discount_amount} টাকা")
         st.metric(label="Due (মোট বাকি টাকা)", value=f"{due} টাকা")
 
-    # ডাটাবেজে রেকর্ড সেভ করার মূল বাটন
-    if st.button("Save Bill and Generate Receipt (ডাটা সেভ করুন)", type="primary"):
+    st.markdown("---")
+    
+    # ডাটা সেভ করার বাটন
+    if st.button("💾 বিল সেভ করুন এবং রিসিট তৈরি করুন", type="primary", use_container_width=True):
         if name and selected_tests:
             final_tests_list = [t for t in selected_tests if t != "Custom Test / অন্যান্য (নিচে নাম ও দাম লিখুন)"]
             if custom_test_active and custom_name:
@@ -216,17 +214,11 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
                 "advance": advance,
                 "due": due
             }
-            st.success("সফলভাবে ডাটা সেভ হয়েছে! নিচে প্রিন্ট বাটন এবং মানি রিসিট প্রস্তুত।")
-        elif not name:
-            st.error("অনুগ্রহ করে ওপরের ফর্মে পেশেন্টের নাম লিখে 'পেশেন্ট তথ্য নিশ্চিত করুন' বাটনে চাপুন।")
-        elif not selected_tests:
-            st.error("অনুগ্রহ করে অন্তত একটি টেস্ট সিলেক্ট করুন।")
-         # রিসিট প্রিন্টিং ও প্রিভিউ এরিয়া
+            st.success("সফলভাবে ডাটা ডাটাবেজে সেভ হয়েছে! নিচে প্রিন্ট বাটন চাপুন।")
+    # রিসিট প্রিন্টিং ও প্রিভিউ এরিয়া
     if st.session_state.receipt_data:
         r = st.session_state.receipt_data
-        st.markdown("---")
         
-        # টেবিলের রো জেনারেশন
         table_rows = ""
         for i, item in enumerate(r['tests'], 1):
             table_rows += f"""
@@ -237,9 +229,8 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
             </tr>
             """
 
-        # সম্পূর্ণ রিসিটের রঙিন এইচটিএমএল স্ট্রাকচার (প্রিন্ট আইডি 'printArea' সহ)
         html_receipt = f"""
-        <div id="printArea" style="border: 3px solid #1e3a8a; padding: 25px; border-radius: 12px; background-color: #f8fafc; font-family: 'Segoe UI', Arial, sans-serif; max-width: 650px; margin: 0 auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+        <div style="border: 3px solid #1e3a8a; padding: 25px; border-radius: 12px; background-color: #f8fafc; font-family: 'Segoe UI', Arial, sans-serif; max-width: 650px; margin: 0 auto;">
             <div style="text-align: center; background-color: #1e3a8a; color: white; padding: 15px; border-radius: 8px 8px 0 0; margin: -25px -25px 20px -25px;">
                 <h2 style="margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px;">Rog Mukti Diagnostic Centre</h2>
                 <p style="margin: 5px 0 0 0; font-size: 13px; opacity: 0.9;">Mollah Stand, Auliapur, Patuakhali</p>
@@ -306,31 +297,15 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
             </div>
         </div>
         """
-
-        # জাভাস্ক্রিপ্ট কোড যুক্ত নতুন উইন্ডো দিয়ে সরাসরি প্রিন্ট বাটন ব্যবস্থা
-        st.subheader("📄 মানি রিসিট কন্ট্রোল")
         
-        # ক্লিক করলেই রিসিটের অংশটুকু প্রিন্ট করার জাভাস্ক্রিপ্ট যুক্ত বাটন
-        print_button_html = f"""
-        <script>
-        function printInvoice() {{
-            var printContents = document.getElementById('printArea').innerHTML;
-            var originalContents = document.body.innerHTML;
-            document.body.innerHTML = printContents;
-            window.print();
-            document.body.innerHTML = originalContents;
-            window.location.reload();
-        }}
-        </script>
-        <button onclick="printInvoice()" style="background-color: #1e3a8a; color: white; padding: 12px 24px; font-size: 16px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-            🖨️ প্রিন্ট করুন (Print Receipt)
-        </button>
-        <br><br>
-        {html_receipt}
-        """
+        st.subheader("🖨️ রিসিট অ্যাকশন মেনু")
         
-        # স্ট্রীমলিটে সম্পূর্ণ বাটন ও রিসিট রেন্ডার করা
-        st.components.v1.html(print_button_html, height=720, scrolling=True)
+        # অফিশিয়াল ১-ক্লিক প্রিন্ট বাটন (যা সম্পূর্ণ ব্রাউজার প্রিন্ট ডায়ালগ অন করবে)
+        if st.button("🖨️ প্রিন্ট করুন (Print Now)", type="secondary", use_container_width=True):
+            st.components.v1.html("<script>window.print();</script>", height=0, width=0)
+            
+        # রিসিট প্রিভিউ শো করা
+        st.components.v1.html(html_receipt, height=580, scrolling=True)
 
 elif page == "পেশেন্ট ডাটাবেজ":
     st.title("📋 রোগমুক্তি ক্লিনিক ডাটাবেজ")
@@ -346,4 +321,4 @@ elif page == "পেশেন্ট ডাটাবেজ":
         st.dataframe(df, use_container_width=True)
     else:
         st.info("এখনো ডাটাবেজে কোনো পেশেন্টের তথ্য রেকর্ড করা হয়নি।")
-    
+
