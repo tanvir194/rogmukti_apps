@@ -2,4 +2,3 @@ streamlit
 pandas
 gspread
 fpdf2
-xhtml2pdf
