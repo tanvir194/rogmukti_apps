@@ -131,12 +131,13 @@ if page == "New Patient Entry":
     discount_amount = (subtotal * discount_pct) / 100
     total_payable = subtotal - discount_amount
     due = total_payable - advance
-    
+        # (ফাইলটির ১৩৫ নম্বর লাইন থেকে শেষের অংশটুকু সম্পূর্ণ মুছে এই কোডটি বসান)
     with col4:
         st.write(f"**Discount Amount:** {discount_amount:.2f} TK")
         st.markdown("### 🔴 Due (Total Remaining Balance):")
         st.markdown(f"## **{due:.2f} TK**")
-            if 'show_receipt' not in st.session_state:
+
+    if 'show_receipt' not in st.session_state:
         st.session_state.show_receipt = False
         st.session_state.inv_id = 0
 
@@ -184,7 +185,11 @@ if page == "New Patient Entry":
         </div>
         """
         st.markdown(receipt_html, unsafe_allow_html=True)
-        elif page == "Patient Database":
+
+# ==========================================
+# PAGE 2: PATIENT DATABASE (PROFESSIONAL)
+# ==========================================
+elif page == "Patient Database":
     st.title("📋 Patient Record Database")
     st.markdown("---")
     st.markdown("#### 🔍 Filter Options")
@@ -229,7 +234,11 @@ if page == "New Patient Entry":
         st.download_button("📥 Download Database Report (CSV)", data=csv, file_name=f"patient_database_{start_str}.csv", mime="text/csv")
     else:
         st.info("No records found. Try changing the start date to yesterday.")
-        elif page == "Doctors Report":
+
+# ==========================================
+# PAGE 3: DOCTORS REPORT (PROFESSIONAL DASHBOARD)
+# ==========================================
+elif page == "Doctors Report":
     st.title("📊 Doctors Referral & Collection Dashboard")
     st.markdown("---")
     st.markdown("#### 📅 Select Timeline & Doctor")
