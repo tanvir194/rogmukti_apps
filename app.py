@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS patients (
 """)
 conn.commit()
 
-# ডাটাবেজে তথ্য সেভ করার ফাংশন
+# Save Data
 def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, date):
     c.execute('''
         INSERT INTO patients (name, age, phone, doctor, tests, total_amount, discount, advance, due, date)
@@ -36,7 +36,7 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     ''', (name, age, phone, doctor, tests, total, discount, advance, due, date))
     conn.commit()
     return c.lastrowid
-    # টেস্টের নাম এবং স্ট্যান্ডার্ড দামের তালিকা
+    # Test List
 TEST_PRICES = {
     # --- Haematology & Blood ---
     "CBC (Complete Blood Count)": 600.0,
@@ -70,6 +70,7 @@ TEST_PRICES = {
     "Anti-HCV": 600.0,
     "HIV I & II": 500.0,
     "Widal Test (Typhoid)": 450.0,
+    "Treple Antigen (T.A)": 1050,
     "ASO Titre": 450.0,
     "RA Factor": 4500.0,
     "CRP (C-Reactive Protein)": 500.0,
@@ -119,7 +120,7 @@ TEST_PRICES = {
     "X-Ray KUB View": 500.0,
     
     # --- কাস্টম অপশন ---
-    "Custom Test / অন্যান্য (নিচে নাম ও দাম লিখুন)": 0.0
+    "Custom Test / অন্যান্য (নিচে নাম ও দাম লিখুন)": 00
 }
 # সাইডবার মেনু নেভিগেশন
 st.sidebar.title("🧭 নেভিগেশন মেনু")
@@ -142,15 +143,15 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
             age = st.number_input("Age (বয়স)", min_value=0, max_value=120, value=25)
             phone = st.text_input("Phone (মোবাইল নম্বর)")
         with col2:
-            doctor_list = ["ডা. সাইদুল ইসলাম", "ডা. নাসরিন সুলতানা", "ডা. মোতালেব হোসেন", "Self / অন্যান্য"]
-            doctor = st.selectbox("REFd By. Dr (ডাক্তার সিলেক্ট করুন)", doctor_list)
-            date_input = st.date_input("Date (তারিখ)", datetime.now())
+            doctor_list = ["Dr. Abdur Rahman RMF", "Dr. Salma Akter ( Shimu)", "Dr. Mosiur Rahman MBBS BCS PGT", "Self "]
+            doctor = st.selectbox("REFd By. Dr (Dr List)", doctor_list)
+            date_input = st.date_input("Date (Date)", datetime.now())
             date_str = date_input.strftime("%Y-%m-%d")
         
-        info_submit = st.form_submit_button("পেশেন্ট তথ্য নিশ্চিত করুন")
+        info_submit = st.form_submit_button("Patient Select")
 
     st.markdown("---")
-    st.subheader("🧪 টেস্ট এবং বিলিং সেকশন")
+    st.subheader("Test & Billing")
     
     # ফর্মের বাইরে স্বাধীন টেস্ট ড্রপডাউন (লাইভ কাউন্টারের জন্য)
     selected_tests = st.multiselect("Description (এখান থেকে টেস্ট সার্চ বা সিলেক্ট করুন)", sorted(list(TEST_PRICES.keys())))
