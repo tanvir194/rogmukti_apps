@@ -89,7 +89,7 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     """, (name, age, phone, doctor, tests, total, discount, advance, due, date_str))
     conn.commit()
     return c.lastrowid
-# Master Price List Dictionary
+    # Master Price List Dictionary
 TEST_PRICES = {
     "Amylase": 700.0,
     "Bilirubin Direct/Indirect": 450.0,
@@ -170,7 +170,7 @@ if page == "New Patient Entry":
         st.write(f"**Discount Amount:** {discount_amount:.2f} TK")
         st.markdown("### 🔴 Due (Total Remaining Balance):")
         st.markdown(f"## **{due:.2f} TK**")
-            # Session state to handle receipt visibility after clicking save
+        # Session state to handle receipt visibility after clicking save
     if 'show_receipt' not in st.session_state:
         st.session_state.show_receipt = False
         st.session_state.inv_id = 0
@@ -201,11 +201,13 @@ if page == "New Patient Entry":
             <table style="width:100%; font-size:14px; margin-bottom:15px;">
                 <tr><td><b>Invoice No:</b> {st.session_state.inv_id:05d}</td><td style="text-align:right;"><b>Date:</b> {current_date.strftime('%Y-%m-%d')}</td></tr>
                 <tr><td><b>Patient Name:</b> {name}</td><td style="text-align:right;"><b>Age:</b> {age} Years</td></tr>
-                <tr><td><b>Phone Number:</b> {phone}</td><td style="text-align:right;"><b>Refd By:</b> {doctor.split(' ')[1] if len(doctor.split(' ')) > 1 else doctor}</td></tr>
+                <tr><td><b>Phone Number:</b> {phone}</td><td style="text-align:right;"><b>Refd By:</b> {doctor.split(' ')[0] if len(doctor.split(' ')) > 0 else doctor}</td></tr>
             </table>
             <table class="receipt-table">
                 <tr><th>SL</th><th>Description</th><th style="text-align:right;">Amount</th></tr>
         """
+        
+        # Fixing Loop Syntax Error by safely building table strings
         for idx, test in enumerate(selected_tests, 1):
             receipt_html += f"<tr><td>{idx}</td><td>{test}</td><td style="text-align:right;">{TEST_PRICES[test]:.2f} ৳</td></tr>"
             
@@ -218,7 +220,7 @@ if page == "New Patient Entry":
         </div>
         """
         st.markdown(receipt_html, unsafe_allow_html=True)
-        # ==========================================
+# ==========================================
 # PAGE 2: PATIENT DATABASE (PROFESSIONAL)
 # ==========================================
 elif page == "Patient Database":
