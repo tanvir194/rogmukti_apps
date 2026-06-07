@@ -323,7 +323,7 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
             window.location.reload();
         }}
         </script>
-        <button onclick="printInvoice()" style="background-color: #1e3a8a; color: white; padding: 12px 24px; font-size: 16px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+        <button onclick="printInvoice()" style="background-color: #1e3a8a; color: white; padding: 12px 24px; font-size: 16px; font-weight: bold; border:; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
             🖨️ প্রিন্ট করুন (Print Receipt)
         </button>
         <br><br>
