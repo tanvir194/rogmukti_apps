@@ -1,35 +1,19 @@
 import datetime
 
-# ১. টেস্ট প্রাইস লিস্ট ডিকশনারি
+# List of available tests and their prices
 TEST_PRICES = {
-    "CBC (Complete Blood Count)": 400.0,
-    "Hgb (Hemoglobin)": 150.0,
-    "ESR (Erythrocyte Sedimentation Rate)": 250.0,
-    "WBC Count & DC": 250.0,
-    "Platelet Count": 200.0,
-    "Blood Grouping & Rh Typing": 150.0,
-    "BT & CT (Bleeding & Clotting Time)": 450.0,
-    "PBF (Peripheral Blood Film)": 450.0,
-    "Malaria Parasite (MP)": 200.0,
-    "Blood Sugar (RBS / Fasting / 2H PP)": 800.0,
-    "HbA1c": 800.0,
-    "Serum Creatinine": 300.0,
-    "Serum Bilirubin (Total/Direct)": 350.0,
-    "SGPT (ALT)": 350.0,
-    "SGOT (AST)": 350.0,
-    "Serum Alkaline Phosphatase": 350.0,
-    "Lipid Profile (Full)": 1000.0,
-    "Serum Cholesterol": 250.0,
-    "Serum Triglycerides": 350.0,
-    "Serum Uric Acid": 350.0,
-    "Serum Urea / BUN": 300.0,
-    "Serum Electrolytes (Na, K, Cl)": 350.0
+    "cbc": 400,
+    "blood sugar": 150,
+    "lipid profile": 1200,
+    "creatinine": 300,
+    "urine re": 250,
+    "x-ray chest": 600,
+    "ultrasonography": 1500,
+    "ecg": 400
 }
 
-# গ্লোবাল ইনভয়েস কাউন্টার
+# Starting invoice number
 invoice_counter = 1001
-
-# ২. রসিদ জেনারেট এবং প্রিন্ট করার ফাংশন
 def generate_receipt(patient_name, age, phone, selected_tests, discount_percent=0, paid_amount=0):
     global invoice_counter
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %I:%M %p")
@@ -37,102 +21,108 @@ def generate_receipt(patient_name, age, phone, selected_tests, discount_percent=
     subtotal = 0
     test_rows = []
     
-    # টেস্টের মূল্য হিসাব
-    for idx, test in enumerate(selected_tests, 1):
-        if test in TEST_PRICES:
-            price = TEST_PRICES[test]
+    # Calculate test prices
+    for idx, test_name in enumerate(selected_tests, 1):
+        if test_name in TEST_PRICES:
+            price = TEST_PRICES[test_name]
             subtotal += price
-            test_rows.append(f"{idx}. {test:<40} {price:>8.2f} TK")
+            test_rows.append(f"{idx}. {test_name.upper():<25} : {price:>6} USD")
             
-    # ডিসকাউন্ট ও নেট বিল হিসাব
+    # Calculate discount and totals
     discount_amount = (subtotal * discount_percent) / 100
     net_total = subtotal - discount_amount
     due_amount = net_total - paid_amount
     
-    # মেমো/রসিদ ডিজাইন প্রিন্ট
-    print("\n" + "="*55)
-    print(f"{'*** আল-শেফা ডায়াগনস্টিক সেন্টার ***':^55}")
-    print(f"{'ঢাকা, বাংলাদেশ | ফোন: ০১৯XXXXXXXX':^55}")
-    print("="*55)
-    print(f"রসিদ নং: #{invoice_counter:<15} তারিখ: {current_time}")
-    print(f"রোগীর নাম: {patient_name:<15} বয়স: {age:<5} মোবাইল: {phone}")
-    print("-"*55)
-    print(f"{'টেস্টের নাম':<42} {'মূল্য':>10}")
-    print("-"*55)
+    # Print receipt layout
+    print("\n" + "="*50)
+    print(f"{'*** AL-MADINA DIAGNOSTIC CENTER ***':^50}")
+    print(f"{'Dhaka, Bangladesh | Phone: 01XXXXXXXXX':^50}")
+    print("="*50)
+    print(f"Invoice No : #{invoice_counter:<14} Date: {current_time}")
+    print(f"Patient Name: {patient_name:<14} Age : {age:<5} Phone: {phone}")
+    print("-"*50)
+    print(f"{'Test Description':<28} : {'Price':>9}")
+    print("-"*50)
     
     for row in test_rows:
         print(row)
         
-    print("-"*55)
-    print(f"{'মোট মূল্য (Subtotal):':<42} {subtotal:>8.2f} TK")
-    print(f"{f'ছাড় (Discount {discount_percent}%):':<42} {discount_amount:>8.2f} TK")
-    print(f"{'সর্বমোট বিল (Net Total):':<42} {net_total:>8.2f} TK")
-    print(f"{'নগদ পরিশোধ (Paid):':<42} {paid_amount:>8.2f} TK")
-    print(f"{'বকেয়া (Due):':<42} {due_amount:>8.2f} TK")
-    print("="*55)
-    print(f"{'সুস্থ থাকুন, ধন্যবাদ!':^55}")
-    print("="*55 + "\n")
+    print("-"*50)
+    print(f"{'Subtotal':<27} : {subtotal:>6}.00 USD")
+    print(f"{'Discount (' + str(discount_percent) + '%)':<27} : {discount_amount:>6}.00 USD")
+    print(f"{'Net Total':<27} : {net_total:>6}.00 USD")
+    print(f"{'Paid Amount':<27} : {paid_amount:>6}.00 USD")
+    print(f"{'Due Amount':<27} : {max(0, due_amount):>6}.00 USD")
+    print("="*50)
+    print(f"{'*** Stay Healthy, Live Well ***':^50}")
+    print("="*50 + "\n")
     
     invoice_counter += 1
-
-# ৩. সিস্টেমে ইন্টারঅ্যাক্টিভ এন্ট্রি নেওয়ার মেইন লুপ
-def diagnostic_system():
-    print("--- ডায়াগনস্টিক ম্যানেজমেন্ট সিস্টেমে স্বাগতম ---")
-    
+    def diagnostic_system():
     while True:
-        print("\n১. নতুন রোগীর রসিদ (New Receipt) কাটুন")
-        print("২. টেস্টের তালিকা ও দাম দেখুন")
-        print("৩. সিস্টেম বন্ধ করুন")
-        choice = input("আপনার অপশনটি সিলেক্ট করুন (১/২/৩): ")
+        print("\n--- DIAGNOSTIC MANAGEMENT SYSTEM ---")
+        print("1. Create New Receipt")
+        print("2. View Test Menu & Prices")
+        print("3. Exit System")
         
-        if choice == "১":
-            name = input("রোগীর নাম লিখুন: ")
-            age = input("বয়স লিখুন: ")
-            phone = input("মোবাইল নম্বর: ")
+        choice = input("Select an option (1/2/3): ").strip()
+        
+        if choice == "1":
+            print("\n--- Enter Patient Information ---")
+            name = input("Patient Name: ").strip()
+            age = input("Patient Age: ").strip()
+            phone = input("Phone Number: ").strip()
             
-            # টেস্ট সিলেকশন
+            # Test Selection Loop
             selected_tests = []
-            print("\nটেস্টের তালিকা থেকে নাম কপি করে পেস্ট করুন (শেষ করতে 'done' লিখুন):")
-            while True:
-                test_name = input("টেস্টের নাম লিখুন (বা 'done'): ").strip()
-                if test_name.lower() == 'done':
-                    break
-                if test_name in TEST_PRICES:
-                    selected_tests.append(test_name)
-                    print(f"-> {test_name} যোগ করা হয়েছে।")
-                else:
-                    print("⚠️ দুঃখিত, এই নামের কোনো টেস্ট তালিকায় নেই! সঠিক নাম দিন।")
+            print("\nEnter test names from the menu. Type 'done' to finish.")
+            print("Available tests:", ", ".join(TEST_PRICES.keys()))
             
+            while True:
+                test_name = input("Enter Test Name (or 'done'): ").strip().lower()
+                
+                if test_name == 'done':
+                    break
+                    
+                if test_name in TEST_PRICES:
+                    if test_name not in selected_tests:
+                        selected_tests.append(test_name)
+                        print(f"-> {test_name.upper()} has been added.")
+                    else:
+                        print("⚠ This test has already been added.")
+                else:
+                    print("⚠ Invalid test name! Please check the menu and try again.")
+            
+            # If no tests were selected
             if not selected_tests:
-                print("❌ কোনো টেস্ট সিলেক্ট করা হয়নি! রসিদ বাতিল করা হলো।")
+                print("❌ No tests selected! Receipt creation canceled.")
                 continue
                 
-            # ডিসকাউন্ট ও পেমেন্ট
+            # Inputs for Discount and Payment
             try:
-                discount = float(input("ডিসকাউন্ট কত %? (না থাকলে ০ দিন): ") or 0)
-                paid = float(input("রোগী কত টাকা জমা দিয়েছেন?: ") or 0)
+                discount = float(input("\nEnter Discount % (Enter 0 if none): ") or 0)
+                paid = float(input("Enter Paid Amount (Enter 0 if none): ") or 0)
             except ValueError:
-                print("⚠️ সংখ্যা ভুল লিখেছেন! ০ ধরে হিসাব করা হচ্ছে।")
+                print("⚠ Invalid input! Setting discount and paid amount to 0.")
                 discount, paid = 0, 0
                 
-            # রসিদ প্রিন্ট করা
+            # Generate the final receipt
             generate_receipt(name, age, phone, selected_tests, discount, paid)
             
-        elif choice == "২":
-            print("\n" + "-"*45)
-            print(f"{'টেস্টের নাম':<35} {'মূল্য (TK)':>8}")
-            print("-"*45)
+        elif choice == "2":
+            print("\n" + "-"*40)
+            print(f"{'Test Name':<25} | {'Price (USD)':>12}")
+            print("-"*40)
             for test, price in TEST_PRICES.items():
-                print(f"{test:<35} {price:>8.2f}")
-            print("-"*45)
+                print(f"{test.upper():<25} | {price:>12} USD")
+            print("-"*40)
             
-        elif choice == "৩":
-            print("সিস্টেম বন্ধ করা হচ্ছে। ভালো থাকুন!")
+        elif choice == "3":
+            print("\nShutting down the system. Thank you!")
             break
         else:
-            print("⚠️ ভুল অপশন চাপছেন! দয়া করে ১, ২ বা ৩ চাপুন।")
-
-# প্রোগ্রামটি চালু করার জন্য
+            print("❌ Invalid choice! Please select option 1, 2, or 3.")
+        # Program entry point
 if __name__ == "__main__":
     diagnostic_system()
-        
+    
