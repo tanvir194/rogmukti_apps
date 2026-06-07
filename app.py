@@ -7,6 +7,7 @@ st.set_page_config(
     page_title="Rog Mukti Diagnostic Centre", 
     layout="wide"
 )
+
 # 2. Database Connection Setup
 conn = sqlite3.connect("rogmukti_clinic_final.db", check_same_thread=False)
 c = conn.cursor()
@@ -37,7 +38,8 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     ''', (name, age, phone, doctor, tests, total, discount, advance, due, date))
     conn.commit()
     return c.lastrowid
-    # 3. Master Price List Dictionary (Part A)
+
+# 3. Master Price List Dictionary (93 Tests)
 TEST_PRICES = {
     # --- HAEMATOLOGY ---
     "CBC (Complete Blood Count)": 400.0,
@@ -69,7 +71,8 @@ TEST_PRICES = {
     "H. Pylori": 850.0,
     "Febrile Antigen / Fallarlia (ICT)": 750.0,
     "Dengue NS1, IgG/IgM": 300.0,
-    # --- X-RAY DIGITAL ---
+
+# --- X-RAY DIGITAL ---
     "X-Ray Chest": 500.0,
     "X-Ray PNS": 500.0,
     "X-Ray Maxilla": 500.0,
@@ -100,7 +103,8 @@ TEST_PRICES = {
     "Hormone Prolactin": 1200.0,
     "Hormone S. IgE": 1500.0,
     "Hormone S.IgE (Device Test)": 700.0,
-    # --- BIO CHEMICAL ANALYSIS ---
+
+# --- BIO CHEMICAL ANALYSIS ---
     "Sugar Random": 200.0,
     "Sugar Fasting": 200.0,
     "Sugar 2hr. After Breakfast": 200.0,
@@ -139,8 +143,9 @@ TEST_PRICES = {
     # --- Custom Option ---
     "Custom Test / Others (Type Name & Price Below)": 0.0
 }
-# Sidebar Navigation Menu
-st.sidebar.title("🧭 Navigation Menu")
+
+# 4. Sidebar Navigation Menu
+st.sidebar.title("Compass Navigation Menu")
 page = st.sidebar.radio("Go to:", ["New Patient Entry", "Patient Database", "Doctors Report"])
 
 if page == "New Patient Entry":
@@ -163,6 +168,7 @@ if page == "New Patient Entry":
         doctor = st.selectbox("REFd By. Dr", doctor_list)
         date_input = st.date_input("Date", datetime.now())
         date_str = date_input.strftime("%Y-%m-%d")
+
     st.markdown("---")
     st.subheader("🧪 Tests & Billing Selection")
     selected_tests = st.multiselect("Description (Search or select official tests)", sorted(list(TEST_PRICES.keys())))
@@ -174,9 +180,11 @@ if page == "New Patient Entry":
         st.info("💡 Custom Test is active. Please enter name and price below.")
     col_c1, col_c2 = st.columns(2)
     with col_c1:
-        if custom_test_active: custom_name = st.text_input("Enter Custom Test Name:")
+        if custom_test_active: 
+            custom_name = st.text_input("Enter Custom Test Name:")
     with col_c2:
-        if custom_test_active: custom_price = st.number_input("Enter Custom Test Price (TK):", min_value=0.0, value=0.0, step=50.0)
+        if custom_test_active: 
+            custom_price = st.number_input("Enter Custom Test Price (TK):", min_value=0.0, value=0.0, step=50.0)
     
     sub_total = sum(TEST_PRICES[test] for test in selected_tests) + custom_price
     col3, col4 = st.columns(2)
@@ -189,7 +197,7 @@ if page == "New Patient Entry":
         due = sub_total - (discount_amount + advance)
         st.write(f"**Discount Amount:** {discount_amount} TK")
         st.metric(label="Due (Total Remaining Balance)", value=f"{due} TK")
-
+    
     st.markdown("---")
     if st.button("💾 Save Bill and Generate Receipt", type="primary", use_container_width=True):
         if name and selected_tests:
@@ -207,7 +215,8 @@ if page == "New Patient Entry":
             st.error("Please enter the Patient's Name.")
         elif not selected_tests: 
             st.error("Please select at least one test.")
-        if st.session_state.receipt_data:
+
+    if st.session_state.receipt_data:
         r = st.session_state.receipt_data
         table_rows = "".join([f"<tr><td>{i}</td><td>{item['name']}</td><td style='text-align:right;'>{item['price']:.2f} TK</td></tr>" for i, item in enumerate(r['tests'], 1)])
         
@@ -231,73 +240,3 @@ if page == "New Patient Entry":
                     <tr style='background-color: #3b82f6; color: white;'>
                         <th style='padding: 8px; text-align: left;'>SL</th>
                         <th style='padding: 8px; text-align: left;'>Description</th>
-                        <th style='padding: 8px; text-align: right;'>Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {table_rows}
-                    <tr style='background-color: #f1f5f9; font-weight: bold;'><td></td><td style='text-align: right; padding: 8px;'>Total:</td><td style='text-align: right; padding: 8px;'>{r['total']:.2f} TK</td></tr>
-                    <tr><td></td><td style='text-align: right; padding: 6px;'>Discount ({r['discount_pct']}%):</td><td style='text-align: right; padding: 6px;'>- {r['discount_amt']:.2f} TK</td></tr>
-                    <tr><td></td><td style='text-align: right; padding: 6px;'>Advance:</td><td style='text-align: right; padding: 6px;'>{r['advance']:.2f} TK</td></tr>
-                    <tr style='background-color: #fee2e2; color: #b91c1c; font-weight: bold;'><td></td><td style='text-align: right; padding: 8px;'>Due:</td><td style='text-align: right; padding: 8px;'>{r['due']:.2f} TK</td></tr>
-                </tbody>
-            </table>
-            <div style='margin-top: 50px; display: flex; justify-content: flex-end;'>
-                <div style='text-align: center; width: 150px;'>
-                    <hr style='border: none; border-top: 1px solid #475569; margin-bottom: 5px;'>
-                    <span style='font-size: 12px; font-weight: bold; color: #475569;'>Authorized Signature</span>
-                </div>
-            </div>
-        </div>
-        """
-        st.subheader("🖨️ Receipt Action Menu")
-        if st.button("🖨️ Click to Open Browser Print Window Now", type="secondary", use_container_width=True):
-            st.components.v1.html(f"<script>var printWindow = window.open('', '_blank'); printWindow.document.write(\`{html_receipt}\`); printWindow.document.close(); printWindow.focus(); printWindow.print(); printWindow.close();</script>", height=0, width=0)
-        st.components.v1.html(html_receipt, height=580, scrolling=True)
-
-elif page == "Patient Database":
-    st.title("📋 Patient Record Database")
-    st.markdown("---")
-    c.execute("SELECT id, name, age, phone, doctor, tests, total_amount, discount, advance, due, date FROM patients ORDER BY id DESC")
-    data = c.fetchall()
-    if data:
-        html_table = "<table style='width:100%; border-collapse: collapse; text-align: left;' border='1'><tr style='background-color:#f1f5f9;'>"
-        headers = ["INV ID", "Patient Name", "Age", "Phone", "Doctor", "Selected Tests", "Total Bill", "Discount %", "Advance", "Due", "Date"]
-        for h in headers: html_table += f"<th style='padding:10px;'>{h}</th>"
-        html_table += "</tr>"
-        for row in data:
-            html_table += f"<tr><td style='padding:10px;'>{row:05d}</td><td style='padding:10px;'>{row}</td><td style='padding:10px;'>{row}</td><td style='padding:10px;'>{row}</td><td style='padding:10px;'>{row}</td><td style='padding:10px;'>{row}</td><td style='padding:10px;'>{row:.2f}</td><td style='padding:10px;'>{row}</td><td style='padding:10px;'>{row:.2f}</td><td style='padding:10px;'>{row:.2f}</td><td style='padding:10px;'>{row}</td></tr>"
-        html_table += "</table>"
-        st.markdown(html_table, unsafe_allow_html=True)
-    else: 
-        st.info("ℹ️ No records found in the database yet. Please add a patient first from 'New Patient Entry'.")
-
-elif page == "Doctors Report":
-    st.title("🩺 Doctors Referral & Collection Dashboard")
-    st.markdown("---")
-    c.execute("SELECT doctor, total_amount FROM patients ORDER BY id DESC")
-    data = c.fetchall()
-    if data:
-        st.subheader("🗓️ Settings & Filter Settings")
-        REFERRAL_PERCENTAGE = st.selectbox("Select Referral Commission Rate", [25.0, 30.0, 35.0, 10.0, 15.0, 20.0])
-        st.markdown("---")
-        doc_totals, total_volume = {}, 0.0
-        for row in data:
-            doc_name = str(row)
-            bill = float(row)
-            total_volume += bill
-            doc_totals[doc_name] = doc_totals.get(doc_name, 0.0) + bill
-        total_commission = total_volume * (REFERRAL_PERCENTAGE / 100.0)
-        col_m1, col_m2 = st.columns(2)
-        with col_m1: st.metric(label="Total Business Volume", value=f"{total_volume:.2f} TK")
-        with col_m2: st.metric(label="Total Commission Payable", value=f"{total_commission:.2f} TK")
-        st.subheader("📊 Doctors Summary")
-        doc_table = "<table style='width:100%; border-collapse: collapse; text-align: left;' border='1'><tr style='background-color:#f1f5f9;'><th style='padding:10px;'>Doctor Name</th><th style='padding:10px;'>Total Test Value (TK)</th><th style='padding:10px;'>Referral Fee</th></tr>"
-        for doc, total in doc_totals.items():
-            fee = total * (REFERRAL_PERCENTAGE / 100.0)
-            doc_table += f"<tr><td style='padding:10px;'>{doc}</td><td style='padding:10px;'>{total:.2f} TK</td><td style='padding:10px;'>{fee:.2f} TK</td></tr>"
-        doc_table += "</table>"
-        st.markdown(doc_table, unsafe_allow_html=True)
-    else: 
-        st.info("ℹ️ No patient records available to generate reports. Please add a patient first.")
-    
