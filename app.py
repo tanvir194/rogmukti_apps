@@ -89,7 +89,8 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     """, (name, age, phone, doctor, tests, total, discount, advance, due, date_str))
     conn.commit()
     return c.lastrowid
-    # Master Price List Dictionary
+
+# Master Price List Dictionary
 TEST_PRICES = {
     "Amylase": 700.0,
     "Bilirubin Direct/Indirect": 450.0,
@@ -134,6 +135,7 @@ DOCTOR_LIST = [
 # --- Navigation Sidebar ---
 st.sidebar.title("🧭 Navigation")
 page = st.sidebar.radio("Go to:", ["New Patient Entry", "Patient Database", "Doctors Report"])
+
 # ==========================================
 # PAGE 1: NEW PATIENT ENTRY
 # ==========================================
@@ -170,12 +172,13 @@ if page == "New Patient Entry":
         st.write(f"**Discount Amount:** {discount_amount:.2f} TK")
         st.markdown("### 🔴 Due (Total Remaining Balance):")
         st.markdown(f"## **{due:.2f} TK**")
-        # Session state to handle receipt visibility after clicking save
+
+    # Session state to handle receipt visibility after clicking save
     if 'show_receipt' not in st.session_state:
         st.session_state.show_receipt = False
         st.session_state.inv_id = 0
 
-    if st.button("💾 Save Bill and Generate Receipt", type="primary"):
+if st.button("💾 Save Bill and Generate Receipt", type="primary"):
         if name:
             date_str = current_date.strftime("%Y-%m-%d")
             tests_str = ", ".join(selected_tests)
@@ -190,7 +193,7 @@ if page == "New Patient Entry":
         st.subheader("🖨️ Receipt Action Menu")
         st.button("📠 Print Receipt Now")
         
-        # HTML Receipt Layout mirroring the provided screenshot
+        # HTML Receipt Header Setup
         receipt_html = f"""
         <div class="receipt-box">
             <div class="receipt-header">
@@ -201,17 +204,21 @@ if page == "New Patient Entry":
             <table style="width:100%; font-size:14px; margin-bottom:15px;">
                 <tr><td><b>Invoice No:</b> {st.session_state.inv_id:05d}</td><td style="text-align:right;"><b>Date:</b> {current_date.strftime('%Y-%m-%d')}</td></tr>
                 <tr><td><b>Patient Name:</b> {name}</td><td style="text-align:right;"><b>Age:</b> {age} Years</td></tr>
-                <tr><td><b>Phone Number:</b> {phone}</td><td style="text-align:right;"><b>Refd By:</b> {doctor.split(' ')[0] if len(doctor.split(' ')) > 0 else doctor}</td></tr>
+                <tr><td><b>Phone Number:</b> {phone}</td><td style="text-align:right;"><b>Refd By:</b> {doctor}</td></tr>
             </table>
             <table class="receipt-table">
                 <tr><th>SL</th><th>Description</th><th style="text-align:right;">Amount</th></tr>
         """
         
-        # Fixing Loop Syntax Error by safely building table strings
-        for idx, test in enumerate(selected_tests, 1):
-            receipt_html += f"<tr><td>{idx}</td><td>{test}</td><td style="text-align:right;">{TEST_PRICES[test]:.2f} ৳</td></tr>"
+        # Building the rows safely using simple concatenation
+        idx = 1
+        for test in selected_tests:
+            test_fee = TEST_PRICES[test]
+            receipt_html = receipt_html + f"<tr><td>{idx}</td><td>{test}</td><td style="text-align:right;">{test_fee:.2f} ৳</td></tr>"
+            idx = idx + 1
             
-        receipt_html += f"""
+        # HTML Footer Append
+        receipt_html = receipt_html + f"""
                 <tr><td colspan="2" style="text-align:right; font-weight:bold;">Total Amount:</td><td style="text-align:right; font-weight:bold;">{subtotal:.2f} ৳</td></tr>
                 <tr><td colspan="2" style="text-align:right; color:green;">Discount ({discount_pct}%):</td><td style="text-align:right; color:green;">-{discount_amount:.2f} ৳</td></tr>
                 <tr><td colspan="2" style="text-align:right; font-weight:bold;">Advance Paid:</td><td style="text-align:right; font-weight:bold;">{advance:.2f} ৳</td></tr>
@@ -220,6 +227,7 @@ if page == "New Patient Entry":
         </div>
         """
         st.markdown(receipt_html, unsafe_allow_html=True)
+
 # ==========================================
 # PAGE 2: PATIENT DATABASE (PROFESSIONAL)
 # ==========================================
@@ -256,71 +264,3 @@ elif page == "Patient Database":
         
         s_col1, s_col2, s_col3 = st.columns(3)
         with s_col1:
-            st.markdown(f'<div class="metric-box"><div class="metric-title">Total Registered</div><div class="metric-value">{len(df)} Patients</div></div>', unsafe_allow_html=True)
-        with s_col2:
-            st.markdown(f'<div class="metric-box"><div class="metric-title">Total Collected</div><div class="metric-value">{df["Paid"].sum():.2f} TK</div></div>', unsafe_allow_html=True)
-        with s_col3:
-            st.markdown(f'<div class="metric-box" style="border-left-color: #dc3545;"><div class="metric-title">Total Due</div><div class="metric-value" style="color: #dc3545;">{df["Due"].sum():.2f} TK</div></div>', unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.dataframe(df, use_container_width=True)
-        
-        csv = df.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Download Database Report (CSV)", data=csv, file_name=f"patient_database_{start_str}.csv", mime="text/csv")
-    else:
-        st.info("No records found for the selected filter inputs. Try changing the start date to yesterday.")
-        # ==========================================
-# PAGE 3: DOCTORS REPORT (PROFESSIONAL DASHBOARD)
-# ==========================================
-elif page == "Doctors Report":
-    st.title("📊 Doctors Referral & Collection Dashboard")
-    st.markdown("---")
-    
-    st.markdown("#### 📅 Select Timeline & Doctor")
-    d_col1, d_col2, d_col3 = st.columns(3)
-    with d_col1:
-        d_start_date = st.date_input("Start Date ", datetime.now())
-    with d_col2:
-        d_end_date = st.date_input("End Date ", datetime.now())
-    with d_col3:
-        filter_doc = st.selectbox("Filter by Doctor Name", ["All Doctors"] + DOCTOR_LIST)
-        
-    d_start_str = d_start_date.strftime("%Y-%m-%d")
-    d_end_str = d_end_date.strftime("%Y-%m-%d")
-    
-    query = "SELECT total_amount, doctor, name, id, due, advance, date FROM patients WHERE date(date) BETWEEN date(?) AND date(?)"
-    params = [d_start_str, d_end_str]
-    
-    if filter_doc != "All Doctors":
-        query += " AND doctor = ?"
-        params.append(filter_doc)
-        
-    c.execute(query, params)
-    rows = c.fetchall()
-    
-    if rows:
-        report_df = pd.DataFrame(rows, columns=["Total Value", "Doctor Name", "Patient Name", "Invoice ID", "Due", "Paid", "Date"])
-        report_df["Invoice ID"] = report_df["Invoice ID"].apply(lambda x: f"{x:05d}")
-        
-        total_volume = report_df["Total Value"].sum()
-        total_commission = total_volume * 0.10 
-        total_received = report_df["Paid"].sum()
-        
-        st.subheader("📊 Doctors Summary")
-        m_col1, m_col2, m_col3 = st.columns(3)
-        with m_col1:
-            st.markdown(f'<div class="metric-box"><div class="metric-title">Total Business Volume</div><div class="metric-value">{total_volume:.2f} TK</div></div>', unsafe_allow_html=True)
-        with m_col2:
-            st.markdown(f'<div class="metric-box" style="border-left-color: #28a745;"><div class="metric-title">Total Referral Commission (10%)</div><div class="metric-value" style="color: #28a745;">{total_commission:.2f} TK</div></div>', unsafe_allow_html=True)
-        with m_col3:
-            st.markdown(f'<div class="metric-box"><div class="metric-title">Net Direct Cash Inflow</div><div class="metric-value">{total_received:.2f} TK</div></div>', unsafe_allow_html=True)
-            
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.subheader("📋 Patient Lists under Selected Range")
-        st.dataframe(report_df[["Invoice ID", "Patient Name", "Doctor Name", "Total Value", "Paid", "Due", "Date"]], use_container_width=True)
-        
-        csv_doc = report_df.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Download Doctor's Statement", data=csv_doc, file_name=f"doctor_report_{d_start_str}.csv", mime="text/csv")
-    else:
-        st.info("No transaction logs found for this timeline or filter setup.")
-        
