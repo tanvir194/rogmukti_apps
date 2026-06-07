@@ -37,8 +37,7 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     ''', (name, age, phone, doctor, tests, total, discount, advance, due, date))
     conn.commit()
     return c.lastrowid
-
-# 3. Master Price List Dictionary (Part A)
+    # 3. Master Price List Dictionary (Part A)
 TEST_PRICES = {
     # --- HAEMATOLOGY ---
     "CBC (Complete Blood Count)": 400.0,
@@ -70,7 +69,7 @@ TEST_PRICES = {
     "H. Pylori": 850.0,
     "Febrile Antigen / Fallarlia (ICT)": 750.0,
     "Dengue NS1, IgG/IgM": 300.0,
-        # --- X-RAY DIGITAL ---
+    # --- X-RAY DIGITAL ---
     "X-Ray Chest": 500.0,
     "X-Ray PNS": 500.0,
     "X-Ray Maxilla": 500.0,
@@ -164,7 +163,7 @@ if page == "New Patient Entry":
         doctor = st.selectbox("REFd By. Dr", doctor_list)
         date_input = st.date_input("Date", datetime.now())
         date_str = date_input.strftime("%Y-%m-%d")
-            st.markdown("---")
+    st.markdown("---")
     st.subheader("🧪 Tests & Billing Selection")
     selected_tests = st.multiselect("Description (Search or select official tests)", sorted(list(TEST_PRICES.keys())))
     
@@ -208,7 +207,7 @@ if page == "New Patient Entry":
             st.error("Please enter the Patient's Name.")
         elif not selected_tests: 
             st.error("Please select at least one test.")
-     if st.session_state.receipt_data:
+        if st.session_state.receipt_data:
         r = st.session_state.receipt_data
         table_rows = "".join([f"<tr><td>{i}</td><td>{item['name']}</td><td style='text-align:right;'>{item['price']:.2f} TK</td></tr>" for i, item in enumerate(r['tests'], 1)])
         
@@ -267,10 +266,10 @@ elif page == "Patient Database":
         for h in headers: html_table += f"<th style='padding:10px;'>{h}</th>"
         html_table += "</tr>"
         for row in data:
-            html_table += f"<tr><td style='padding:10px;'>{row[0]:05d}</td><td style='padding:10px;'>{row[1]}</td><td style='padding:10px;'>{row[2]}</td><td style='padding:10px;'>{row[3]}</td><td style='padding:10px;'>{row[4]}</td><td style='padding:10px;'>{row[5]}</td><td style='padding:10px;'>{row[6]:.2f}</td><td style='padding:10px;'>{row[7]}</td><td style='padding:10px;'>{row[8]:.2f}</td><td style='padding:10px;'>{row[9]:.2f}</td><td style='padding:10px;'>{row[10]}</td></tr>"
+            html_table += f"<tr><td style='padding:10px;'>{row:05d}</td><td style='padding:10px;'>{row}</td><td style='padding:10px;'>{row}</td><td style='padding:10px;'>{row}</td><td style='padding:10px;'>{row}</td><td style='padding:10px;'>{row}</td><td style='padding:10px;'>{row:.2f}</td><td style='padding:10px;'>{row}</td><td style='padding:10px;'>{row:.2f}</td><td style='padding:10px;'>{row:.2f}</td><td style='padding:10px;'>{row}</td></tr>"
         html_table += "</table>"
         st.markdown(html_table, unsafe_allow_html=True)
-    else:
+    else: 
         st.info("ℹ️ No records found in the database yet. Please add a patient first from 'New Patient Entry'.")
 
 elif page == "Doctors Report":
@@ -284,8 +283,8 @@ elif page == "Doctors Report":
         st.markdown("---")
         doc_totals, total_volume = {}, 0.0
         for row in data:
-            doc_name = str(row[0])
-            bill = float(row[1])
+            doc_name = str(row)
+            bill = float(row)
             total_volume += bill
             doc_totals[doc_name] = doc_totals.get(doc_name, 0.0) + bill
         total_commission = total_volume * (REFERRAL_PERCENTAGE / 100.0)
@@ -299,5 +298,6 @@ elif page == "Doctors Report":
             doc_table += f"<tr><td style='padding:10px;'>{doc}</td><td style='padding:10px;'>{total:.2f} TK</td><td style='padding:10px;'>{fee:.2f} TK</td></tr>"
         doc_table += "</table>"
         st.markdown(doc_table, unsafe_allow_html=True)
-    else:
+    else: 
         st.info("ℹ️ No patient records available to generate reports. Please add a patient first.")
+    
