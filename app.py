@@ -2,6 +2,8 @@ import streamlit as st
 import sqlite3
 from datetime import datetime
 import pandas as pd
+import io
+from xhtml2pdf import pisa
 
 # পেজ কনফিগারেশন
 st.set_page_config(page_title="Rog Mukti Diagnostic Centre", layout="wide")
@@ -9,7 +11,14 @@ st.set_page_config(page_title="Rog Mukti Diagnostic Centre", layout="wide")
 # ডাটাবেজ কানেকশন
 conn = sqlite3.connect("rogmukti_clinic_final.db", check_same_thread=False)
 c = conn.cursor()
-
+def generate_pdf(html_content):
+    pdf_buffer = io.BytesIO()
+    pisa_status = pisa.CreatePDF(io.StringIO(html_content), dest=pdf_buffer)
+    if not pisa_status.err:
+        pdf_buffer.seek(0)
+        return pdf_buffer.read()
+    return None
+    
 # টেবিল তৈরি
 c.execute("""
 CREATE TABLE IF NOT EXISTS patients (
@@ -332,7 +341,15 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
         
         # স্ট্রীমলিটে সম্পূর্ণ বাটন ও রিসিট রেন্ডার করা
         st.components.v1.html(print_button_html, height=720, scrolling=True)
-
+    pdf_data = generate_pdf(html_receipt)
+    if pdf_data:
+        st.download_button(
+            label="📄 ডাউনলোড করুন (PDF)",
+            data=pdf_data,
+            file_name="Diagnostic_Report.pdf",
+            mime="application/pdf"
+        )
+        
 elif page == "পেশেন্ট ডাটাবেজ":
     st.title("📋 রোগমুক্তি ক্লিনিক ডাটাবেজ")
     st.markdown("---")
