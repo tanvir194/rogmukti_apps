@@ -158,7 +158,7 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
     
     custom_test_active = "Custom Test / অন্যান্য (নিচে নাম ও দাম লিখুন)" in selected_tests
     custom_name = ""
-    custom_price = 0.0
+    custom_price = 0
     
     if custom_test_active:
         st.info("💡 কাস্টম টেস্টের ফিল্ড সচল হয়েছে। নিচে নাম ও দাম লিখুন।")
@@ -169,7 +169,7 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
             custom_name = st.text_input("কাস্টম টেস্টের নাম লিখুন:")
     with col_c2:
         if custom_test_active:
-            custom_price = st.number_input("কাস্টম টেস্টের দাম (টাকা):", min_value=0.0, value=0.0, step=50.0)
+            custom_price = st.number_input("কাস্টম টেস্টের দাম (টাকা):", min_value=0, value=0, step=50)
     
     # লাইভ কাউন্টার ক্যালকুলেশন
     sub_total = sum(TEST_PRICES[test] for test in selected_tests) + custom_price
@@ -177,8 +177,8 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
     col3, col4 = st.columns(2)
     with col3:
         st.markdown(f"### 🧮 লাইভ টোটাল ফি: `{sub_total}` টাকা")
-        discount_pct = st.number_input("Discount (%)", min_value=0.0, max_value=100.0, value=0.0, step=1.0)
-        advance = st.number_input("Advance (অগ্রিম পরিশোধ)", min_value=0.0, value=0.0, step=50.0)
+        discount_pct = st.number_input("Discount ()", min_value=0, max_value=100, value=00, step=10)
+        advance = st.number_input("Advance (অগ্রিম পরিশোধ)", min_value=00, value=00, step=500)
     with col4:
         discount_amount = sub_total * (discount_pct / 100)
         due = sub_total - (discount_amount + advance)
