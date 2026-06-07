@@ -1,242 +1,138 @@
-import streamlit as st
-import sqlite3
-from datetime import datetime
+import datetime
 
-# 1. Page Configuration Settings
-st.set_page_config(
-    page_title="Rog Mukti Diagnostic Centre", 
-    layout="wide"
-)
-
-# 2. Database Connection Setup
-conn = sqlite3.connect("rogmukti_clinic_final.db", check_same_thread=False)
-c = conn.cursor()
-
-# Create Patients Table Structure
-c.execute("""
-CREATE TABLE IF NOT EXISTS patients (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    age INTEGER,
-    phone TEXT,
-    doctor TEXT,
-    tests TEXT,
-    total_amount REAL,
-    discount REAL,
-    advance REAL,
-    due REAL,
-    date TEXT
-)
-""")
-conn.commit()
-
-# Function to Insert Patient Record safely
-def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, date):
-    c.execute('''
-        INSERT INTO patients (name, age, phone, doctor, tests, total_amount, discount, advance, due, date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (name, age, phone, doctor, tests, total, discount, advance, due, date))
-    conn.commit()
-    return c.lastrowid
-
-# 3. Master Price List Dictionary (93 Tests)
+# ১. টেস্ট প্রাইস লিস্ট ডিকশনারি
 TEST_PRICES = {
-    # --- HAEMATOLOGY ---
     "CBC (Complete Blood Count)": 400.0,
-    "CBC with ESR": 600.0,
-    "TC.DC": 250.0,
-    "HB% (Hemoglobin)": 250.0,
-    "ESR": 200.0,
-    "Platelet Count": 300.0,
-    "MP (Malaria Parasite)": 200.0,
-    "BT/CT (Bleeding & Clotting Time)": 350.0,
-    "C/E Count": 250.0,
-    
-    # --- SEROLOGY ---
-    "Widal Test": 450.0,
-    "Aso Titre": 450.0,
-    "CRP": 450.0,
-    "RA/RF": 450.0,
-    "HBs Ag (Screen Test)": 450.0,
-    "TPHA": 450.0,
-    "VDRL": 400.0,
-    "Blood Group & Rh Factor": 200.0,
-    "Mantaux-Test (M.T)": 200.0,
-    "Triple Antigen": 500.0,
-    "R.Fever": 400.0,
-    "HIV I & II": 450.0,
-    "HCV": 500.0,
-    "TB (ICT)": 750.0,
-    "Malaria pf/pv": 700.0,
-    "H. Pylori": 850.0,
-    "Febrile Antigen / Fallarlia (ICT)": 750.0,
-    "Dengue NS1, IgG/IgM": 300.0,
-
-# --- X-RAY DIGITAL ---
-    "X-Ray Chest": 500.0,
-    "X-Ray PNS": 500.0,
-    "X-Ray Maxilla": 500.0,
-    "X-Ray Nasopharynx": 550.0,
-    "X-Ray Abdomen A/P": 500.0,
-    "X-Ray Cervical Spine": 600.0,
-    "X-Ray Plane X-Ray Abdomen": 500.0,
-    "X-Ray Mastoid Towns View": 500.0,
-    "X-Ray Skull": 600.0,
-    "X-Ray Pelvic": 500.0,
-    "X-Ray Mandible B/V": 600.0,
-    "X-Ray KUB": 500.0,
-    "X-Ray D/S Spine": 600.0,
-    "X-Ray L/S Spine": 600.0,
-    "X-Ray Foot B/V": 500.0,
-    "X-Ray Knee B/V": 550.0,
-    "X-Ray Elbow B/V": 500.0,
-    "X-Ray Shoulder Joint B/V": 550.0,
-    "X-Ray Hip Joint": 500.0,
-    
-    # --- HORMONE PANEL ---
-    "Hormone T3": 1200.0,
-    "Hormone T4": 1200.0,
-    "Hormone FT3": 900.0,
-    "Hormone FT4": 900.0,
-    "Hormone TSH": 1100.0,
-    "Hormone HbA1c": 1500.0,
-    "Hormone Prolactin": 1200.0,
-    "Hormone S. IgE": 1500.0,
-    "Hormone S.IgE (Device Test)": 700.0,
-
-# --- BIO CHEMICAL ANALYSIS ---
-    "Sugar Random": 200.0,
-    "Sugar Fasting": 200.0,
-    "Sugar 2hr. After Breakfast": 200.0,
-    "Sugar 2hr. After 75gm Glucose": 200.0,
-    "O.G.T.T": 500.0,
-    "Blood Urea": 400.0,
-    "Cholesterol": 350.0,
-    "HDL": 400.0,
-    "TG (Triglycerides)": 350.0,
-    "LDL": 300.0,
-    "S.GPT (ALT)": 500.0,
-    "S.GOT (AST)": 500.0,
-    "Bilirubin Total": 350.0,
+    "Hgb (Hemoglobin)": 150.0,
+    "ESR (Erythrocyte Sedimentation Rate)": 250.0,
+    "WBC Count & DC": 250.0,
+    "Platelet Count": 200.0,
+    "Blood Grouping & Rh Typing": 150.0,
+    "BT & CT (Bleeding & Clotting Time)": 450.0,
+    "PBF (Peripheral Blood Film)": 450.0,
+    "Malaria Parasite (MP)": 200.0,
+    "Blood Sugar (RBS / Fasting / 2H PP)": 800.0,
+    "HbA1c": 800.0,
+    "Serum Creatinine": 300.0,
+    "Serum Bilirubin (Total/Direct)": 350.0,
+    "SGPT (ALT)": 350.0,
+    "SGOT (AST)": 350.0,
+    "Serum Alkaline Phosphatase": 350.0,
     "Lipid Profile (Full)": 1000.0,
-    "Bilirubin Direct/Indirect": 450.0,
-    "Serum Creatinine": 400.0,
-    "Uric Acid": 400.0,
-    "Amylase": 700.0,
-    "Calcium": 600.0,
-    
-    # --- URINE & STOOL ---
-    "Urine Pregnancy Test (PT)": 200.0,
-    "Urine R/E": 250.0,
-    "Stool R/E": 400.0,
-    "Stool OBT": 400.0,
-    
-    # --- ULTRASOUND IMAGING ---
-    "USG of Whole Abdomen": 1000.0,
-    "USG of Upper Abdomen": 800.0,
-    "USG of Lower Abdomen": 800.0,
-    "USG of KUB": 1000.0,
-    "USG Pregnancy Profile": 800.0,
-    "USG of Breast": 1200.0,
-    "USG Color Doppler": 1500.0,
-    
-    # --- Custom Option ---
-    "Custom Test / Others (Type Name & Price Below)": 0.0
+    "Serum Cholesterol": 250.0,
+    "Serum Triglycerides": 350.0,
+    "Serum Uric Acid": 350.0,
+    "Serum Urea / BUN": 300.0,
+    "Serum Electrolytes (Na, K, Cl)": 350.0
 }
 
-# 4. Sidebar Navigation Menu
-st.sidebar.title("Compass Navigation Menu")
-page = st.sidebar.radio("Go to:", ["New Patient Entry", "Patient Database", "Doctors Report"])
+# গ্লোবাল ইনভয়েস কাউন্টার
+invoice_counter = 1001
 
-if page == "New Patient Entry":
-    st.title("🏥 Rog Mukti Diagnostic Centre")
-    st.markdown("##### Mollah Stand, Auliapur, Patuakhali | 📞 Phone: 01711867637")
-    st.markdown("---")
+# ২. রসিদ জেনারেট এবং প্রিন্ট করার ফাংশন
+def generate_receipt(patient_name, age, phone, selected_tests, discount_percent=0, paid_amount=0):
+    global invoice_counter
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %I:%M %p")
     
-    if "receipt_data" not in st.session_state:
-        st.session_state.receipt_data = None
-
-    st.subheader("👤 Patient & Doctor Information")
+    subtotal = 0
+    test_rows = []
     
-    col1, col2 = st.columns(2)
-    with col1:
-        name = st.text_input("Name of the PT *")
-        age = st.number_input("Age (Years)", min_value=0, max_value=120, value=25)
-        phone = st.text_input("Phone Number")
-    with col2:
-        doctor_list = ["Dr. Saidul Islam", "Dr. Nasrin Sultana", "Dr. Motaleb Hossain", "Self / Others"]
-        doctor = st.selectbox("REFd By. Dr", doctor_list)
-        date_input = st.date_input("Date", datetime.now())
-        date_str = date_input.strftime("%Y-%m-%d")
-
-    st.markdown("---")
-    st.subheader("🧪 Tests & Billing Selection")
-    selected_tests = st.multiselect("Description (Search or select official tests)", sorted(list(TEST_PRICES.keys())))
+    # টেস্টের মূল্য হিসাব
+    for idx, test in enumerate(selected_tests, 1):
+        if test in TEST_PRICES:
+            price = TEST_PRICES[test]
+            subtotal += price
+            test_rows.append(f"{idx}. {test:<40} {price:>8.2f} TK")
+            
+    # ডিসকাউন্ট ও নেট বিল হিসাব
+    discount_amount = (subtotal * discount_percent) / 100
+    net_total = subtotal - discount_amount
+    due_amount = net_total - paid_amount
     
-    custom_test_active = "Custom Test / Others (Type Name & Price Below)" in selected_tests
-    custom_name, custom_price = "", 0.0
+    # মেমো/রসিদ ডিজাইন প্রিন্ট
+    print("\n" + "="*55)
+    print(f"{'*** আল-শেফা ডায়াগনস্টিক সেন্টার ***':^55}")
+    print(f"{'ঢাকা, বাংলাদেশ | ফোন: ০১৯XXXXXXXX':^55}")
+    print("="*55)
+    print(f"রসিদ নং: #{invoice_counter:<15} তারিখ: {current_time}")
+    print(f"রোগীর নাম: {patient_name:<15} বয়স: {age:<5} মোবাইল: {phone}")
+    print("-"*55)
+    print(f"{'টেস্টের নাম':<42} {'মূল্য':>10}")
+    print("-"*55)
     
-    if custom_test_active:
-        st.info("💡 Custom Test is active. Please enter name and price below.")
-    col_c1, col_c2 = st.columns(2)
-    with col_c1:
-        if custom_test_active: 
-            custom_name = st.text_input("Enter Custom Test Name:")
-    with col_c2:
-        if custom_test_active: 
-            custom_price = st.number_input("Enter Custom Test Price (TK):", min_value=0.0, value=0.0, step=50.0)
-    
-    sub_total = sum(TEST_PRICES[test] for test in selected_tests) + custom_price
-    col3, col4 = st.columns(2)
-    with col3:
-        st.markdown(f"### 🧮 Live Total Fee: `{sub_total}` TK")
-        discount_pct = st.number_input("Discount (%)", min_value=0.0, max_value=100.0, value=0.0, step=1.0)
-        advance = st.number_input("Advance Paid (TK)", min_value=0.0, value=0.0, step=50.0)
-    with col4:
-        discount_amount = sub_total * (discount_pct / 100)
-        due = sub_total - (discount_amount + advance)
-        st.write(f"**Discount Amount:** {discount_amount} TK")
-        st.metric(label="Due (Total Remaining Balance)", value=f"{due} TK")
-    
-    st.markdown("---")
-    if st.button("💾 Save Bill and Generate Receipt", type="primary", use_container_width=True):
-        if name and selected_tests:
-            final_tests_list = [t for t in selected_tests if t != "Custom Test / Others (Type Name & Price Below)"]
-            if custom_test_active and custom_name: 
-                final_tests_list.append(f"{custom_name} (Custom)")
-            tests_str = ", ".join(final_tests_list)
-            invoice_id = add_patient(name, age, phone, doctor, tests_str, sub_total, discount_pct, advance, due, date_str)
-            receipt_tests = [{"name": t, "price": TEST_PRICES[t]} for t in selected_tests if t != "Custom Test / Others (Type Name & Price Below)"]
-            if custom_test_active and custom_name: 
-                receipt_tests.append({"name": custom_name, "price": custom_price})
-            st.session_state.receipt_data = {"inv_no": f"{invoice_id:05d}", "date": date_str, "name": name, "age": age, "doctor": doctor, "phone": phone, "tests": receipt_tests, "total": sub_total, "discount_pct": discount_pct, "discount_amt": discount_amount, "advance": advance, "due": due}
-            st.success("Data saved successfully! Print menu and invoice are available below.")
-        elif not name: 
-            st.error("Please enter the Patient's Name.")
-        elif not selected_tests: 
-            st.error("Please select at least one test.")
-
-    if st.session_state.receipt_data:
-        r = st.session_state.receipt_data
-        table_rows = "".join([f"<tr><td>{i}</td><td>{item['name']}</td><td style='text-align:right;'>{item['price']:.2f} TK</td></tr>" for i, item in enumerate(r['tests'], 1)])
+    for row in test_rows:
+        print(row)
         
-        html_receipt = f"""
-        <div id='receiptBox' style='border: 3px solid #1e3a8a; padding: 25px; border-radius: 12px; background-color: #f8fafc; font-family: sans-serif; max-width: 650px; margin: 0 auto;'>
-            <div style='text-align: center; background-color: #1e3a8a; color: white; padding: 15px; border-radius: 8px 8px 0 0; margin: -25px -25px 20px -25px;'>
-                <h2 style='margin: 0; font-size:24px; text-transform: uppercase;'>Rog Mukti Diagnostic Centre</h2>
-                <p style='margin: 5px 0 0 0; font-size: 14px;'>Mollah Stand, Auliapur, Patuakhali</p>
-                <p style='margin: 2px 0 0 0; font-size: 14px; font-weight: bold;'>📞 Phone: 01711867637</p>
-            </div>
-            <div style='text-align: center; margin-bottom: 15px;'>
-                <span style='background-color: #e2e8f0; padding: 5px 18px; font-weight: bold; border-radius: 20px; color: #0f172a; font-size: 14px;'>MONEY RECEIPT</span>
-            </div>
-            <table style='width: 100%; font-size: 13px; margin-bottom: 15px;'>
-                <tr><td><b>Inv No:</b> {r['inv_no']}</td><td style='text-align: right;'><b>Date:</b> {r['date']}</td></tr>
-                <tr><td><b>Patient Name:</b> {r['name']}</td><td style='text-align: right;'><b>Age:</b> {r['age']} Years</td></tr>
-                <tr><td><b>Phone:</b> {r['phone']}</td><td style='text-align: right;'><b>Refd By:</b> {r['doctor']}</td></tr>
-            </table>
-            <table style='width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;'>
-                <thead>
-                    <tr style='background-color: #3b82f6; color: white;'>
-                        <th style='padding: 8px; text-align: left;'>SL</th>
-                        <th style='padding: 8px; text-align: left;'>Description</th>
+    print("-"*55)
+    print(f"{'মোট মূল্য (Subtotal):':<42} {subtotal:>8.2f} TK")
+    print(f"{f'ছাড় (Discount {discount_percent}%):':<42} {discount_amount:>8.2f} TK")
+    print(f"{'সর্বমোট বিল (Net Total):':<42} {net_total:>8.2f} TK")
+    print(f"{'নগদ পরিশোধ (Paid):':<42} {paid_amount:>8.2f} TK")
+    print(f"{'বকেয়া (Due):':<42} {due_amount:>8.2f} TK")
+    print("="*55)
+    print(f"{'সুস্থ থাকুন, ধন্যবাদ!':^55}")
+    print("="*55 + "\n")
+    
+    invoice_counter += 1
+
+# ৩. সিস্টেমে ইন্টারঅ্যাক্টিভ এন্ট্রি নেওয়ার মেইন লুপ
+def diagnostic_system():
+    print("--- ডায়াগনস্টিক ম্যানেজমেন্ট সিস্টেমে স্বাগতম ---")
+    
+    while True:
+        print("\n১. নতুন রোগীর রসিদ (New Receipt) কাটুন")
+        print("২. টেস্টের তালিকা ও দাম দেখুন")
+        print("৩. সিস্টেম বন্ধ করুন")
+        choice = input("আপনার অপশনটি সিলেক্ট করুন (১/২/৩): ")
+        
+        if choice == "১":
+            name = input("রোগীর নাম লিখুন: ")
+            age = input("বয়স লিখুন: ")
+            phone = input("মোবাইল নম্বর: ")
+            
+            # টেস্ট সিলেকশন
+            selected_tests = []
+            print("\nটেস্টের তালিকা থেকে নাম কপি করে পেস্ট করুন (শেষ করতে 'done' লিখুন):")
+            while True:
+                test_name = input("টেস্টের নাম লিখুন (বা 'done'): ").strip()
+                if test_name.lower() == 'done':
+                    break
+                if test_name in TEST_PRICES:
+                    selected_tests.append(test_name)
+                    print(f"-> {test_name} যোগ করা হয়েছে।")
+                else:
+                    print("⚠️ দুঃখিত, এই নামের কোনো টেস্ট তালিকায় নেই! সঠিক নাম দিন।")
+            
+            if not selected_tests:
+                print("❌ কোনো টেস্ট সিলেক্ট করা হয়নি! রসিদ বাতিল করা হলো।")
+                continue
+                
+            # ডিসকাউন্ট ও পেমেন্ট
+            try:
+                discount = float(input("ডিসকাউন্ট কত %? (না থাকলে ০ দিন): ") or 0)
+                paid = float(input("রোগী কত টাকা জমা দিয়েছেন?: ") or 0)
+            except ValueError:
+                print("⚠️ সংখ্যা ভুল লিখেছেন! ০ ধরে হিসাব করা হচ্ছে।")
+                discount, paid = 0, 0
+                
+            # রসিদ প্রিন্ট করা
+            generate_receipt(name, age, phone, selected_tests, discount, paid)
+            
+        elif choice == "২":
+            print("\n" + "-"*45)
+            print(f"{'টেস্টের নাম':<35} {'মূল্য (TK)':>8}")
+            print("-"*45)
+            for test, price in TEST_PRICES.items():
+                print(f"{test:<35} {price:>8.2f}")
+            print("-"*45)
+            
+        elif choice == "৩":
+            print("সিস্টেম বন্ধ করা হচ্ছে। ভালো থাকুন!")
+            break
+        else:
+            print("⚠️ ভুল অপশন চাপছেন! দয়া করে ১, ২ বা ৩ চাপুন।")
+
+# প্রোগ্রামটি চালু করার জন্য
+if __name__ == "__main__":
+    diagnostic_system()
+        
