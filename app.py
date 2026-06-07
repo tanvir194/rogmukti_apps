@@ -2,8 +2,7 @@ import streamlit as st
 import sqlite3
 from datetime import datetime
 import pandas as pd
-import io
-from xhtml2pdf import pisa
+from fpdf import FPDF
 
 # পেজ কনফিগারেশন
 st.set_page_config(page_title="Rog Mukti Diagnostic Centre", layout="wide")
