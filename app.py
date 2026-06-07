@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS patients (
     doctor TEXT,
     tests TEXT,
     total_amount REAL,
-    discount REAL,
-    advance REAL,
+    discount,
+    advance,
     due REAL,
     date TEXT
 )
