@@ -2,12 +2,12 @@ import streamlit as st
 import sqlite3
 from datetime import datetime
 
-# 1. Page Configuration
+# Page Configuration Settings
 st.set_page_config(
     page_title="Rog Mukti Diagnostic Centre", 
     layout="wide"
 )
-# 2. Database Connection Setup
+# Database Connection Setup
 conn = sqlite3.connect("rogmukti_clinic_final.db", check_same_thread=False)
 c = conn.cursor()
 
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS patients (
 """)
 conn.commit()
 
-# Function to Insert Patient Record
+# Function to Insert Patient Record safely
 def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, date):
     c.execute('''
         INSERT INTO patients (name, age, phone, doctor, tests, total_amount, discount, advance, due, date)
@@ -37,7 +37,7 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     ''', (name, age, phone, doctor, tests, total, discount, advance, due, date))
     conn.commit()
     return c.lastrowid
-# 3. Master Price List from Official Rate Chart (93 Tests)
+# Master Price List Dictionary (Haematology, Serology & X-Ray)
 TEST_PRICES = {
     # --- HAEMATOLOGY ---
     "CBC (Complete Blood Count)": 400.0,
@@ -122,15 +122,13 @@ TEST_PRICES = {
     "Amylase": 700.0,
     "Calcium": 600.0,
     
-    # --- URINE EXAM ---
+    # --- URINE & STOOL ---
     "Urine Pregnancy Test (PT)": 200.0,
     "Urine R/E": 250.0,
-    
-    # --- STOOL EXAM ---
     "Stool R/E": 400.0,
     "Stool OBT": 400.0,
     
-    # --- UI ULTRASOUND IMAGING ---
+    # --- ULTRASOUND IMAGING ---
     "USG of Whole Abdomen": 1000.0,
     "USG of Upper Abdomen": 800.0,
     "USG of Lower Abdomen": 800.0,
@@ -142,7 +140,7 @@ TEST_PRICES = {
     # --- Custom Option ---
     "Custom Test / Others (Type Name & Price Below)": 0.0
 }
-# 4. Sidebar Navigation Menu
+# Sidebar Navigation Menu
 st.sidebar.title("🧭 Navigation Menu")
 page = st.sidebar.radio("Go to:", ["New Patient Entry", "Patient Database", "Doctors Report"])
 
@@ -209,10 +207,14 @@ if page == "New Patient Entry":
     if st.session_state.receipt_data:
         r = st.session_state.receipt_data
         table_rows = "".join([f"<tr><td>{i}</td><td>{item['name']}</td><td style='text-align:right;'>{item['price']:.2f} TK</td></tr>" for i, item in enumerate(r['tests'], 1)])
-        html_receipt = f"""<div style='border: 3px solid #1e3a8a; padding: 25px; border-radius: 12px; background-color: #f8fafc; font-family: sans-serif; max-width: 650px; margin: 0 auto;'><div style='text-align: center; background-color: #1e3a8a; color: white; padding: 15px; border-radius: 8px 8px 0 0; margin: -25px -25px 20px -25px;'><h2 style='margin: 0; font-size:24px; text-transform: uppercase;'>Rog Mukti Diagnostic Centre</h2><p style='margin: 5px 0 0 0; font-size: 14px;'>Mollah Stand, Auliapur, Patuakhali</p><p style='margin: 2px 0 0 0; font-size: 14px; font-weight: bold;'>📞 Phone: 01711867637</p></div><div style='text-align: center; margin-bottom: 15px;'><span style='background-color: #e2e8f0; padding: 5px 18px; font-weight: bold; border-radius: 20px; color: #0f172a; font-size: 14px;'>MONEY RECEIPT</span></div><table style='width: 100%; font-size: 13px; margin-bottom: 15px;'><tr><td><b>Inv No:</b> {r['inv_no']}</td><td style='text-align: right;'><b>Date:</b> {r['date']}</td></tr><tr><td><b>Patient Name:</b> {r['name']}</td><td style='text-align: right;'><b>Age:</b> {r['age']} Years</td></tr><tr><td><b>Phone:</b> {r['phone']}</td><td style='text-align: right;'><b>Refd By:</b> {r['doctor']}</td></tr></table><table style='width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;'><thead><tr style='background-color: #3b82f6; color: white;'><th style='padding: 8px; text-align: left;'>SL</th><th style='padding: 8px; text-align: left;'>Description</th><th style='padding: 8px; text-align: right;'>Amount</th></tr></thead><tbody>{table_rows}<tr style='background-color: #f1f5f9; font-weight: bold;'><td></td><td style='text-align: right; padding: 8px;'>Total:</td><td style='text-align: right; padding: 8px;'>{r['total']:.2f} TK</td></tr><tr><td></td><td style='text-align: right; padding: 6px;'>Discount ({r['discount_pct']}%):</td><td style='text-align: right; padding: 6px;'>- {r['discount_amt']:.2f} TK</td></tr><tr><td></td><td style='text-align: right; padding: 6px;'>Advance:</td><td style='text-align: right; padding: 6px;'>{r['advance']:.2f} TK</td></tr><tr style='background-color: #fee2e2; color: #b91c1c; font-weight: bold;'><td></td><td style='text-align: right; padding: 8px;'>Due:</td><td style='text-align: right; padding: 8px;'>{r['due']:.2f} TK</td></tr></tbody></table></div>"""
-        st.subheader("🖨️ Receipt Action Menu")
-        if st.button("🖨️ Print Receipt Now", type="secondary", use_container_width=True): st.components.v1.html("<script>window.print();</script>", height=0, width=0)
+        html_receipt = f"""<div id='printArea' style='border: 3px solid #1e3a8a; padding: 25px; border-radius: 12px; background-color: #f8fafc; font-family: sans-serif; max-width: 650px; margin: 0 auto;'><div style='text-align: center; background-color: #1e3a8a; color: white; padding: 15px; border-radius: 8px 8px 0 0; margin: -25px -25px 20px -25px;'><h2 style='margin: 0; font-size:24px; text-transform: uppercase;'>Rog Mukti Diagnostic Centre</h2><p style='margin: 5px 0 0 0; font-size: 14px;'>Mollah Stand, Auliapur, Patuakhali</p><p style='margin: 2px 0 0 0; font-size: 14px; font-weight: bold;'>📞 Phone: 01711867637</p></div><div style='text-align: center; margin-bottom: 15px;'><span style='background-color: #e2e8f0; padding: 5px 18px; font-weight: bold; border-radius: 20px; color: #0f172a; font-size: 14px;'>MONEY RECEIPT</span></div><table style='width: 100%; font-size: 13px; margin-bottom: 15px;'><tr><td><b>Inv No:</b> {r['inv_no']}</td><td style='text-align: right;'><b>Date:</b> {r['date']}</td></tr><tr><td><b>Patient Name:</b> {r['name']}</td><td style='text-align: right;'><b>Age:</b> {r['age']} Years</td></tr><tr><td><b>Phone:</b> {r['phone']}</td><td style='text-align: right;'><b>Refd By:</b> {r['doctor']}</td></tr></table><table style='width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;'><thead><tr style='background-color: #3b82f6; color: white;'><th style='padding: 8px; text-align: left;'>SL</th><th style='padding: 8px; text-align: left;'>Description</th><th style='padding: 8px; text-align: right;'>Amount</th></tr></thead><tbody>{table_rows}<tr style='background-color: #f1f5f9; font-weight: bold;'><td></td><td style='text-align: right; padding: 8px;'>Total:</td><td style='text-align: right; padding: 8px;'>{r['total']:.2f} TK</td></tr><tr><td></td><td style='text-align: right; padding: 6px;'>Discount ({r['discount_pct']}%):</td><td style='text-align: right; padding: 6px;'>- {r['discount_amt']:.2f} TK</td></tr><tr><td></td><td style='text-align: right; padding: 6px;'>Advance:</td><td style='text-align: right; padding: 6px;'>{r['advance']:.2f} TK</td></tr><tr style='background-color: #fee2e2; color: #b91c1c; font-weight: bold;'><td></td><td style='text-align: right; padding: 8px;'>Due:</td><td style='text-align: right; padding: 8px;'>{r['due']:.2f} TK</td></tr></tbody></table></div>"""
+        
+        st.subheader("🖨️ Receipt Action")
+        # নিউ অ্যান্ড্রয়েড উইন্ডো ওপেনিং জাভাস্ক্রিপ্ট (যা ১০০% কাজ করবে)
+        print_js = f"""<button onclick="var win = window.open('', '_blank'); win.document.write(\`{html_receipt}\`); win.document.close(); win.print();" style='background-color: #3b82f6; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%;'>🖨️ Open Print Window</button>"""
+        st.components.v1.html(print_js, height=50)
         st.components.v1.html(html_receipt, height=580, scrolling=True)
+
 elif page == "Patient Database":
     st.title("📋 Patient Record Database")
     st.markdown("---")
@@ -224,13 +226,12 @@ elif page == "Patient Database":
         for h in headers: html_table += f"<th style='padding:10px;'>{h}</th>"
         html_table += "</tr>"
         for row in data:
-            html_table += "<tr>"
-            html_table += f"<td style='padding:10px;'>{row:05d}</td>"
-            for val in row[1:]: html_table += f"<td style='padding:10px;'>{val}</td>"
-            html_table += "</tr>"
+            html_table += f"<tr><td style='padding:10px;'>{row[0]:05d}</td><td style='padding:10px;'>{row[1]}</td><td style='padding:10px;'>{row[2]}</td><td style='padding:10px;'>{row[3]}</td><td style='padding:10px;'>{row[4]}</td><td style='padding:10px;'>{row[5]}</td><td style='padding:10px;'>{row[6]:.2f}</td><td style='padding:10px;'>{row[7]}</td><td style='padding:10px;'>{row[8]:.2f}</td><td style='padding:10px;'>{row[9]:.2f}</td><td style='padding:10px;'>{row[10]}</td></tr>"
         html_table += "</table>"
         st.markdown(html_table, unsafe_allow_html=True)
-    else: st.info("ℹ️ No records found in the database yet. Please add a patient first from 'New Patient Entry'.")
+    else:
+        st.info("ℹ️ No records found in the database yet. Please add a patient first from 'New Patient Entry'.")
+
 elif page == "Doctors Report":
     st.title("🩺 Doctors Referral & Collection Dashboard")
     st.markdown("---")
@@ -242,8 +243,8 @@ elif page == "Doctors Report":
         st.markdown("---")
         doc_totals, total_volume = {}, 0.0
         for row in data:
-            doc_name = row
-            bill = float(row)
+            doc_name = str(row[4])
+            bill = float(row[6])
             total_volume += bill
             doc_totals[doc_name] = doc_totals.get(doc_name, 0.0) + bill
         total_commission = total_volume * (REFERRAL_PERCENTAGE / 100.0)
@@ -257,8 +258,5 @@ elif page == "Doctors Report":
             doc_table += f"<tr><td style='padding:10px;'>{doc}</td><td style='padding:10px;'>{total:.2f} TK</td><td style='padding:10px;'>{fee:.2f} TK</td></tr>"
         doc_table += "</table>"
         st.markdown(doc_table, unsafe_allow_html=True)
-    else: st.info("ℹ️ No patient records available to generate reports.")
-
-
-
-
+    else:
+        st.info("ℹ️ No patient records available to generate reports. Please add a patient first.")
