@@ -117,11 +117,11 @@ TEST_PRICES = {
 st.sidebar.title("🧭 নেভিগেশন মেনু")
 page = st.sidebar.radio("অপশন সিলেক্ট করুন:", ["নতুন পেশেন্ট এন্ট্রি", "পেশেন্ট ডাটাবেজ"])
 
-if page == "নতুন পেশেন্ট এন্ট্রি":
+   if page == "নতুন পেশেন্ট এন্ট্রি":
 if "custom_tests" not in st.session_state:
         st.session_state.custom_tests = {}
 
-if "receipt_data" not in st.session_state:
+   if "receipt_data" not in st.session_state:
         st.session_state.receipt_data = None
 
     st.subheader("👤 পেশেন্ট এবং ডাক্তারের তথ্য")
