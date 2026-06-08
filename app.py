@@ -118,22 +118,22 @@ st.sidebar.title("🧭 নেভিগেশন মেনু")
 page = st.sidebar.radio("অপশন সিলেক্ট করুন:", ["নতুন পেশেন্ট এন্ট্রি", "পেশেন্ট ডাটাবেজ"])
 
 if page == "নতুন পেশেন্ট এন্ট্রি":
-    if "custom_tests" not in st.session_state:
+if "custom_tests" not in st.session_state:
         st.session_state.custom_tests = {}
 
-    if "receipt_data" not in st.session_state:
+if "receipt_data" not in st.session_state:
         st.session_state.receipt_data = None
 
     st.subheader("👤 পেশেন্ট এবং ডাক্তারের তথ্য")
     
     # রোগীর সাধারণ তথ্যের আলাদা ফর্ম
-    with st.form("patient_info_form"):
+with st.form("patient_info_form"):
         col1, col2 = st.columns(2)
-        with col1:
+with col1:
             name = st.text_input("Name of the PT (পেশেন্টের নাম) *")
             age = st.number_input("Age (বয়স)", min_value=0, max_value=120, value=25)
             phone = st.text_input("Phone (মোবাইল নম্বর)")
-        with col2:
+with col2:
             doctor_list = ["ডা. সাইদুল ইসলাম", "ডা. নাসরিন সুলতানা", "ডা. মোতালেব হোসেন", "Self / অন্যান্য"]
             doctor = st.selectbox("REFd By. Dr (ডাক্তার সিলেক্ট করুন)", doctor_list)
             date_input = st.date_input("Date (তারিখ)", datetime.now())
@@ -150,12 +150,12 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
     
     st.markdown("### ➕ তালিকার বাইরের কাস্টম টেস্ট")
     c_col1, c_col2 = st.columns(2)
-    with c_col1:
+with c_col1:
         custom_name = st.text_input("কাস্টম টেস্টের নাম লিখুন:", key="c_name_input")
-    with c_col2:
+with c_col2:
         custom_price = st.number_input("টেস্টের রেট (টাকা):", min_value=0.0, step=50.0, key="c_price_input")
 
-    if custom_name:
+if custom_name:
         st.session_state.custom_tests[custom_name] = float(custom_price)
 
         st.session_state.custom_tests = {}
@@ -166,7 +166,7 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
     total_bill = sum(TEST_PRICES.get(t, 0.0) for t in selected_tests)  # স্ট্যান্ডার্ড টেস্টের মোট দাম
 
     # কাস্টম টেস্টগুলো যোগ করা
-    for name, price in st.session_state.custom_tests.items():
+for name, price in st.session_state.custom_tests.items():
         all_selected_tests.append(name)
         total_bill += price
   
@@ -174,20 +174,20 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
     custom_name = ""
     custom_price = 0.0
     
-    if custom_test_active:
+if custom_test_active:
         st.info("💡 কাস্টম টেস্টের ফিল্ড সচল হয়েছে। নিচে নাম ও দাম লিখুন।")
     # লাইভ কাউন্টার ক্যালকুলেশন (স্ট্যান্ডার্ড + কাস্টম টেস্টের দাম)
     sub_total = sum(TEST_PRICES.get(test, 0.0) for test in selected_tests)
-    for c_name, c_price in st.session_state.custom_tests.items():
+for c_name, c_price in st.session_state.custom_tests.items():
         sub_total += c_price
 
     col3, col4 = st.columns(2)
-    with col3:
+with col3:
         st.markdown(f"### 🧮 লাইভ টোটাল ফি: `{sub_total}` টাকা")
         discount_pct = st.number_input("Discount (%)", min_value=0.0, max_value=100.0, step=1.0)
         advance = st.number_input("Advance (অগ্রিম পরিশোধ)", min_value=0.0, step=50.0)
         
-    with col4:
+with col4:
         discount_amount = sub_total * (discount_pct / 100.0)
         due = sub_total - (discount_amount + advance)
         st.write(f"**ডিসকাউন্ট প্রদেয়:** {discount_amount} টাকা")
@@ -197,27 +197,27 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
             
             receipt_tests = []
         # লাইভ কাউন্টার ক্যালকুলেশন (স্ট্যান্ডার্ড + কাস্টম টেস্টের দাম)
-    sub_total = sum(TEST_PRICES.get(test, 0.0) for test in selected_tests)
-    for c_name, c_price in st.session_state.custom_tests.items():
+       sub_total = sum(TEST_PRICES.get(test, 0.0) for test in selected_tests)
+for c_name, c_price in st.session_state.custom_tests.items():
         sub_total += c_price
 
     col3, col4 = st.columns(2)
-    with col3:
+with col3:
         st.markdown(f"### 🧮 লাইভ টোটাল ফি: `{sub_total}` টাকা")
         discount_pct = st.number_input("Discount (%)", min_value=0.0, max_value=100.0, step=1.0)
         advance = st.number_input("Advance (অগ্রিম পরিশোধ)", min_value=0.0, step=50.0)
         
-    with col4:
+with col4:
         discount_amount = sub_total * (discount_pct / 100.0)
         due = sub_total - (discount_amount + advance)
         st.write(f"**ডিসকাউন্ট প্রদেয়:** {discount_amount} টাকা")
         st.metric(label="Due (মোট বাকি টাকা)", value=f"{due} টাকা")
 
     # ডাটাবেজে রেকর্ড সেভ করার মূল বাটন
-    if st.button("Save Bill and Generate Receipt (বিল সেভ করুন)"):
-        if name and (selected_tests or st.session_state.custom_tests):
+if st.button("Save Bill and Generate Receipt (বিল সেভ করুন)"):
+if name and (selected_tests or st.session_state.custom_tests):
             final_tests_list = [t for t in selected_tests]
-            for c_name in st.session_state.custom_tests.keys():
+for c_name in st.session_state.custom_tests.keys():
                 final_tests_list.append(c_name)
                 
             tests_str = ", ".join(final_tests_list)
@@ -225,40 +225,40 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
             invoice_id = add_patient(name, age, phone, doctor, tests_str, sub_total, discount_amount, advance, due, date_str)
             
             receipt_tests = []
-            for test in selected_tests:
-                price = TEST_PRICES.get(test, 0.0)
-                receipt_tests.append({"name": test, "price": price})
+for test in selected_tests:
+            price = TEST_PRICES.get(test, 0.0)
+            receipt_tests.append({"name": test, "price": price})
                 
-            for c_name, c_price in st.session_state.custom_tests.items():
+for c_name, c_price in st.session_state.custom_tests.items():
                 receipt_tests.append({"name": c_name, "price": c_price})
 
             st.session_state.receipt_data = {
-                "inv_no": f"{invoice_id:05d}" if invoice_id else "00001",
-                "date": date_str,
-                "name": name,
-                "age": age,
-                "doctor": doctor,
-                "phone": phone,
-                "tests": receipt_tests,
-                "total": sub_total,
-                "discount_pct": discount_pct,
-                "discount_amt": discount_amount,
-                "advance": advance,
-                "due": due
+            "inv_no": f"{invoice_id:05d}" if invoice_id else "00001",
+            "date": date_str,
+            "name": name,
+            "age": age,
+            "doctor": doctor,
+            "phone": phone,
+            "tests": receipt_tests,
+            "total": sub_total,
+            "discount_pct": discount_pct,
+            "discount_amt": discount_amount,
+            "advance": advance,
+            "due": due
             }
             
             st.session_state.custom_tests = {}
             st.success("সফলভাবে ডাটা সেভ হয়েছে! নিচে প্রিন্ট বাটন এবং মানি রিসিট প্রস্তুত।")
             st.rerun()
             
-        elif not name:
+elif not name:
             st.error("অনুগ্রহ করে ওপরের ফর্মে পেশেন্টের নাম লিখুন।")
-        elif not selected_tests and not st.session_state.custom_tests:
+elif not selected_tests and not st.session_state.custom_tests:
             st.error("অনুগ্রহ করে অন্তত একটি টেস্ট সিলেক্ট বা যোগ করুন।")
-        if name and (selected_tests or st.session_state.custom_tests):
+if name and (selected_tests or st.session_state.custom_tests):
             final_tests_list = [t for t in selected_tests]
-            for c_name in st.session_state.custom_tests.keys():
-                final_tests_list.append(c_name)
+for c_name in st.session_state.custom_tests.keys():
+            final_tests_list.append(c_name)
                 
             tests_str = ", ".join(final_tests_list)
             
@@ -291,9 +291,9 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
             st.success("সফলভাবে ডাটা সেভ হয়েছে! নিচে প্রিন্ট বাটন এবং মানি রিসিট প্রস্তুত।")
             st.rerun()
             
-        elif not name:
+elif not name:
             st.error("অনুগ্রহ করে ওপরের ফর্মে পেশেন্টের নাম লিখুন।")
-        elif not selected_tests and not st.session_state.custom_tests:
+elif not selected_tests and not st.session_state.custom_tests:
             st.error("অনুগ্রহ করে অন্তত একটি টেস্ট সিলেক্ট বা যোগ করুন।")
             </div>
             
