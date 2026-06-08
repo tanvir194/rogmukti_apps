@@ -55,9 +55,7 @@ TEST_PRICES = {
     "03. CRP": 450.0,
     "04. RA/RF": 450.0,
     "05. HBs Ag (Screen Test)": 450.0,
-    "06. TPHA": 450.0
-    # ... বাকি টেস্টগুলো একইভাবে লিখবেন
-
+    "06. TPHA": 450.0,
     "07. VDRL": 400.0,
     "08. Group & Rh Factor": 200.0,
     "09. Mantaux-Test (M.T)": 300.0,
@@ -71,7 +69,7 @@ TEST_PRICES = {
     "17. Fallarlia (ICT)": 750.0,
     "18. Dengue NS1. IGG/IgM": 300.0,
 
-    "# --- Hormone Pannel": ---, 
+    # --- Hormone Pannel ---
     "01. T3": 1200.0,
     "02. T4": 1200.0,
     "03. FT3": 900.0,
@@ -82,7 +80,7 @@ TEST_PRICES = {
     "08. S. IgE": 1500.0,
     "09. S.IgE (Device Test)": 700.0,
 
-    "# --- Bio Chemical Analysis": ---, 
+    # --- Bio Chemical Analysis ---
     "01. Random": 200.0,
     "02. Fasting": 200.0,
     "03. 2hr. After Breakfast": 200.0,
@@ -103,7 +101,7 @@ TEST_PRICES = {
     "18. Amylase": 700.0,
     "19. Calcium": 600.0,
 
-    "# --- X-Ray Digital": ---, 
+    # --- X-Ray Digital ---
     "01. Chest X-Ray": 500.0,
     "02. PNS X-Ray": 500.0,
     "03. Maxila X-Ray": 500.0,
@@ -124,19 +122,20 @@ TEST_PRICES = {
     "18. Shoulder Joint B/V X-Ray": 550.0,
     "19. Hip Joint X-Ray": 500.0,
 
-    "# --- Urine & Stool Exam": ---, 
+    # --- Urine & Stool Exam ---
     "01. Urine Pregnancy Test (PT)": 200.0,
     "02. Urine R/E": 250.0,
     "03. Stool R/E": 400.0,
     "04. Stool OBT": 400.0,
 
-    "# --- UI Ultrasound Imaging".---, 
+    # --- UI Ultrasound Imaging ---
     "01. USG Whole Abdomen": 1000.0,
     "02. USG Upper Abdomen": 800.0,
     "03. USG Lower Abdomen": 800.0,
     "04. USG KUB": 1000.0,
     "05. USG Pregnancy Profile": 800.0,
-    "06. USG Breast": 1200.0,
+    "06. USG Breast": 1200.0
+}  # <--- এই ক্লোজিং ব্র্যাকেটটি দেওয়া জরুরি ছিল
 
 # সাইডবার মেনু নেভিগেশন
 st.sidebar.title("🧭 নেভিগেশন মেনু")
