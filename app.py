@@ -98,27 +98,6 @@ TEST_PRICES = {
     "53. Amylase": 700.0,
     "54. Calcium": 600.0,
 
-    # --- X-Ray Digital ---
-    "115. Chest X-Ray": 500.0,
-    "117. PNS X-Ray": 500.0,
-    "118. Maxila X-Ray": 500.0,
-    "114. Nasopharynx X-Ray": 550.0,
-    "115. Abdomen A/P X-Ray": 500.0,
-    "116. Cervical Spine X-Ray": 600.0,
-    "1117. Plane X-Ray Abdomen": 500.0,
-    "128. Mastoid Towns View X-Ray": 500.0,
-    "139. Skull X-Ray": 600.0,
-    "1410. Pelvic X-Ray": 500.0,
-    "1511. Mandible B/V X-Ray": 600.0,
-    "1612. KUB X-Ray": 500.0,
-    "173. D/S Spine X-Ray": 600.0,
-    "118. L/S Spine X-Ray": 600.0,
-    "119. X-ray Foot B/V": 500.0,
-    "206. Knee B/V X-Ray": 550.0,
-    "221. Elbow B/V X-Ray": 500.0,
-    "122. Shoulder Joint B/V X-Ray": 550.0,
-    "129. Hip Joint X-Ray": 500.0,
-
     # --- Urine & Stool Exam ---
     "02. Urine Pregnancy Test (PT)": 200.0,
     "01. Urine R/E": 250.0,
