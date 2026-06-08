@@ -236,25 +236,65 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
     if st.session_state.receipt_data:
         r = st.session_state.receipt_data
         st.markdown("---")
-        
-        # টেবিলের রো জেনারেশন
-        table_rows = ""
-        for i, item in enumerate(r['tests'], 1):
-            table_rows += f"""
-            <tr style="border-bottom: 1px solid #ddd;">
-                <td style="padding: 8px; color: #1e293b;">{i}</td>
-                <td style="padding: 8px; color: #1e293b;">{item['name']}</td>
-                <td style="padding: 8px; text-align: right; color: #1e293b;">{item['price']:.2f} ৳</td>
-            </tr>
-            """
+    # লাইভ কাউন্টার ক্যালকুলেশন (স্ট্যান্ডার্ড + কাস্টম টেস্টের দাম)
+    sub_total = sum(TEST_PRICES.get(test, 0.0) for test in selected_tests)
+    for c_name, c_price in st.session_state.custom_tests.items():
+        sub_total += c_price
 
-        # সম্পূর্ণ রিসিটের রঙিন এইচটিএমএল স্ট্রাকচার (প্রিন্ট আইডি 'printArea' সহ)
-        html_receipt = f"""
-        <div id="printArea" style="border: 3px solid #1e3a8a; padding: 25px; border-radius: 12px; background-color: #f8fafc; font-family: 'Segoe UI', Arial, sans-serif; max-width: 650px; margin: 0 auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-            <div style="text-align: center; background-color: #1e3a8a; color: white; padding: 15px; border-radius: 8px 8px 0 0; margin: -25px -25px 20px -25px;">
-                <h2 style="margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px;">Rog Mukti Diagnostic Centre</h2>
-                <p style="margin: 5px 0 0 0; font-size: 13px; opacity: 0.9;">Mollah Stand, Auliapur, Patuakhali</p>
-                <p style="margin: 2px 0 0 0; font-size: 13px; font-weight: bold;">📞 Phone: 01711867637</p>
+    col3, col4 = st.columns(2)
+    with col3:
+        st.markdown(f"### 🧮 লাইভ টোটাল ফি: `{sub_total}` টাকা")
+        discount_pct = st.number_input("Discount (%)", min_value=0.0, max_value=100.0, step=1.0)
+        advance = st.number_input("Advance (অগ্রিম পরিশোধ)", min_value=0.0, step=50.0)
+        
+    with col4:
+        discount_amount = sub_total * (discount_pct / 100.0)
+        due = sub_total - (discount_amount + advance)
+        st.write(f"**ডিসকাউন্ট প্রদেয়:** {discount_amount} টাকা")
+        st.metric(label="Due (মোট বাকি টাকা)", value=f"{due} টাকা")
+
+    # ডাটাবেজে রেকর্ড সেভ করার মূল বাটন
+    if st.button("Save Bill and Generate Receipt (বিল সেভ করুন)"):
+        if name and (selected_tests or st.session_state.custom_tests):
+            final_tests_list = [t for t in selected_tests]
+            for c_name in st.session_state.custom_tests.keys():
+                final_tests_list.append(c_name)
+                
+            tests_str = ", ".join(final_tests_list)
+            
+            invoice_id = add_patient(name, age, phone, doctor, tests_str, sub_total, discount_amount, advance, due, date_str)
+            
+            receipt_tests = []
+            for test in selected_tests:
+                price = TEST_PRICES.get(test, 0.0)
+                receipt_tests.append({"name": test, "price": price})
+                
+            for c_name, c_price in st.session_state.custom_tests.items():
+                receipt_tests.append({"name": c_name, "price": c_price})
+
+            st.session_state.receipt_data = {
+                "inv_no": f"{invoice_id:05d}",
+                "date": date_str,
+                "name": name,
+                "age": age,
+                "doctor": doctor,
+                "phone": phone,
+                "tests": receipt_tests,
+                "total": sub_total,
+                "discount_pct": discount_pct,
+                "discount_amt": discount_amount,
+                "advance": advance,
+                "due": due
+            }
+            
+            st.session_state.custom_tests = {}
+            st.success("সফলভাবে ডাটা সেভ হয়েছে! নিচে প্রিন্ট বাটন এবং মানি রিসিট প্রস্তুত।")
+            st.rerun()
+            
+        elif not name:
+            st.error("অনুগ্রহ করে ওপরের ফর্মে পেশেন্টের নাম লিখুন।")
+        elif not selected_tests and not st.session_state.custom_tests:
+            st.error("অনুগ্রহ করে অন্তত একটি টেস্ট সিলেক্ট বা যোগ করুন।")
             </div>
             
             <div style="text-align: center; margin-bottom: 15px;">
