@@ -149,7 +149,7 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
       # --- কাস্টম টেস্ট যোগ করার ইউআই ---
     st.markdown("### ➕ তালিকার বাইরের কাস্টম টেস্ট")
     c_col1, c_col2 = st.columns(2)
-        st.markdown("### ➕ তালিকার বাইরের কাস্টম টেস্ট")
+    st.markdown("### ➕ তালিকার বাইরের কাস্টম টেস্ট")
     c_col1, c_col2 = st.columns(2)
     with c_col1:
         custom_name = st.text_input("কাস্টম টেস্টের নাম লিখুন:")
