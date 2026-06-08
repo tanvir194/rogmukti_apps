@@ -36,9 +36,6 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     ''', (name, age, phone, doctor, tests, total, discount, advance, due, date))
     conn.commit()
     return c.lastrowid
-    # টেস্টের নাম এবং স্ট্যান্ডার্ড দামের তালিকা
-
-TEST_PRICES = {
     
 # ক্রমিক নম্বরসহ টেস্টের নাম এবং স্ট্যান্ডার্ড দামের তালিকা
 TEST_PRICES = {
