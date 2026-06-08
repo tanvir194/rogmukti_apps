@@ -187,51 +187,67 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
             custom_price = st.number_input("কাস্টম টেস্টের দাম (টাকা):", min_value=0.0, value=0.0, step=50.0)
     
     # লাইভ কাউন্টার ক্যালকুলেশন
-    sub_total = sum(TEST_PRICES[test] for test in selected_tests) + custom_price
+        # লাইভ কাউন্টার ক্যালকুলেশন (স্ট্যান্ডার্ড + কাস্টম টেস্টের দাম)
+    sub_total = sum(TEST_PRICES.get(test, 0.0) for test in selected_tests)
+    for c_name, c_price in st.session_state.custom_tests.items():
+        sub_total += c_price
 
     col3, col4 = st.columns(2)
     with col3:
         st.markdown(f"### 🧮 লাইভ টোটাল ফি: `{sub_total}` টাকা")
-        discount_pct = st.number_input("Discount (%)", min_value=0.0, max_value=100.0, value=0.0, step=1.0)
-        advance = st.number_input("Advance (অগ্রিম পরিশোধ)", min_value=0.0, value=0.0, step=50.0)
+        discount_pct = st.number_input("Discount (%)", min_value=0.0, max_value=100.0, step=1.0)
+        advance = st.number_input("Advance (অগ্রিম পরিশোধ)", min_value=0.0, step=50.0)
+        
     with col4:
-        discount_amount = sub_total * (discount_pct / 100)
+        discount_amount = sub_total * (discount_pct / 100.0)
         due = sub_total - (discount_amount + advance)
         st.write(f"**ডিসকাউন্ট প্রদেয়:** {discount_amount} টাকা")
         st.metric(label="Due (মোট বাকি টাকা)", value=f"{due} টাকা")
 
     # ডাটাবেজে রেকর্ড সেভ করার মূল বাটন
-    if st.button("Save Bill and Generate Receipt (ডাটা সেভ করুন)", type="primary"):
-        if name and selected_tests:
-            final_tests_list = [t for t in selected_tests if t != "Custom Test / অন্যান্য (নিচে নাম ও দাম লিখুন)"]
-            if custom_test_active and custom_name:
-                final_tests_list.append(f"{custom_name} (Custom)")
-            
+    if st.button("Save Bill and Generate Receipt (বিল সেভ করুন)"):
+        if name and (selected_tests or st.session_state.custom_tests):
+            # স্ট্যান্ডার্ড এবং কাস্টম টেস্টের নাম একসাথে করা
+            final_tests_list = [t for t in selected_tests]
+            for c_name in st.session_state.custom_tests.keys():
+                final_tests_list.append(c_name)
+                
             tests_str = ", ".join(final_tests_list)
-            invoice_id = add_patient(name, age, phone, doctor, tests_str, sub_total, discount_pct, advance, due, date_str)
             
-            receipt_tests = []
-            for test in selected_tests:
-                if test == "Custom Test / অন্যান্য (নিচে নাম ও দাম লিখুন)":
-                    if custom_name:
-                        receipt_tests.append({"name": custom_name, "price": custom_price})
-                else:
-                    receipt_tests.append({"name": test, "price": TEST_PRICES[test]})
+            # ডাটাবেজে ডাটা পাঠানো (আপনার আসল ফাংশনটি কল হবে)
+            invoice_id = add_patient(name, age, phone, doctor, tests_str, sub_total, discount_amount, advance, due, date_str)
 
-            st.session_state.receipt_data = {
-                "inv_no": f"{invoice_id:05d}",
-                "date": date_str,
-                "name": name,
-                "age": age,
-                "doctor": doctor,
-                "phone": phone,
-                "tests": receipt_tests,
-                "total": sub_total,
-                "discount_pct": discount_pct,
-                "discount_amt": discount_amount,
-                "advance": advance,
-                "due": due
-            }
+            # রিসিটের জন্য টেস্ট এবং দামের তালিকা তৈরি
+        receipt_tests = []
+        
+        # ১. স্ট্যান্ডার্ড টেস্টগুলো যোগ করা
+        for test in selected_tests:
+            price = TEST_PRICES.get(test, 0.0)
+            receipt_tests.append({"name": test, "amount": price})
+            
+        # ২. কাস্টম টেস্টগুলো যোগ করা
+        for c_name, c_price in st.session_state.custom_tests.items():
+            receipt_tests.append({"name": c_name, "amount": c_price})
+
+        # সেশন স্টেটে রিসিটের ডাটা সেভ করা
+        st.session_state.receipt_data = {
+            "inv_no": f"{invoice_id:05d}",
+            "date": date_str,
+            "name": name,
+            "age": age,
+            "doctor": doctor,
+            "phone": phone,
+            "tests": receipt_tests,
+            "total": sub_total,
+            "discount_pct": discount_pct,
+            "discount_amt": discount_amount,
+            "advance": advance,
+            "due": due
+        }
+        
+        # নতুন রোগীর জন্য কাস্টম টেস্টের তালিকা খালি করা
+        st.session_state.custom_tests = {}
+
             st.success("সফলভাবে ডাটা সেভ হয়েছে! নিচে প্রিন্ট বাটন এবং মানি রিসিট প্রস্তুত।")
         elif not name:
             st.error("অনুগ্রহ করে ওপরের ফর্মে পেশেন্টের নাম লিখে 'পেশেন্ট তথ্য নিশ্চিত করুন' বাটনে চাপুন।")
