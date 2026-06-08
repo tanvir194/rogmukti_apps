@@ -147,18 +147,17 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
     # ফর্মের বাইরে স্বাধীন টেস্ট ড্রপডাউন (লাইভ কাউন্টারের জন্য)
     selected_tests = st.multiselect("Description (এখান থেকে টেস্ট সার্চ বা সিলেক্ট করুন)", sorted(list(TEST_PRICES.keys())))
       # --- কাস্টম টেস্ট যোগ করার ইউআই ---
-    st.markdown("### ➕ তালিকার বাইরের কাস্টম টেস্ট")
-    c_col1, c_col2 = st.columns(2)
+    
     st.markdown("### ➕ তালিকার বাইরের কাস্টম টেস্ট")
     c_col1, c_col2 = st.columns(2)
     with c_col1:
-        custom_name = st.text_input("কাস্টম টেস্টের নাম লিখুন:")
+        custom_name = st.text_input("কাস্টম টেস্টের নাম লিখুন:", key="c_name_input")
     with c_col2:
-        custom_price = st.number_input("টেস্টের রেট (টাকা):", min_value=0.0, step=50.0)
+        custom_price = st.number_input("টেস্টের রেট (টাকা):", min_value=0.0, step=50.0, key="c_price_input")
 
     if custom_name:
-        st.session_state.custom_tests = {custom_name: float(custom_price)}
-    else:
+        st.session_state.custom_tests[custom_name] = float(custom_price)
+
         st.session_state.custom_tests = {}
         st.rerun()
 
