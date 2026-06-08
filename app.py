@@ -40,8 +40,8 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
 
 TEST_PRICES = {
     # --- Haematology ---
-    "CBC (Complete Blood Count)": 600.0,
-    "TC.DC": 250.0,
+    " 1/. CBC (Complete Blood Count)": 600.0,
+    " 2/.TC.DC": 250.0,
     "HB%": 250.0,
     "ESR": 200.0,
     "Platelet Count": 300.0,
