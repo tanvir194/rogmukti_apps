@@ -136,7 +136,6 @@ TEST_PRICES = {
     "USG KUB": 1000.0,
     "USG Pregnancy Profile": 800.0,
     "USG Breast": 1200.0
-}
 .0,
 # --- কাস্টম অপশন ---
 "Custom Test / অন্যান্য (নিচে নাম ও দাম লিখুন)": 0.0
