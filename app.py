@@ -176,16 +176,7 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
     
     if custom_test_active:
         st.info("💡 কাস্টম টেস্টের ফিল্ড সচল হয়েছে। নিচে নাম ও দাম লিখুন।")
-        
-    col_c1, col_c2 = st.columns(2)
-    with col_c1:
-        if custom_test_active:
-            custom_name = st.text_input("কাস্টম টেস্টের নাম লিখুন:")
-    with col_c2:
-        if custom_test_active:
-            custom_price = st.number_input("কাস্টম টেস্টের দাম (টাকা):", min_value=0.0, value=0.0, step=50.0)
-    
-        # লাইভ কাউন্টার ক্যালকুলেশন (স্ট্যান্ডার্ড + কাস্টম টেস্টের দাম)
+    # লাইভ কাউন্টার ক্যালকুলেশন (স্ট্যান্ডার্ড + কাস্টম টেস্টের দাম)
     sub_total = sum(TEST_PRICES.get(test, 0.0) for test in selected_tests)
     for c_name, c_price in st.session_state.custom_tests.items():
         sub_total += c_price
@@ -202,15 +193,6 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
         st.write(f"**ডিসকাউন্ট প্রদেয়:** {discount_amount} টাকা")
         st.metric(label="Due (মোট বাকি টাকা)", value=f"{due} টাকা")
 
-    # ডাটাবেজে রেকর্ড সেভ করার মূল বাটন
-    if st.button("Save Bill and Generate Receipt (বিল সেভ করুন)"):
-        if name and (selected_tests or st.session_state.custom_tests):
-            final_tests_list = [t for t in selected_tests]
-            for c_name in st.session_state.custom_tests.keys():
-                final_tests_list.append(c_name)
-                
-            tests_str = ", ".join(final_tests_list)
-            
             invoice_id = add_patient(name, age, phone, doctor, tests_str, sub_total, discount_amount, advance, due, date_str)
             
             receipt_tests = []
