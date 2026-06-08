@@ -38,8 +38,8 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     return c.lastrowid
     
 # ক্রমিক নম্বরসহ টেস্টের নাম এবং স্ট্যান্ডার্ড দামের তালিকা
-
-    "# --- Haematology": ---, 
+TEST_PRICES = {
+    # --- Haematology ---
     "01. CBC (Complete Blood Count)": 600.0,
     "02. TC.DC": 250.0,
     "03. HB%": 250.0,
@@ -49,13 +49,15 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     "07. BT/CT": 350.0,
     "08. C/E Count": 250.0,
 
-    "# --- Serology": ---, 
+    # --- Serology ---
     "01. Widal": 450.0,
     "02. Aso Titre": 450.0,
     "03. CRP": 450.0,
     "04. RA/RF": 450.0,
     "05. HBs Ag (Screen Test)": 450.0,
-    "06. TPHA": 450.0,
+    "06. TPHA": 450.0
+    # ... বাকি টেস্টগুলো একইভাবে লিখবেন
+
     "07. VDRL": 400.0,
     "08. Group & Rh Factor": 200.0,
     "09. Mantaux-Test (M.T)": 300.0,
