@@ -132,7 +132,8 @@ TEST_PRICES = {
     "04. USG KUB": 1000.0,
     "05. USG Pregnancy Profile": 800.0,
     "06. USG Breast": 1200.0
-}if page == "নতুন পেশেন্ট এন্ট্রি":
+}
+if page == "নতুন পেশেন্ট এন্ট্রি":
     st.title("🏥 Rog Mukti Diagnostic Centre")
     st.markdown("---")
     
