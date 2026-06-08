@@ -38,7 +38,7 @@ def add_patient(name, age, phone, doctor, tests, total, discount, advance, due, 
     return c.lastrowid
     
 # ক্রমিক নম্বরসহ টেস্টের নাম এবং স্ট্যান্ডার্ড দামের তালিকা
-"TEST_PRICES": = {, 
+"TEST_PRICES":, 
     "# --- Haematology": ---, 
     "01. CBC (Complete Blood Count)": 600.0,
     "02. TC.DC": 250.0,
