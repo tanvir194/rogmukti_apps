@@ -139,10 +139,6 @@ TEST_PRICES = {
 }
 .0,
 
-    # --- Imaging & Cardiology ---
-    "ETT (Exercise Tolerance Test)": 3000.0,
-    "Echocardiography (2D & Color Doppler)": 2000.0,
-    
     # --- কাস্টম অপশন ---
     "Custom Test / অন্যান্য (নিচে নাম ও দাম লিখুন)": 0.0
 }
