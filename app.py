@@ -118,8 +118,6 @@ st.sidebar.title("🧭 নেভিগেশন মেনু")
 page = st.sidebar.radio("অপশন সিলেক্ট করুন:", ["নতুন পেশেন্ট এন্ট্রি", "পেশেন্ট ডাটাবেজ"])
 
 if page == "নতুন পেশেন্ট এন্ট্রি":
-    st.title("🏥 Rog Mukti Diagnostic Centre")
-    st.markdown("---")
     if "custom_tests" not in st.session_state:
         st.session_state.custom_tests = {}
 
@@ -151,16 +149,18 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
       # --- কাস্টম টেস্ট যোগ করার ইউআই ---
     st.markdown("### ➕ তালিকার বাইরের কাস্টম টেস্ট")
     c_col1, c_col2 = st.columns(2)
+        st.markdown("### ➕ তালিকার বাইরের কাস্টম টেস্ট")
+    c_col1, c_col2 = st.columns(2)
     with c_col1:
         custom_name = st.text_input("কাস্টম টেস্টের নাম লিখুন:")
     with c_col2:
         custom_price = st.number_input("টেস্টের রেট (টাকা):", min_value=0.0, step=50.0)
 
-    if st.button("কাস্টম টেস্ট যোগ করুন"):
-        if custom_name:
-            st.session_state.custom_tests[custom_name] = float(custom_price)
-            st.success(f"'{custom_name}' সফলভাবে যোগ হয়েছে!")
-            st.rerun()
+    if custom_name:
+        st.session_state.custom_tests = {custom_name: float(custom_price)}
+    else:
+        st.session_state.custom_tests = {}
+        st.rerun()
 
     # --- সিলেক্টেড টেস্ট এবং কাস্টম টেস্টের নাম ও দাম একসাথে করা ---
     all_selected_tests = list(selected_tests)  # ড্রপডাউন থেকে সিলেক্ট করা স্ট্যান্ডার্ড টেস্ট
@@ -186,7 +186,6 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
         if custom_test_active:
             custom_price = st.number_input("কাস্টম টেস্টের দাম (টাকা):", min_value=0.0, value=0.0, step=50.0)
     
-    # লাইভ কাউন্টার ক্যালকুলেশন
         # লাইভ কাউন্টার ক্যালকুলেশন (স্ট্যান্ডার্ড + কাস্টম টেস্টের দাম)
     sub_total = sum(TEST_PRICES.get(test, 0.0) for test in selected_tests)
     for c_name, c_price in st.session_state.custom_tests.items():
@@ -204,29 +203,25 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
         st.write(f"**ডিসকাউন্ট প্রদেয়:** {discount_amount} টাকা")
         st.metric(label="Due (মোট বাকি টাকা)", value=f"{due} টাকা")
 
-        # # ডাটাবেজে রেকর্ড সেভ করার মূল বাটন
+    # ডাটাবেজে রেকর্ড সেভ করার মূল বাটন
     if st.button("Save Bill and Generate Receipt (বিল সেভ করুন)"):
         if name and (selected_tests or st.session_state.custom_tests):
-            # স্ট্যান্ডার্ড এবং কাস্টম টেস্টের নাম একসাথে করা
             final_tests_list = [t for t in selected_tests]
             for c_name in st.session_state.custom_tests.keys():
                 final_tests_list.append(c_name)
                 
             tests_str = ", ".join(final_tests_list)
             
-            # ডাটাবেজে ডাটা পাঠানো
             invoice_id = add_patient(name, age, phone, doctor, tests_str, sub_total, discount_amount, advance, due, date_str)
             
-            # রিসিটের জন্য টেস্ট এবং দামের তালিকা তৈরি
             receipt_tests = []
             for test in selected_tests:
                 price = TEST_PRICES.get(test, 0.0)
-                receipt_tests.append({"name": test, "amount": price})
+                receipt_tests.append({"name": test, "price": price})
                 
             for c_name, c_price in st.session_state.custom_tests.items():
-                receipt_tests.append({"name": c_name, "amount": c_price})
+                receipt_tests.append({"name": c_name, "price": c_price})
 
-            # সেশন স্টেটে রিসিটের ডাটা সেভ করা
             st.session_state.receipt_data = {
                 "inv_no": f"{invoice_id:05d}",
                 "date": date_str,
@@ -242,9 +237,14 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
                 "due": due
             }
             
-            # নতুন রোগীর জন্য কাস্টম টেস্টের তালিকা খালি করা
             st.session_state.custom_tests = {}
             st.success("সফলভাবে ডাটা সেভ হয়েছে! নিচে প্রিন্ট বাটন এবং মানি রিসিট প্রস্তুত।")
+            st.rerun()
+            
+        elif not name:
+            st.error("অনুগ্রহ করে ওপরের ফর্মে পেশেন্টের নাম লিখুন।")
+        elif not selected_tests and not st.session_state.custom_tests:
+            st.error("অনুগ্রহ করে অন্তত একটি টেস্ট সিলেক্ট বা যোগ করুন।")
             st.rerun()
             
         elif not name:
