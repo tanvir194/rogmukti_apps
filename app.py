@@ -318,11 +318,64 @@ elif not selected_tests and not st.session_state.custom_tests:
                         <td style="text-align: right; padding: 6px; color: #16a34a;">{r['advance']:.2f} ৳</td>
                     </tr>
                     <tr style="background-color: #fee2e2; color: #b91c1c; font-weight: bold; font-size: 15px; border-top: 2px solid #f87171;">
-                        <td></td>
-                        <td style="text-align: right; padding: 8px;">Due (বাকি টাকা):</td>
-                        <td style="text-align: right; padding: 8px;">{r['due']:.2f} ৳</td>
-                    </tr>
-                </tbody>
+    st.title("🏥 Rog Mukti Diagnostic Centre")
+    st.markdown("---")
+    
+    if "custom_tests" not in st.session_state:
+        st.session_state.custom_tests = {}
+
+    st.subheader("👤 পেসেন্ট এবং ডাক্তারের তথ্য")
+    with st.form("patient_form"):
+        col1, col2 = st.columns(2)
+        with col1:
+            name = st.text_input("Name of the PT (পেশেন্টের নাম) *")
+            age = st.number_input("Age (বয়স)", min_value=0, max_value=120, value=25)
+            phone = st.text_input("Phone (মোবাইল নম্বর)")
+        with col2:
+            doctor_list = ["ডা. সাইদুল ইসলাম", "ডা. নাসরিন সুলতানা", "ডা. মোতালেব হোসেন", "অন্যান্য"]
+            doctor = st.selectbox("REFD By. Dr (ডাক্তার সিলেক্ট করুন)", doctor_list)
+            date_input = st.date_input("Date (তারিখ)", datetime.now())
+            date_str = date_input.strftime("%Y-%m-%d")
+
+        info_submit = st.form_submit_button("পেশেন্ট তথ্য নিশ্চিত করুন")
+
+    st.markdown("---")
+    st.subheader("🧪 টেস্ট এবং বিলিং সেকশন")
+
+    # ফর্মের বাইরে স্বাধীন টেস্ট ড্রপডাউন (লাইভ কাউন্টারের জন্য)
+    selected_tests = st.multiselect("Description (এখান থেকে টেস্ট সার্চ বা সিলেক্ট করুন):", options=list(TEST_PRICES.keys()))
+
+    # --- কাস্টম টেস্ট যোগ করার ইউআই ---
+    st.markdown("### ➕ তালিকার বাইরের কাস্টম টেস্ট")
+    c_col1, c_col2 = st.columns(2)
+    with c_col1:
+        custom_name = st.text_input("কাস্টম টেস্টের নাম লিখুন:", key="c_name_input")
+    with c_col2:
+        custom_price = st.number_input("টেস্টের রেট (টাকা):", min_value=0.0, step=50.0, key="c_price_input")
+
+    # ইউজার বক্সে নাম লিখলেই সেটি স্বয়ংক্রিয়ভাবে সেশন স্টেটে যোগ হবে
+    if custom_name:
+        st.session_state.custom_tests = {custom_name: float(custom_price)}
+    else:
+        st.session_state.custom_tests = {}
+
+    # --- সিলেক্টেড টেস্ট এবং কাস্টম টেস্টের নাম ও দাম একসাথে করা ---
+    sub_total = sum(TEST_PRICES.get(test, 0.0) for test in selected_tests)
+    for c_name, c_price in st.session_state.custom_tests.items():
+        sub_total += c_price
+
+    col3, col4 = st.columns(2)
+    with col3:
+        st.markdown(f"### 🧮 লাইভ টোটাল ফি: `{sub_total}` টাকা")
+        discount_pct = st.number_input("Discount (%)", min_value=0.0, max_value=100.0, step=1.0)
+        advance = st.number_input("Advance (অগ্রিম পরিশোধ)", min_value=0.0, step=50.0)
+        
+    with col4:
+        discount_amount = sub_total * (discount_pct / 100.0)
+        due = sub_total - (discount_amount + advance)
+        st.write(f"**ডিসকাউন্ট প্রদেয়:** {discount_amount} টাকা")
+        st.metric(label="Due (মোট باقی টাকা)", value=f"{due} টাকা")
+
     # ডাটাবেজে রেকর্ড সেভ করার মূল বাটন
     if st.button("Save Bill and Generate Receipt (বিল সেভ করুন)"):
         if name and (selected_tests or st.session_state.custom_tests):
