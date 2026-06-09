@@ -220,11 +220,29 @@ if page == "নতুন পেশেন্ট এন্ট্রি":
             }
             st.session_state.custom_tests = {}
             st.success("সফলভাবে ডাটা সেভ হয়েছে!")
-            st.rerun()
+        
         elif not name:
             st.error("অনুগ্রহ করে ওপরের ফর্মে পেশেন্টের নাম লিখুন।")
         elif not selected_tests and not st.session_state.custom_tests:
             st.error("অনুগ্রহ করে অন্তত একটি টেস্ট সিলেক্ট বা যোগ করুন।")
+         # --- মানি রিসিট স্ক্রিনে দেখানোর সেকশন ---
+    if "receipt_data" in st.session_state and st.session_state.receipt_data:
+        res = st.session_state.receipt_data
+        st.markdown("---")
+        st.subheader("🧾 ROG MUKTI DIAGNOSTIC CENTRE (MONEY RECEIPT)")
+        st.write(f"**Invoice No:** {res['inv_no']} | **Date:** {res['date']}")
+        st.write(f"**Patient Name:** {res['name']} | **Age:** {res['age']} | **Phone:** {res['phone']}")
+        st.write(f"**Referred By:** {res['doctor']}")
+        
+        st.write("---")
+        for item in res['tests']:
+            st.write(f"- {item['name']}: {item['price']} টাকা")
+        st.write("---")
+        
+        st.write(f"**Sub Total:** {res['total']} টাকা")
+        st.write(f"**Discount:** {res['discount_amt']} টাকা ({res['discount_pct']}%)")
+        st.write(f"**Advance Paid:** {res['advance']} টাকা")
+        st.markdown(f"### 🔴 Total Due: {res['due']} টাকা")
 
 elif page == "আজকের রিপোর্ট":
     st.title("📋 আজকের পেশেন্ট রিপোর্ট")
