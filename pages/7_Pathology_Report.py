@@ -13,7 +13,7 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 st.title("🔬 প্যাথলজি রিপোর্ট (কাস্টম ওয়ার্ড ফরম্যাট)")
 st.write("---")
 
-# 🌟 ক্লাউড ডাটাবেজ এরর সমাধানের জন্য নিখুঁত ডিরেক্টরি পাথ লজিক
+# ডিরেক্টরি পাথ লজিক
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
 TEMPLATE_DIR = os.path.join(BASE_DIR, "report_templates")
@@ -47,7 +47,6 @@ if uploaded_template is not None:
         f.write(uploaded_template.getbuffer())
     st.success("✅ আপনার কাস্টম ওয়ার্ড ফরম্যাটটি সফলভাবে আপলোড ও সেভ হয়েছে!")
 
-# ফরম্যাট ফাইলটি আপলোড করা আছে কি না চেক
 if not os.path.exists(TEMPLATE_PATH):
     st.info("ℹ️ শুরু করার জন্য ওপরে আপনার ল্যাবের রিসিট বা রিপোর্টের একটি মাইক্রোসফট ওয়ার্ড ফরম্যাট আপলোড করুন।")
     st.markdown("""
@@ -73,7 +72,7 @@ if search_id > 0:
         c.execute("SELECT patient_name, age, phone, doctor, selected_tests, billing_date FROM billing_records WHERE id = ?", (search_id,))
         patient_row = c.fetchone()
         
-        c.execute("SELECT report_data FROM pathology_reports WHERE invoice_id = ?", (search_id,))
+        c.execute("SELECT report_data, reported_date FROM pathology_reports WHERE invoice_id = ?", (search_id,))
         saved_report_row = c.fetchone()
         conn.close()
         
@@ -86,14 +85,18 @@ if search_id > 0:
             tests_to_process = []
             for item in raw_tests:
                 if ":" in item:
-                    tests_to_process.append(item.split(":", 1))
+                    tests_to_process.append(item.split(":", 1)[0])
                 else:
                     tests_to_process.append(item)
                     
             saved_data = {}
+            display_report_date = p_date # ডিফল্ট হিসেবে রোগীর ভর্তির তারিখ
+            
             if saved_report_row:
                 try:
-                    saved_data = json.loads(saved_report_row)
+                    saved_data = json.loads(saved_report_row[0])
+                    if saved_report_row[1]:
+                        display_report_date = saved_report_row[1] # আগের সেভ করা রিপোর্ট তৈরির তারিখ
                 except:
                     pass
 
@@ -117,6 +120,8 @@ if search_id > 0:
                 conn = sqlite3.connect(DB_PATH)
                 c = conn.cursor()
                 json_str = json.dumps(new_report_data)
+                
+                # 🌟 এখানে নিখুঁতভাবে কারেন্ট ডেট ফরম্যাট জেনারেট করা হয়েছে (টাইপো ফিক্সড)
                 current_time_str = datetime.now().strftime("%Y-%m-%d")
                 
                 c.execute("""
@@ -126,23 +131,24 @@ if search_id > 0:
                 """, (search_id, json_str, current_time_str, json_str, current_time_str))
                 conn.commit()
                 conn.close()
-                st.success("✅ ডাটা সেভ হয়েছে! নিচে ফাইল ডাউনলোড অপশন চালু হয়েছে।")
+                st.success("✅ প্যাথলজি রিপোর্টের ডাটা এবং আজকের তারিখ সফলভাবে সেভ হয়েছে!")
                 st.rerun()
 
             # --- ৩. ওয়ার্ড ফাইল জেনারেট ও ডাউনলোড লজিক ---
             if saved_report_row:
                 st.subheader("📥 আপনার কাস্টমাইজড ওয়ার্ড রিপোর্টটি ডাউনলোড করুন")
+                st.info(f"📅 এই রিপোর্টটি তৈরির তারিখ: **{display_report_date}**")
                 
                 try:
                     doc = Document(TEMPLATE_PATH)
                     
-                    # প্যারাগ্রাফের ট্যাগ পরিবর্তন করা
+                    # প্যারাগ্রাফের ট্যাগ পরিবর্তন করা ({{DATE}} ট্যাগে এখন অটো তারিখ বসে যাবে)
                     for paragraph in doc.paragraphs:
                         if "{{PATIENT_NAME}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{PATIENT_NAME}}", str(p_name))
                         if "{{INVOICE_ID}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{INVOICE_ID}}", f"#{search_id}")
                         if "{{AGE}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{AGE}}", str(p_age))
                         if "{{DOCTOR}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{DOCTOR}}", str(p_doctor))
-                        if "{{DATE}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{DATE}}", str(p_date))
+                        if "{{DATE}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{DATE}}", str(display_report_date))
                     
                     # টেবিলের ভেতরের ট্যাগ পরিবর্তন
                     for table in doc.tables:
@@ -152,7 +158,7 @@ if search_id > 0:
                                 if "{{INVOICE_ID}}" in cell.text: cell.text = cell.text.replace("{{INVOICE_ID}}", f"#{search_id}")
                                 if "{{AGE}}" in cell.text: cell.text = cell.text.replace("{{AGE}}", str(p_age))
                                 if "{{DOCTOR}}" in cell.text: cell.text = cell.text.replace("{{DOCTOR}}", str(p_doctor))
-                                if "{{DATE}}" in cell.text: cell.text = cell.text.replace("{{DATE}}", str(p_date))
+                                if "{{DATE}}" in cell.text: cell.text = cell.text.replace("{{DATE}}", str(display_report_date))
                                 
                                 if "{{TEST_RESULTS}}" in cell.text:
                                     cell.text = "" 
@@ -177,8 +183,8 @@ if search_id > 0:
                         os.remove(output_path)
                         
                 except Exception as e:
-                    st.error(f"❌ ওয়ার্ড ফাইলটি প্রসেস করতে সমস্যা হচ্ছে। এরর: {e}")
+                    st.error(f"❌ ওয়ার্ড ফাইলটি তৈরি করতে সমস্যা হচ্ছে। এরর: {e}")
         else:
-            st.error(f"⚠️ এই বিল নম্বরের ({search_id}) কোনো রোগীর তথ্য পাওয়া যায়নি। অনুগ্রহ করে '1_Patient_Entry.py' পেজে গিয়ে নিশ্চিত হোন যে এই নম্বরের বিলটি ডাটাবেজে সঠিক নামে সাবমিট করা আছে কি না।")
+            st.error(f"⚠️ এই বিল নম্বরের ({search_id}) কোনো রোগীর তথ্য পাওয়া যায়নি।")
     except Exception as e:
         st.error(f"❌ ডাটাবেজ অপারেশন ব্যর্থ হয়েছে। এরর টেক্সট: {e}")
