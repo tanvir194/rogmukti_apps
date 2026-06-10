@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 
 # 🔑 ১. অ্যাডমিন সিকিউরিটি লক কোড (একদম শুরুতে)
-ADMIN_PASSWORD = "rogmukti_admin"
+ADMIN_PASSWORD = "12345"
 
 if "admin_auth" not in st.session_state:
     st.session_state.admin_auth = False
