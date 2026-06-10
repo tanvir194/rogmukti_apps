@@ -1,7 +1,7 @@
 import streamlit as st
 import sqlite3
 
-# লগইন চেক
+# সিকিউরিটি বা লগইন চেক
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
     st.warning("⚠️ আগে লগইন করুন।")
     st.stop()
@@ -11,7 +11,7 @@ st.write("------------------- Invoice ID তথ্য -------------------")
 
 invoice_id = None
 
-# কুয়েরি প্যারামিটার অথবা সেশন স্টেট থেকে invoice_id নেওয়া
+# কুয়েরি প্যারামিটার অথবা সেশন স্টেট থেকে ইনভয়েস আইডি রিড করা
 if "invoice_id" in st.query_params:
     invoice_id = st.query_params.get("invoice_id")
 elif "last_invoice_id" in st.session_state:
@@ -21,7 +21,7 @@ if not invoice_id:
     st.info("💡 কোনো ইনভয়েস আইডি পাওয়া যায়নি। অনুগ্রহ করে 'Patient Entry' পেজ থেকে তথ্য সাবমিট করুন।")
     st.stop()
 
-# ------------------- ডাটাবেজ থেকে ডাটা রিড করা -------------------
+# ডাটাবেজ কানেকশন
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
 
@@ -33,28 +33,25 @@ if not row:
     st.error(f"❌ ID #{invoice_id} এর কোনো রেকর্ড পাওয়া যায়নি।")
     st.stop()
 
-# ------------------- ডাটা ভেরিয়েবলে অ্যাসাইন করা -------------------
+# ডাটাবেজের কলাম ইনডেক্স সিরিয়াল অনুযায়ী ভেরিয়েবল অ্যাসাইন
 name = row[1]
 age = row[2]
 phone = row[3]
 doctor = row[4]
-selected_tests_data = row[5]
+selected_tests_data = row[5] 
 total_amount = float(row[6])
 discount_pct = float(row[7])
 advance_paid = float(row[8])
-# row[9] এ মূলত due_amount বা অন্য কোনো ডাটা থাকতে পারে
+due_amount = float(row[9])
+current_date = row[10]
 
-# লজিক্যাল হিসাব-নিকাশ (পূর্বের বাগ ঠিক করা হয়েছে)
+# লজিক্যাল হিসাব পুনরায় করা
 discount_amount = (total_amount * discount_pct) / 100.0
-due_amount = total_amount - discount_amount - advance_paid
 
-# তারিখ সংগ্রহ (ডাটাবেজের ইনডেক্স অনুযায়ী ঠিক করুন, সাধারণত row[10])
-current_date = row[10] if len(row) > 10 else "N/A"
+# পাইপ '|' চিহ্ন দিয়ে আলাদা করে টেস্টের লিস্ট তৈরি করা
+tests_list = [item.strip() for item in selected_tests_data.split('|') if item.strip()]
 
-# টেস্টের তালিকা তৈরি
-tests_list = [item.strip() for item in selected_tests_data.split(',') if item.strip()]
-
-# ------------------- প্রিন্ট বাটন এবং প্রিন্ট স্ক্রিপ্ট -------------------
+# ------------------- ব্রাউজার প্রিন্ট বোতাম -------------------
 st.components.v1.html("""
     <button onclick="parent.window.print()" style="
         background-color: #1a365d; 
@@ -72,10 +69,9 @@ st.components.v1.html("""
     </button>
 """, height=80)
 
-# ------------------- প্রিন্ট CSS এবং রসিদ ডিজাইন -------------------
+# ------------------- সিএসএস স্টাইল (CSS Style) -------------------
 st.markdown("""
 <style>
-/* প্রিন্ট করার সময় শুধু রসিদের অংশটি দেখানোর জন্য মিডিয়া কুয়েরি */
 @media print {
     body * {
         visibility: hidden;
@@ -95,7 +91,6 @@ st.markdown("""
     }
 }
 
-/* স্ক্রিনে রসিদটি যেভাবে দেখাবে */
 .receipt-box {
     max-width: 600px;
     margin: 20px auto;
@@ -132,6 +127,7 @@ st.markdown("""
     border: 1px solid #ddd;
     padding: 10px;
     text-align: left;
+    font-size: 14px;
 }
 .test-table th {
     background-color: #f2f2f2;
@@ -145,10 +141,9 @@ st.markdown("""
     color: #1a365d;
 }
 </style>
-""", unsafe_allow_allowed=True)
+""", unsafe_allow_html=True)
 
-# ------------------- দৃশ্যমান রসিদের কন্টেন্ট -------------------
-# HTML কন্টেন্টকে একটি স্ট্রিং-এ নিয়ে আসছি যেন পুরোটাকে '#receipt' আইডি দিয়ে র‍্যাপ (Wrap) করা যায়
+# ------------------- ডাইনামিক রসিদ জেনারেটর -------------------
 receipt_html = f"""
 <div id="receipt" class="receipt-box">
     <div class="header">
@@ -171,46 +166,50 @@ receipt_html = f"""
         </tr>
     </table>
     
-    <h3 style="color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 5px;">টেস্টের তালিকা</h3>
+    <h3 style="color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 5px; font-size: 16px;">টেস্ট ও রেট বিবরণী</h3>
     <table class="test-table">
         <thead>
             <tr>
-                <th style="width: 15%;">ক্রমিম নং</th>
-                <th>টেস্টের নাম</th>
+                <th style="width: 10%;">নং</th>
+                <th style="width: 65%;">টেস্টের নাম</th>
+                <th style="width: 25%; text-align: right;">মূল্য (টাকা)</th>
             </tr>
         </thead>
         <tbody>
 """
 
-# টেস্টের রোগুলো ডাইনামিকালি যোগ করা
-for index, test in enumerate(tests_list, start=1):
+# টেস্টের নাম ও দাম আলাদা করে টেবিলে যোগ করা
+for index, item in enumerate(tests_list, start=1):
+    if ":" in item:
+        t_name, t_price = item.split(":", 1)
+    else:
+        t_name, t_price = item, "0.0"
+        
     receipt_html += f"""
             <tr>
                 <td>{index}</td>
-                <td>{test}</td>
+                <td>{t_name}</td>
+                <td style="text-align: right;">{float(t_price):.2f} ৳</td>
             </tr>
     """
 
-# হিসাবের অংশ যুক্ত করা
 receipt_html += f"""
         </tbody>
     </table>
     
     <div class="total-section">
-        <p>মোট টাকা (Total): {total_amount:.2f} ৳</p>
+        <p>মোট বিল (Total): {total_amount:.2f} ৳</p>
         <p>ছাড় (Discount): {discount_amount:.2f} ৳ ({discount_pct}%)</p>
         <p>অগ্রিম পরিশোধ (Paid): <b>{advance_paid:.2f} ৳</b></p>
-        <p style="font-size: 18px; border-top: 1px dashed #1a365d; padding-top: 5px;">
+        <p style="font-size: 18px; border-top: 1px dashed #1a365d; padding-top: 5px; margin-top: 5px;">
             <b>বাকি টাকা (Due Amount): <span style="color: red;">{due_amount:.2f} ৳</span></b>
         </p>
     </div>
     
-    <div style="margin-top: 5px; text-align: center; font-size: 12px; color: #555;">
+    <div style="margin-top: 25px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #eee; padding-top: 10px;">
         <p>আমাদের ওপর আস্থা রাখার জন্য ধন্যবাদ।</p>
     </div>
 </div>
 """
 
-# অবশেষে রসিদটি স্ক্রিনে রেন্ডার করা হলো
 st.markdown(receipt_html, unsafe_allow_html=True)
-
