@@ -47,15 +47,15 @@ if test_count < 15:
     c.execute("DELETE FROM diagnostic_tests")
     galachipa_official_tests = [
         # HAEMATOLOGY
-        ("(CBC), ESR", 400.0), ("TC.DC", 250.0), ("HB%", 250.0), ("ESR", 200.0),
+        ("(CBC) ESR", 600.0), ("TC.DC", 250.0), ("HB%", 250.0), ("ESR", 200.0),
         ("Platelet Count", 300.0), ("MP", 200.0), ("BT/CT", 350.0), ("C/E Count", 250.0),
         # SEROLOGY
         ("Widal", 450.0), ("Aso Titre", 450.0), ("CRP", 450.0), ("RA/RF", 450.0),
         ("HBs Ag (Screen Test)", 450.0), ("TPHA", 450.0), ("VDRL", 400.0),
-        ("Group & Rh Factor", 200.0), ("Mantaux-Test (M.T)", 250.0), ("Triple Antigen", 500.0),
+        ("Group & Rh Factor", 200.0), ("Mantaux-Test (M.T)", 250.0), ("Triple Antigen", 1050.0),
         ("R.Fever", 450.0), ("HIV", 500.0), ("HCV", 500.0), ("TB (ICT)", 750.0),
         ("Malaria. pf/pv", 700.0), ("H. Pylori", 850.0), ("Fallaria (ICT)", 750.0),
-        ("Dengue NS1. IGG/IgM", 300.0),
+        ("Dengue NS1.", 300.0),("Dengue IGG/IgM", 300.0),
         # HORMONE PANEL
         ("T3", 1200.0), ("T4", 1200.0), ("FT3", 900.0), ("FT4", 900.0), ("TSH", 1100.0),
         ("HbA1c", 1500.0), ("Prolactin", 1200.0), ("S. IgE", 1500.0), ("S.IgE (Device Test)", 700.0),
