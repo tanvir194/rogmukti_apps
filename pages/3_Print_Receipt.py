@@ -211,5 +211,85 @@ receipt_html += f"""
     </div>
 </div>
 """
+# --- কোডের একেবারে শেষ লাইনে st.markdown-এর পরিবর্তে এটি লিখুন ---
 
-st.markdown(receipt_html, unsafe_allow_html=True)
+# CSS স্টাইল এবং HTML কন্টেন্টকে একসাথে জোড়া দেওয়া হচ্ছে
+full_html_content = f"""
+<style>
+/* প্রিন্ট করার সময় শুধু রসিদের অংশটি দেখানোর জন্য মিডিয়া কুয়েরি */
+@media print {{
+    body * {{
+        visibility: hidden !important;
+    }}
+    #receipt, #receipt * {{
+        visibility: visible !important;
+    }}
+    #receipt {{
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }}
+    @page {{
+        size: A4 portrait;
+        margin: 10mm;
+    }}
+}}
+
+/* স্ক্রিনে রসিদটি যেভাবে দেখাবে */
+.receipt-box {{
+    max-width: 600px;
+    margin: 10px auto;
+    padding: 30px;
+    border: 2px solid #1a365d;
+    border-radius: 12px;
+    background-color: white;
+    font-family: 'Arial', sans-serif;
+    color: black;
+}}
+.header {{
+    text-align: center;
+    background-color: #1a365d;
+    color: white;
+    padding: 20px;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 20px;
+}}
+.header h2 {{
+    margin: 0;
+    font-size: 24px;
+}}
+.info-table, .test-table {{
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    color: black;
+}}
+.info-table td {{
+    padding: 6px 0;
+    font-size: 15px;
+}}
+.test-table th, .test-table td {{
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+    font-size: 14px;
+}}
+.test-table th {{
+    background-color: #f2f2f2;
+}}
+.total-section {{
+    text-align: right;
+    font-size: 16px;
+    line-height: 1.6;
+}}
+.total-section b {{
+    color: #1a365d;
+}}
+</style>
+
+{receipt_html}
+"""
+
+# নিখুঁতভাবে HTML রেন্ডার করার কম্পোনেন্ট (উচ্চতা ১০০০ পিক্সেল দেওয়া হয়েছে যেন পুরো রসিদ ধরে)
+st.components.v1.html(full_html_content, height=1000, scroller=True)
