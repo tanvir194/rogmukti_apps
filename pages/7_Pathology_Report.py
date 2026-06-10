@@ -1,190 +1,151 @@
 import streamlit as st
 import sqlite3
-import json
+import pandas as pd
 import os
-from docx import Document
 from datetime import datetime
 
-# সিকিউরিটি চেক
-if "logged_in" not in st.session_state or not st.session_state.logged_in:
-    st.warning("🔒 অ্যাক্সেস রিফিউজড! দয়া করে আগে মেইন পেজ থেকে লগইন করুন।")
+# 🔑 1. ADMIN SECURITY LOCK
+ADMIN_PASSWORD = "12345"
+
+if "admin_auth" not in st.session_state:
+    st.session_state.admin_auth = False
+
+if not st.session_state.admin_auth:
+    st.warning("🔒 This page is locked. Enter admin password to view.")
+    password_box = st.text_input("🔑 Enter Password:", type="password", key="lock_dashboard")
+    
+    if st.button("🔓 Unlock Dashboard", type="primary", key="btn_dashboard"):
+        if password_box == ADMIN_PASSWORD:
+            st.session_state.admin_auth = True
+            st.success("🎉 Successfully Unlocked!")
+            st.rerun()
+        else:
+            st.error("❌ Incorrect Password!")
     st.stop()
 
-st.title("🔬 প্যাথলজি রিপোর্ট (কাস্টম ওয়ার্ড ফরম্যাট)")
-st.write("---")
+# 📊 2. MAIN DASHBOARD
+st.title("📊 Daily & Monthly Cash Accounting")
 
-# ডিরেক্টরি পাথ লজিক
+# Database Path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
-TEMPLATE_DIR = os.path.join(BASE_DIR, "report_templates")
-TEMPLATE_PATH = os.path.join(TEMPLATE_DIR, "pathology_template.docx")
 
-if not os.path.exists(TEMPLATE_DIR):
-    os.makedirs(TEMPLATE_DIR)
+conn = sqlite3.connect(DB_PATH)
+c = conn.cursor()
 
-# ডাটাবেজ কানেকশন ও টেবিল তৈরি নিশ্চিত করা
+# Ensure table exists
+c.execute("""
+CREATE TABLE IF NOT EXISTS billing_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_name TEXT,
+    age INTEGER,
+    phone TEXT,
+    doctor TEXT,
+    selected_tests TEXT,
+    total_amount REAL,
+    discount_percent REAL,
+    net_paid REAL,
+    due_amount REAL,
+    billing_date TEXT,
+    ref_fee REAL DEFAULT 0.0
+)
+""")
+conn.commit()
+
 try:
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS pathology_reports (
-        invoice_id INTEGER PRIMARY KEY,
-        report_data TEXT,
-        reported_date TEXT
-    )
-    """)
-    conn.commit()
-    conn.close()
-except Exception as e:
-    st.error(f"❌ ডাটাবেজ কানেকশন তৈরি করা যাচ্ছে না: {e}")
-
-# --- ১. মাইক্রোসফট ওয়ার্ড ফরম্যাট আপলোড সেকশন ---
-st.subheader("📁 আপনার অফিশিয়াল MS Word (.doc/.docx) ফরম্যাট আপলোড করুন")
-uploaded_template = st.file_uploader("ল্যাবের প্যাড বা ফরম্যাট ফাইলটি এখানে একবার আপলোড করে রাখুন:", type=["doc", "docx"])
-
-if uploaded_template is not None:
-    with open(TEMPLATE_PATH, "wb") as f:
-        f.write(uploaded_template.getbuffer())
-    st.success("✅ আপনার কাস্টম ওয়ার্ড ফরম্যাটটি সফলভাবে আপলোড ও সেভ হয়েছে!")
-
-if not os.path.exists(TEMPLATE_PATH):
-    st.info("ℹ️ শুরু করার জন্য ওপরে আপনার ল্যাবের রিসিট বা রিপোর্টের একটি মাইক্রোসফট ওয়ার্ড ফরম্যাট আপলোড করুন।")
-    st.markdown("""
-    💡 **ওয়ার্ড ফাইলে লেখার নিয়ম:** আপনার ওয়ার্ড ফাইলের যেখানে রোগীর নাম, বয়স বসাতে চান, সেখানে নিচের ট্যাগগুলো হুবহু লিখে রাখুন:
-    * রোগীর নামের জায়গায় লিখুন: `{{PATIENT_NAME}}`
-    * ইনভয়েস আইডির জায়গায় লিখুন: `{{INVOICE_ID}}`
-    * বয়স: `{{AGE}}` | ডাক্তার: `{{DOCTOR}}` | তারিখ: `{{DATE}}`
-    * টেস্টের ফলাফল টেবিলের ভেতরে যেখানে টেস্টের নাম ও রেজাল্ট বসবে সেখানে লিখুন: `{{TEST_RESULTS}}`
-    """)
-    st.stop()
-else:
-    st.caption("✅ ল্যাবের নিজস্ব ওয়ার্ড ফরম্যাটটি ব্যাকগ্রাউন্ডে রেডি আছে।")
-
-st.write("---")
-
-# --- ২. বিল নম্বর দিয়ে রোগী খোঁজা ও ডাটা এন্ট্রি ---
-search_id = st.number_input("বিল নম্বর (Invoice ID) দিয়ে রোগীর টেস্ট খুঁজুন:", min_value=0, step=1, value=0)
-
-if search_id > 0:
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("SELECT patient_name, age, phone, doctor, selected_tests, billing_date FROM billing_records WHERE id = ?", (search_id,))
-        patient_row = c.fetchone()
+    df = pd.read_sql_query("SELECT * FROM billing_records", conn)
+    
+    if not df.empty:
+        df['billing_date'] = pd.to_datetime(df['billing_date'], errors='coerce')
+        df = df.dropna(subset=['billing_date'])
         
-        c.execute("SELECT report_data, reported_date FROM pathology_reports WHERE invoice_id = ?", (search_id,))
-        saved_report_row = c.fetchone()
-        conn.close()
+        option = st.radio("What do you want to view?", 
+                         ["Daily Accounting", "Monthly Accounting"], 
+                         horizontal=True)
         
-        if patient_row:
-            p_name, p_age, p_phone, p_doctor, p_tests_str, p_date = patient_row
-            st.success(f"🔍 রোগী পাওয়া গেছে: {p_name} | ডাক্তার: {p_doctor}")
+        if option == "Daily Accounting":
+            user_date = st.date_input("📅 Select Date:", datetime.now().date())
+            filtered_df = df[df['billing_date'].dt.date == user_date]
             
-            # টেস্ট আলাদা করা
-            raw_tests = [item.strip() for item in p_tests_str.split('|') if item.strip()]
-            tests_to_process = []
-            for item in raw_tests:
-                if ":" in item:
-                    tests_to_process.append(item.split(":", 1)[0])
-                else:
-                    tests_to_process.append(item)
-                    
-            saved_data = {}
-            display_report_date = p_date # ডিফল্ট হিসেবে রোগীর ভর্তির তারিখ
-            
-            if saved_report_row:
-                try:
-                    saved_data = json.loads(saved_report_row[0])
-                    if saved_report_row[1]:
-                        display_report_date = saved_report_row[1] # আগের সেভ করা রিপোর্ট তৈরির তারিখ
-                except:
-                    pass
-
-            st.subheader("📝 টেস্টের ফলাফল ও রেফারেন্স ভ্যালু লিখুন")
-            new_report_data = {}
-            
-            for test in tests_to_process:
-                st.markdown(f"##### 🧪 টেস্ট: **{test}**")
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    result = st.text_input(f"ফলাফল (Result) - {test}:", value=saved_data.get(test, {}).get("result", ""), key=f"res_{test}")
-                with col2:
-                    unit = st.text_input(f"ইউনিট (Unit) - {test}:", value=saved_data.get(test, {}).get("unit", ""), key=f"unit_{test}")
-                with col3:
-                    ref_range = st.text_input(f"নরমাল রেঞ্জ (Reference) - {test}:", value=saved_data.get(test, {}).get("ref", ""), key=f"ref_{test}")
-                    
-                new_report_data[test] = {"result": result, "unit": unit, "ref": ref_range}
-                st.markdown("---")
-                
-            if st.button("💾 রিপোর্টের ডাটা সেভ করুন", type="primary", use_container_width=True):
-                conn = sqlite3.connect(DB_PATH)
-                c = conn.cursor()
-                json_str = json.dumps(new_report_data)
-                
-                # 🌟 এখানে নিখুঁতভাবে কারেন্ট ডেট ফরম্যাট জেনারেট করা হয়েছে (টাইপো ফিক্সড)
-                current_time_str = datetime.now().strftime("%Y-%m-%d")
-                
-                c.execute("""
-                    INSERT INTO pathology_reports (invoice_id, report_data, reported_date)
-                    VALUES (?, ?, ?)
-                    ON CONFLICT(invoice_id) DO UPDATE SET report_data = ?, reported_date = ?
-                """, (search_id, json_str, current_time_str, json_str, current_time_str))
-                conn.commit()
-                conn.close()
-                st.success("✅ প্যাথলজি রিপোর্টের ডাটা এবং আজকের তারিখ সফলভাবে সেভ হয়েছে!")
-                st.rerun()
-
-            # --- ৩. ওয়ার্ড ফাইল জেনারেট ও ডাউনলোড লজিক ---
-            if saved_report_row:
-                st.subheader("📥 আপনার কাস্টমাইজড ওয়ার্ড রিপোর্টটি ডাউনলোড করুন")
-                st.info(f"📅 এই রিপোর্টটি তৈরির তারিখ: **{display_report_date}**")
-                
-                try:
-                    doc = Document(TEMPLATE_PATH)
-                    
-                    # প্যারাগ্রাফের ট্যাগ পরিবর্তন করা ({{DATE}} ট্যাগে এখন অটো তারিখ বসে যাবে)
-                    for paragraph in doc.paragraphs:
-                        if "{{PATIENT_NAME}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{PATIENT_NAME}}", str(p_name))
-                        if "{{INVOICE_ID}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{INVOICE_ID}}", f"#{search_id}")
-                        if "{{AGE}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{AGE}}", str(p_age))
-                        if "{{DOCTOR}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{DOCTOR}}", str(p_doctor))
-                        if "{{DATE}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{DATE}}", str(display_report_date))
-                    
-                    # টেবিলের ভেতরের ট্যাগ পরিবর্তন
-                    for table in doc.tables:
-                        for row in table.rows:
-                            for cell in row.cells:
-                                if "{{PATIENT_NAME}}" in cell.text: cell.text = cell.text.replace("{{PATIENT_NAME}}", str(p_name))
-                                if "{{INVOICE_ID}}" in cell.text: cell.text = cell.text.replace("{{INVOICE_ID}}", f"#{search_id}")
-                                if "{{AGE}}" in cell.text: cell.text = cell.text.replace("{{AGE}}", str(p_age))
-                                if "{{DOCTOR}}" in cell.text: cell.text = cell.text.replace("{{DOCTOR}}", str(p_doctor))
-                                if "{{DATE}}" in cell.text: cell.text = cell.text.replace("{{DATE}}", str(display_report_date))
-                                
-                                if "{{TEST_RESULTS}}" in cell.text:
-                                    cell.text = "" 
-                                    results_text = ""
-                                    for t_name, t_val in saved_data.items():
-                                        results_text += f"{t_name} \t\t Result: {t_val['result']} \t Unit: {t_val['unit']} \t Ref: {t_val['ref']}\n"
-                                    cell.text = results_text
-
-                    output_path = os.path.join(BASE_DIR, f"Report_{search_id}.docx")
-                    doc.save(output_path)
-                    
-                    with open(output_path, "rb") as file:
-                        st.download_button(
-                            label="📥 জেনারেটেড MS Word (.docx) ফাইল ডাউনলোড করুন",
-                            data=file,
-                            file_name=f"Pathology_Report_ID_{search_id}.docx",
-                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                            use_container_width=True
-                        )
-                    
-                    if os.path.exists(output_path):
-                        os.remove(output_path)
-                        
-                except Exception as e:
-                    st.error(f"❌ ওয়ার্ড ফাইলটি তৈরি করতে সমস্যা হচ্ছে। এরর: {e}")
         else:
-            st.error(f"⚠️ এই বিল নম্বরের ({search_id}) কোনো রোগীর তথ্য পাওয়া যায়নি।")
-    except Exception as e:
-        st.error(f"❌ ডাটাবেজ অপারেশন ব্যর্থ হয়েছে। এরর টেক্সট: {e}")
+            col_m1, col_m2 = st.columns(2)
+            with col_m1:
+                available_years = sorted(df['billing_date'].dt.year.unique())
+                if datetime.now().year not in available_years:
+                    available_years.append(datetime.now().year)
+                selected_year = st.selectbox("Select Year:", 
+                                           available_years, 
+                                           index=available_years.index(datetime.now().year))
+            
+            with col_m2:
+                months_en = ["January", "February", "March", "April", "May", "June", 
+                            "July", "August", "September", "October", "November", "December"]
+                current_month = datetime.now().month
+                selected_month = st.selectbox("Select Month:", 
+                                            range(1, 13), 
+                                            index=current_month-1, 
+                                            format_func=lambda x: months_en[x-1])
+            
+            filtered_df = df[(df['billing_date'].dt.month == selected_month) & 
+                           (df['billing_date'].dt.year == selected_year)]
+        
+        st.markdown("---")
+        
+        if not filtered_df.empty:
+            st.success(f"📋 Total {len(filtered_df)} bills found.")
+            
+            box1, box2, box3, box4 = st.columns(4)
+            with box1:
+                st.metric("💰 Total Billed Amount", f"{filtered_df['total_amount'].sum():,.2f} ৳")
+            with box2:
+                st.metric("✅ Total Cash Collected", f"{filtered_df['net_paid'].sum():,.2f} ৳")
+            with box3:
+                st.metric("🚨 Total Due Amount", f"{filtered_df['due_amount'].sum():,.2f} ৳")
+            with box4:
+                total_ref = filtered_df['ref_fee'].sum() if 'ref_fee' in filtered_df.columns else 0.0
+                st.metric("🩺 Total Doctor Referral Fee", f"{total_ref:,.2f} ৳")
+                
+            st.subheader("🩺 Doctor-wise Referral Fee Summary")
+            if 'ref_fee' in filtered_df.columns and 'doctor' in filtered_df.columns:
+                doc_fee_df = filtered_df.groupby('doctor')['ref_fee'].sum().reset_index()
+                doc_fee_df = doc_fee_df.rename(columns={
+                    'doctor': 'Doctor Name', 
+                    'ref_fee': 'Total Referral Fee (৳)'
+                })
+                st.dataframe(doc_fee_df, use_container_width=True, hide_index=True)
+            
+            st.subheader("📋 Detailed Bill List")
+            display_df = filtered_df.copy()
+            display_df['billing_date'] = display_df['billing_date'].dt.strftime('%Y-%m-%d')
+            display_df['selected_tests'] = display_df['selected_tests'].str.replace('|', ', ', regex=False)
+            
+            display_df = display_df.rename(columns={
+                'id': 'Bill No',
+                'patient_name': 'Patient Name',
+                'age': 'Age',
+                'phone': 'Phone',
+                'selected_tests': 'Tests',
+                'doctor': 'Referred Doctor',
+                'total_amount': 'Total Amount',
+                'net_paid': 'Cash Paid',
+                'due_amount': 'Due Amount',
+                'billing_date': 'Date',
+                'ref_fee': 'Referral Fee'
+            })
+            
+            available_cols = ['Bill No', 'Date', 'Patient Name', 'Referred Doctor', 
+                            'Tests', 'Total Amount', 'Cash Paid', 'Due Amount']
+            if 'Referral Fee' in display_df.columns:
+                available_cols.append('Referral Fee')
+                
+            st.dataframe(display_df[available_cols], use_container_width=True, hide_index=True)
+            
+        else:
+            st.warning("⚠️ No bills found for the selected date/month.")
+    else:
+        st.info("ℹ️ No billing data available in the database yet.")
+
+except Exception as e:
+    st.error(f"❌ Error loading database. Details: {e}")
+
+conn.close()
