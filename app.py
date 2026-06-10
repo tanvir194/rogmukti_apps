@@ -14,7 +14,7 @@ if not st.session_state.logged_in:
     
     password = st.text_input("সিকিউরিটি পাসওয়ার্ড দিন:", type="password")
     if st.button("লগইন করুন"):
-        if password == "admin123": # <--- এটি আপনার পাসওয়ার্ড, চাইলে পরিবর্তন করতে পারেন
+        if password == "admin123":
             st.session_state.logged_in = True
             st.success("লগইন সফল হয়েছে! বাম পাশের মেনু থেকে অন্য পেজে যান।")
             st.rerun()
@@ -24,12 +24,15 @@ else:
     st.title("👋 স্বাগতম, অ্যাডমিন!")
     st.info("আপনার প্রজেক্টের কাজ শুরু করতে বাম পাশের সাইডবার (Sidebar) থেকে যেকোনো পেজ সিলেক্ট করুন।")
     
+    # 🚨 জোরপূর্বক নেভিগেশন লিংক তৈরি (সবগুলো লাইন লাইনের শুরু থেকে সমান স্পেসে আছে)
+    st.sidebar.markdown("### 🗂️ মেনু অপশন")
+    st.sidebar.page_link("pages/1_Patient_Entry.py", label="📝 পেশেন্ট এন্ট্রি ও বিলিং", icon="📝")
+    st.sidebar.page_link("pages/2_Dashboard.py", label="📊 দৈনিক ও মাসিক হিসাব", icon="📊")
+    st.sidebar.page_link("pages/3_Print_Receipt.py", label="🖨️ মানি রিসিট ও প্রিন্ট", icon="🖨️")
+    
+    st.sidebar.markdown("---")
     # লগআউট বাটন
     if st.sidebar.button("লগআউট (Logout)"):
         st.session_state.logged_in = False
         st.rerun()
-# সাইডবারে পেজগুলো জোরপূর্বক দেখানোর জন্য ব্যাকআপ নেভিগেশন
-st.sidebar.page_link("pages/1_Patient_Entry.py", label="📝 পেশেন্ট এন্ট্রি ও বিলিং")
-st.sidebar.page_link("pages/2_Dashboard.py", label="📊 দৈনিক ও মাসিক হিসাব")
-    # app.py এর একদম শেষে থাকা লিংকের নিচে এটি বসিয়ে দিন:
-    st.sidebar.page_link("pages/3_Print_Receipt.py", label="🖨️ মানি রিসিট ও প্রিন্ট", icon="🖨️")
+        
