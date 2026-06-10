@@ -4,148 +4,93 @@ import pandas as pd
 import os
 from datetime import datetime
 
-# 🔑 1. ADMIN SECURITY LOCK
-ADMIN_PASSWORD = "12345"
+st.set_page_config(page_title="Pathology Report", layout="wide")
 
-if "admin_auth" not in st.session_state:
-    st.session_state.admin_auth = False
+st.title("🧪 Pathology Reports")
+st.markdown("**সকল ধরনের প্যাথলজি ও ল্যাবরেটরি রিপোর্ট এখানে সেভ করা হবে**")
 
-if not st.session_state.admin_auth:
-    st.warning("🔒 This page is locked. Enter admin password to view.")
-    password_box = st.text_input("🔑 Enter Password:", type="password", key="lock_dashboard")
-    
-    if st.button("🔓 Unlock Dashboard", type="primary", key="btn_dashboard"):
-        if password_box == ADMIN_PASSWORD:
-            st.session_state.admin_auth = True
-            st.success("🎉 Successfully Unlocked!")
-            st.rerun()
-        else:
-            st.error("❌ Incorrect Password!")
-    st.stop()
-
-# 📊 2. MAIN DASHBOARD
-st.title("📊 Daily & Monthly Cash Accounting")
-
-# Database Path
+# Database and Folder Setup
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "pathology_reports")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
 
-# Ensure table exists
+# Create Table
 c.execute("""
-CREATE TABLE IF NOT EXISTS billing_records (
+CREATE TABLE IF NOT EXISTS pathology_reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    patient_name TEXT,
-    age INTEGER,
-    phone TEXT,
-    doctor TEXT,
-    selected_tests TEXT,
-    total_amount REAL,
-    discount_percent REAL,
-    net_paid REAL,
-    due_amount REAL,
-    billing_date TEXT,
-    ref_fee REAL DEFAULT 0.0
+    patient_name TEXT NOT NULL,
+    patient_phone TEXT,
+    test_name TEXT NOT NULL,
+    report_date TEXT NOT NULL,
+    doctor_name TEXT,
+    result TEXT,
+    notes TEXT,
+    file_path TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
 )
 """)
 conn.commit()
 
-try:
-    df = pd.read_sql_query("SELECT * FROM billing_records", conn)
+tab1, tab2 = st.tabs(["➕ নতুন রিপোর্ট যোগ করুন", "📋 সব রিপোর্ট দেখুন"])
+
+with tab1:
+    st.subheader("নতুন প্যাথলজি রিপোর্ট যোগ করুন")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        patient_name = st.text_input("রোগীর নাম *")
+        patient_phone = st.text_input("মোবাইল নম্বর")
+        test_name = st.text_input("টেস্টের নাম / পরীক্ষা *")
+    
+    with col2:
+        report_date = st.date_input("রিপোর্টের তারিখ", datetime.now().date())
+        doctor_name = st.text_input("রেফার করা ডাক্তার")
+    
+    result = st.text_area("রিপোর্ট / ফলাফল", height=150)
+    notes = st.text_area("অতিরিক্ত নোট / মন্তব্য", height=100)
+    
+    uploaded_file = st.file_uploader("রিপোর্ট ফাইল আপলোড করুন (PDF বা ছবি)", 
+                                   type=["pdf", "png", "jpg", "jpeg"])
+
+    if st.button("💾 রিপোর্ট সেভ করুন", type="primary", use_container_width=True):
+        if patient_name and test_name:
+            file_path_db = None
+            if uploaded_file:
+                filename = f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uploaded_file.name}"
+                save_path = os.path.join(UPLOAD_FOLDER, filename)
+                with open(save_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                file_path_db = filename
+
+            c.execute("""
+                INSERT INTO pathology_reports 
+                (patient_name, patient_phone, test_name, report_date, doctor_name, result, notes, file_path)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (patient_name, patient_phone, test_name, str(report_date), 
+                  doctor_name, result, notes, file_path_db))
+            conn.commit()
+            
+            st.success("✅ রিপোর্ট সফলভাবে সেভ হয়েছে!")
+            st.rerun()
+        else:
+            st.error("রোগীর নাম এবং টেস্টের নাম দিতে হবে!")
+
+with tab2:
+    st.subheader("সকল সেভকৃত রিপোর্ট")
+    df = pd.read_sql_query("SELECT * FROM pathology_reports ORDER BY report_date DESC, id DESC", conn)
     
     if not df.empty:
-        df['billing_date'] = pd.to_datetime(df['billing_date'], errors='coerce')
-        df = df.dropna(subset=['billing_date'])
+        search = st.text_input("🔍 রোগী বা টেস্ট দিয়ে সার্চ করুন")
+        if search:
+            df = df[df['patient_name'].str.contains(search, case=False, na=False) | 
+                    df['test_name'].str.contains(search, case=False, na=False)]
         
-        option = st.radio("What do you want to view?", 
-                         ["Daily Accounting", "Monthly Accounting"], 
-                         horizontal=True)
-        
-        if option == "Daily Accounting":
-            user_date = st.date_input("📅 Select Date:", datetime.now().date())
-            filtered_df = df[df['billing_date'].dt.date == user_date]
-            
-        else:
-            col_m1, col_m2 = st.columns(2)
-            with col_m1:
-                available_years = sorted(df['billing_date'].dt.year.unique())
-                if datetime.now().year not in available_years:
-                    available_years.append(datetime.now().year)
-                selected_year = st.selectbox("Select Year:", 
-                                           available_years, 
-                                           index=available_years.index(datetime.now().year))
-            
-            with col_m2:
-                months_en = ["January", "February", "March", "April", "May", "June", 
-                            "July", "August", "September", "October", "November", "December"]
-                current_month = datetime.now().month
-                selected_month = st.selectbox("Select Month:", 
-                                            range(1, 13), 
-                                            index=current_month-1, 
-                                            format_func=lambda x: months_en[x-1])
-            
-            filtered_df = df[(df['billing_date'].dt.month == selected_month) & 
-                           (df['billing_date'].dt.year == selected_year)]
-        
-        st.markdown("---")
-        
-        if not filtered_df.empty:
-            st.success(f"📋 Total {len(filtered_df)} bills found.")
-            
-            box1, box2, box3, box4 = st.columns(4)
-            with box1:
-                st.metric("💰 Total Billed Amount", f"{filtered_df['total_amount'].sum():,.2f} ৳")
-            with box2:
-                st.metric("✅ Total Cash Collected", f"{filtered_df['net_paid'].sum():,.2f} ৳")
-            with box3:
-                st.metric("🚨 Total Due Amount", f"{filtered_df['due_amount'].sum():,.2f} ৳")
-            with box4:
-                total_ref = filtered_df['ref_fee'].sum() if 'ref_fee' in filtered_df.columns else 0.0
-                st.metric("🩺 Total Doctor Referral Fee", f"{total_ref:,.2f} ৳")
-                
-            st.subheader("🩺 Doctor-wise Referral Fee Summary")
-            if 'ref_fee' in filtered_df.columns and 'doctor' in filtered_df.columns:
-                doc_fee_df = filtered_df.groupby('doctor')['ref_fee'].sum().reset_index()
-                doc_fee_df = doc_fee_df.rename(columns={
-                    'doctor': 'Doctor Name', 
-                    'ref_fee': 'Total Referral Fee (৳)'
-                })
-                st.dataframe(doc_fee_df, use_container_width=True, hide_index=True)
-            
-            st.subheader("📋 Detailed Bill List")
-            display_df = filtered_df.copy()
-            display_df['billing_date'] = display_df['billing_date'].dt.strftime('%Y-%m-%d')
-            display_df['selected_tests'] = display_df['selected_tests'].str.replace('|', ', ', regex=False)
-            
-            display_df = display_df.rename(columns={
-                'id': 'Bill No',
-                'patient_name': 'Patient Name',
-                'age': 'Age',
-                'phone': 'Phone',
-                'selected_tests': 'Tests',
-                'doctor': 'Referred Doctor',
-                'total_amount': 'Total Amount',
-                'net_paid': 'Cash Paid',
-                'due_amount': 'Due Amount',
-                'billing_date': 'Date',
-                'ref_fee': 'Referral Fee'
-            })
-            
-            available_cols = ['Bill No', 'Date', 'Patient Name', 'Referred Doctor', 
-                            'Tests', 'Total Amount', 'Cash Paid', 'Due Amount']
-            if 'Referral Fee' in display_df.columns:
-                available_cols.append('Referral Fee')
-                
-            st.dataframe(display_df[available_cols], use_container_width=True, hide_index=True)
-            
-        else:
-            st.warning("⚠️ No bills found for the selected date/month.")
+        st.dataframe(df, use_container_width=True, hide_index=True)
     else:
-        st.info("ℹ️ No billing data available in the database yet.")
-
-except Exception as e:
-    st.error(f"❌ Error loading database. Details: {e}")
+        st.info("এখনো কোনো রিপোর্ট সেভ করা হয়নি।")
 
 conn.close()
