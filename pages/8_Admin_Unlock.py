@@ -4,7 +4,7 @@ st.title("🔑 অ্যাডমিন প্যানেল আনলকার
 st.write("---")
 
 # সিকিউরিটি পাসওয়ার্ড সেট করুন (এখানে আপনি আপনার পছন্দমতো পাসওয়ার্ড দিতে পারেন)
-ADMIN_PASSWORD = "rogmukti_admin"
+ADMIN_PASSWORD = "12345"
 
 if "admin_authenticated" not in st.session_state:
     st.session_state.admin_authenticated = False
