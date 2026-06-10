@@ -7,7 +7,7 @@ from datetime import datetime
 st.set_page_config(page_title="Pathology Report", layout="wide")
 
 st.title("🧪 Pathology Reports")
-st.markdown("**সকল ধরনের প্যাথলজি ও ল্যাবরেটরি রিপোর্ট এখানে সেভ করা হবে**")
+st.markdown("**অটোমেটিক রিপোর্ট জেনারেটর সহ প্যাথলজি সিস্টেম**")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
@@ -33,22 +33,19 @@ CREATE TABLE IF NOT EXISTS pathology_reports (
 """)
 conn.commit()
 
-tab1, tab2 = st.tabs(["➕ নতুন রিপোর্ট যোগ করুন", "📋 সব রিপোর্ট দেখুন"])
+tab1, tab2 = st.tabs(["➕ নতুন অটো রিপোর্ট", "📋 সব রিপোর্ট"])
 
 with tab1:
-    st.subheader("নতুন প্যাথলজি রিপোর্ট যোগ করুন")
+    st.subheader("অটোমেটিক রিপোর্ট জেনারেট করুন")
 
+    # Patient Selection
     try:
-        patients_df = pd.read_sql_query("""
-            SELECT DISTINCT patient_name, phone, doctor 
-            FROM billing_records ORDER BY billing_date DESC LIMIT 100
-        """, conn)
+        patients = pd.read_sql_query("SELECT DISTINCT patient_name, phone, doctor FROM billing_records ORDER BY billing_date DESC", conn)
+        patient_list = ["নতুন রোগী"] + sorted(patients['patient_name'].unique().tolist())
+        selected_patient = st.selectbox("রোগীর নাম সিলেক্ট করুন", patient_list)
         
-        patient_options = ["নতুন রোগী"] + sorted(patients_df['patient_name'].unique().tolist()) if not patients_df.empty else ["নতুন রোগী"]
-        selected_patient = st.selectbox("রোগীর নাম সিলেক্ট করুন", patient_options)
-        
-        if selected_patient != "নতুন রোগী" and not patients_df.empty:
-            row = patients_df[patients_df['patient_name'] == selected_patient].iloc[0]
+        if selected_patient != "নতুন রোগী":
+            row = patients[patients['patient_name'] == selected_patient].iloc[0]
             def_name = row['patient_name']
             def_phone = row.get('phone', '')
             def_doctor = row.get('doctor', '')
@@ -60,23 +57,22 @@ with tab1:
     col1, col2 = st.columns(2)
     with col1:
         patient_name = st.text_input("রোগীর নাম *", value=def_name)
-        patient_phone = st.text_input("মোবাইল নম্বর", value=def_phone)
-        test_name = st.text_input("টেস্টের নাম / পরীক্ষা *")
+        patient_phone = st.text_input("মোবাইল", value=def_phone)
+        test_name = st.text_input("টেস্টের নাম *")
     with col2:
-        report_date = st.date_input("রিপোর্টের তারিখ", datetime.now().date())
-        doctor_name = st.text_input("রেফার করা ডাক্তার", value=def_doctor)
+        report_date = st.date_input("রিপোর্ট তারিখ", datetime.now().date())
+        doctor_name = st.text_input("রেফার ডাক্তার", value=def_doctor)
 
-    result = st.text_area("রিপোর্ট / ফলাফল", height=150)
-    notes = st.text_area("অতিরিক্ত নোট", height=100)
+    st.markdown("### টেস্ট রেজাল্ট দিন")
+    result = st.text_area("রেজাল্ট লিখুন (যেমন: Blood Group: B Positive\nHBsAg: Negative\nRandom: 4.85 mmol/L)", height=200)
 
-    uploaded_file = st.file_uploader(
-        "রিপোর্ট ফাইল আপলোড করুন", 
-        type=["pdf", "png", "jpg", "jpeg", "doc", "docx"],
-        help="PDF, DOC, DOCX, JPG, PNG সমর্থিত"
-    )
+    notes = st.text_area("অতিরিক্ত নোট / মন্তব্য", height=100)
 
-    if st.button("💾 রিপোর্ট সেভ করুন", type="primary", use_container_width=True):
-        if patient_name.strip() and test_name.strip():
+    uploaded_file = st.file_uploader("অতিরিক্ত ফাইল আপলোড (ঐচ্ছিক)", 
+                                   type=["pdf", "png", "jpg", "jpeg", "doc", "docx"])
+
+    if st.button("🖨️ রিপোর্ট জেনারেট ও সেভ করুন", type="primary", use_container_width=True):
+        if patient_name and test_name and result:
             file_path = None
             if uploaded_file:
                 filename = f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uploaded_file.name}"
@@ -90,56 +86,47 @@ with tab1:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (patient_name, patient_phone, test_name, str(report_date), doctor_name, result, notes, file_path))
             conn.commit()
-            st.success("✅ রিপোর্ট সফলভাবে সেভ হয়েছে!")
-            st.rerun()
+
+            # Show Printable Report
+            st.success("✅ রিপোর্ট সেভ হয়েছে!")
+            
+            st.markdown("---")
+            st.subheader("🖨️ প্রিন্ট রেডি রিপোর্ট")
+            
+            st.markdown(f"""
+            <div style="border: 2px solid #333; padding: 30px; margin: 20px 0; font-family: Arial;">
+                <h2 style="text-align: center;">Pathology Report</h2>
+                <p><strong>রোগীর নাম:</strong> {patient_name} &nbsp;&nbsp;&nbsp; <strong>মোবাইল:</strong> {patient_phone}</p>
+                <p><strong>রেফার ডাক্তার:</strong> {doctor_name} &nbsp;&nbsp;&nbsp; <strong>তারিখ:</strong> {report_date}</p>
+                <p><strong>পরীক্ষা:</strong> {test_name}</p>
+                <hr>
+                <pre style="font-size: 16px; white-space: pre-wrap;">{result}</pre>
+                {f"<p><strong>নোট:</strong> {notes}</p>" if notes else ""}
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.info("↑ উপরের রিপোর্টটি সিলেক্ট করে **Ctrl + P** চাপুন প্রিন্ট করার জন্য")
+
         else:
-            st.error("রোগীর নাম এবং টেস্টের নাম দিতে হবে")
+            st.error("রোগীর নাম, টেস্টের নাম এবং রেজাল্ট দিতে হবে")
 
 with tab2:
     st.subheader("সকল সেভকৃত রিপোর্ট")
-    df = pd.read_sql_query("SELECT * FROM pathology_reports ORDER BY report_date DESC, id DESC", conn)
+    df = pd.read_sql_query("SELECT * FROM pathology_reports ORDER BY id DESC", conn)
     
     if not df.empty:
-        search = st.text_input("🔍 সার্চ করুন (রোগী/টেস্ট)")
-        if search:
-            df = df[df['patient_name'].str.contains(search, case=False, na=False) | 
-                    df['test_name'].str.contains(search, case=False, na=False)]
-        
         for _, row in df.iterrows():
-            with st.expander(f"🧾 {row['patient_name']} - {row['test_name']} ({row['report_date']})"):
-                st.write(f"**রোগীর নাম:** {row['patient_name']}")
-                st.write(f"**মোবাইল:** {row['patient_phone']}")
-                st.write(f"**রেফার ডাক্তার:** {row['doctor_name']}")
-                st.write(f"**টেস্ট:** {row['test_name']}")
-                st.write(f"**তারিখ:** {row['report_date']}")
-                st.write("**ফলাফল:**")
-                st.text_area(" ", value=row['result'], height=150, key=f"res{row['id']}", disabled=True)
-                
+            with st.expander(f"{row['patient_name']} - {row['test_name']} ({row['report_date']})"):
+                st.write(f"**ডাক্তার:** {row['doctor_name']}")
+                st.text_area("রেজাল্ট", value=row['result'], height=200, disabled=True)
                 if row['notes']:
                     st.write("**নোট:**", row['notes'])
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    if row['file_path']:
-                        file_full = os.path.join(UPLOAD_FOLDER, row['file_path'])
-                        if os.path.exists(file_full):
-                            with open(file_full, "rb") as f:
-                                st.download_button("📥 ডাউনলোড", f, file_name=row['file_path'], key=f"dl{row['id']}")
-                with col2:
-                    # Print Button
-                    if st.button("🖨️ প্রিন্ট করুন", key=f"print{row['id']}"):
-                        st.markdown(f"""
-                        <div style="text-align:center; padding:20px; border:1px solid #ddd;">
-                            <h3>Pathology Report</h3>
-                            <p><strong>রোগী:</strong> {row['patient_name']}</p>
-                            <p><strong>টেস্ট:</strong> {row['test_name']}</p>
-                            <p><strong>তারিখ:</strong> {row['report_date']}</p>
-                            <hr>
-                            <p><strong>ফলাফল:</strong><br>{row['result']}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        st.info("👆 উপরের অংশটি সিলেক্ট করে Ctrl + P চাপুন প্রিন্ট করার জন্য")
+                if row['file_path']:
+                    file_path = os.path.join(UPLOAD_FOLDER, row['file_path'])
+                    if os.path.exists(file_path):
+                        with open(file_path, "rb") as f:
+                            st.download_button("📥 ডাউনলোড", f, row['file_path'])
     else:
-        st.info("এখনো কোনো রিপোর্ট সেভ করা হয়নি।")
+        st.info("এখনো কোনো রিপোর্ট নেই")
 
 conn.close()
