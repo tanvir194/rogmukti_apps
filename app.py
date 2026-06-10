@@ -31,3 +31,5 @@ else:
 # সাইডবারে পেজগুলো জোরপূর্বক দেখানোর জন্য ব্যাকআপ নেভিগেশন
 st.sidebar.page_link("pages/1_Patient_Entry.py", label="📝 পেশেন্ট এন্ট্রি ও বিলিং")
 st.sidebar.page_link("pages/2_Dashboard.py", label="📊 দৈনিক ও মাসিক হিসাব")
+    # app.py এর একদম শেষে থাকা লিংকের নিচে এটি বসিয়ে দিন:
+    st.sidebar.page_link("pages/3_Print_Receipt.py", label="🖨️ মানি রিসিট ও প্রিন্ট", icon="🖨️")
