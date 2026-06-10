@@ -2,6 +2,7 @@ import streamlit as st
 import sqlite3
 from datetime import datetime
 
+# সিকিউরিটি চেক
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
     st.warning("🔒 অ্যাক্সেস রিফিউজড! দয়া করে আগে মেইন পেজ থেকে লগইন করুন।")
     st.stop()
@@ -9,7 +10,7 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
 
-# টেবিল তৈরি (ফিক্সড স্ট্রাকচার)
+# ডাটাবেজ টেবিল
 c.execute("""
 CREATE TABLE IF NOT EXISTS billing_records (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,54 +27,19 @@ CREATE TABLE IF NOT EXISTS billing_records (
 )
 """)
 
-c.execute("""
-CREATE TABLE IF NOT EXISTS diagnostic_tests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    test_name TEXT UNIQUE,
-    price REAL
-)
-""")
-conn.commit()
-
-c.execute("SELECT COUNT(*) FROM diagnostic_tests")
-count_result = c.fetchone()
-test_count = count_result[0] if count_result else 0
-
-if test_count < 15:
-    c.execute("DELETE FROM diagnostic_tests")
-    galachipa_official_tests = [
-        ("(CBC), ESR", 400.0), ("TC.DC", 250.0), ("HB%", 250.0), ("ESR", 200.0),
-        ("Platelet Count", 300.0), ("MP", 200.0), ("BT/CT", 350.0), ("C/E Count", 250.0),
-        ("Widal", 450.0), ("Aso Titre", 450.0), ("CRP", 450.0), ("RA/RF", 450.0),
-        ("HBs Ag (Screen Test)", 450.0), ("TPHA", 450.0), ("VDRL", 400.0),
-        ("Group & Rh Factor", 200.0), ("Mantaux-Test (M.T)", 250.0), ("Triple Antigen", 500.0),
-        ("R.Fever", 450.0), ("HIV", 500.0), ("HCV", 500.0), ("TB (ICT)", 750.0),
-        ("Malaria. pf/pv", 700.0), ("H. Pylori", 850.0), ("Fallaria (ICT)", 750.0),
-        ("Dengue NS1. IGG/IgM", 300.0),
-        ("T3", 1200.0), ("T4", 1200.0), ("FT3", 900.0), ("FT4", 900.0), ("TSH", 1100.0),
-        ("HbA1c", 1500.0), ("Prolactin", 1200.0), ("S. IgE", 1500.0), ("S.IgE (Device Test)", 700.0),
-        ("Random Blood Sugar (RBS)", 200.0), ("Fasting Blood Sugar (FBS)", 200.0),
-        ("2hr. After Breakfast", 200.0), ("2hr. After 75gm Glucose", 200.0), ("O.G.T.T", 500.0),
-        ("Blood Urea", 400.0), ("Cholesterol", 350.0), ("HDL", 400.0), ("TG (Triglycerides)", 350.0),
-        ("LDL", 300.0), ("S.GPT (ALT)", 500.0), ("S.GOT (AST)", 500.0), ("Bilirubin Total", 350.0),
-        ("Lipid Profile", 1000.0), ("Bilirubin Direct/Indirect", 450.0), ("Serum Creatinine", 400.0),
-        ("Uric Acid", 400.0), ("Amylase", 700.0), ("Calcium", 600.0),
-        ("Urine Pregnancy Test (PT)", 200.0), ("Urine R/E", 250.0),
-        ("Stool R/E", 400.0), ("Stool OBT", 400.0),
-        ("USG Whole Abdomen", 1000.0), ("USG Upper Abdomen", 800.0), ("USG Lower Abdomen", 800.0),
-        ("USG KUB", 1000.0), ("USG Pregnancy Profile", 800.0), ("USG Breast", 1200.0),
-        ("X-Ray Chest", 500.0), ("X-Ray PNS", 500.0), ("X-Ray Maxilla", 500.0), ("X-Ray Nasopharynx", 550.0),
-        ("X-Ray Abdomen A/P", 500.0), ("X-Ray Cervical Spine", 600.0), ("X-Ray Plane X-Ray Abdomen", 500.0),
-        ("X-Ray Mastoid Towns View", 500.0), ("X-Ray Skull", 600.0), ("X-Ray Pelvic", 500.0),
-        ("X-Ray Mandible B/V", 600.0), ("X-Ray KUB", 500.0), ("X-Ray D/S Spine", 600.0),
-        ("X-Ray L/S Spine", 600.0), ("X-Ray Foot B/V", 500.0), ("X-Ray Knee B/V", 550.0),
-        ("X-Ray Elbow B/V", 500.0), ("X-Ray Shoulder Joint B/V", 550.0), ("X-Ray Hip Joint", 500.0)
-    ]
-    c.executemany("INSERT OR IGNORE INTO diagnostic_tests (test_name, price) VALUES (?, ?)", galachipa_official_tests)
-    conn.commit()
-
-c.execute("SELECT test_name, price FROM diagnostic_tests ORDER BY test_name ASC")
-test_prices = {row[0]: row[1] for row in c.fetchall()}
+# টেস্টের নামের তালিকা (শুধু নাম, দাম এখানে লাগবে না কারণ আপনি নিজেই টাইপ করবেন)
+available_tests = [
+    "(CBC), ESR", "TC.DC", "HB%", "ESR", "Platelet Count", "MP", "BT/CT", "C/E Count",
+    "Widal", "Aso Titre", "CRP", "RA/RF", "HBs Ag (Screen Test)", "TPHA", "VDRL",
+    "Group & Rh Factor", "Mantaux-Test (M.T)", "Triple Antigen", "R.Fever", "HIV", "HCV",
+    "Random Blood Sugar (RBS)", "Fasting Blood Sugar (FBS)", "2hr. After Breakfast",
+    "Blood Urea", "Cholesterol", "TG (Triglycerides)", "S.GPT (ALT)", "S.GOT (AST)",
+    "Bilirubin Total", "Lipid Profile", "Serum Creatinine", "Uric Acid",
+    "Urine Pregnancy Test (PT)", "Urine R/E", "Stool R/E",
+    "USG Whole Abdomen", "USG Upper Abdomen", "USG Lower Abdomen", "USG KUB", "USG Pregnancy Profile",
+    "X-Ray Chest", "X-Ray PNS", "X-Ray Cervical Spine", "X-Ray L/S Spine", "X-Ray Knee B/V"
+]
+available_tests.sort()
 
 st.title("📝 টেস্ট এবং বিলিং সেকশন")
 
@@ -87,19 +53,38 @@ with col2:
     doctor = st.selectbox("ডাক্তার সিলেক্ট করুন (Refd By)", ["ডা. সাইদুল ইসলাম", "অন্যান্য"])
 
 st.markdown("---")
-st.subheader("টেস্ট সিলেকশন")
+st.subheader("টেস্ট সিলেকশন ও লাইভ রেট এন্ট্রি")
 
-selected_tests = st.multiselect("তালিকা থেকে টেস্ট সিলেক্ট করুন (Description):", list(test_prices.keys()))
-regular_fee = sum(test_prices[test] for test in selected_tests)
+# ড্রপডাউন থেকে টেস্ট সিলেক্ট
+selected_tests = st.multiselect("তালিকা থেকে টেস্ট সিলেক্ট করুন:", available_tests)
 
-st.markdown("#### ➕ তালিকা বহির্ভূত কাস্টম টেস্ট যোগ করুন (ঐচ্ছিক)")
+# 📌 💥 জাদুকরী লজিক: প্রতিটি সিলেক্ট করা টেস্টের জন্য স্ক্রিনে লাইভ প্রাইস ইনপুট বক্স তৈরি 💥
+test_with_prices = []
+total_fee = 0.0
+
+if selected_tests:
+    st.markdown("##### 💰 নির্বাচিত টেস্টগুলোর দাম এখানে হাত লিখে দিন:")
+    for test in selected_tests:
+        # স্ক্রিনে প্রতিটা টেস্টের পাশে দাম লেখার বক্স আসবে
+        price = st.number_input(f"রেট দিন -> {test} (টাকা):", min_value=0.0, step=50.0, key=f"price_{test}")
+        total_fee += price
+        if price > 0:
+            test_with_prices.append(f"{test}:{price}")
+        else:
+            test_with_prices.append(f"{test}:0")
+
+# কাস্টম টেস্ট অপশন (তালিকার বাইরে কিছু থাকলে)
+st.markdown("##### ➕ তালিকা বহির্ভূত কাস্টম টেস্ট (ঐচ্ছিক)")
 col_c1, col_c2 = st.columns(2)
 with col_c1:
-    custom_test_name = st.text_input("কাস্টম টেস্টের নাম লিখুন:", key="custom_name")
+    custom_name = st.text_input("কাস্টম টেস্টের নাম:")
 with col_c2:
-    custom_test_price = st.number_input("কাস্টম টেস্টের দাম (টাকা):", min_value=0.0, step=50.0, key="custom_price")
+    custom_price = st.number_input("কাস্টম টেস্টের দাম:", min_value=0.0, step=50.0)
 
-total_fee = regular_fee + custom_test_price
+if custom_name.strip():
+    total_fee += custom_price
+    test_with_prices.append(f"{custom_name.strip()}:{custom_price}")
+
 st.info(f"📋 লাইভ মোট বিল (টোটাল ফি): {total_fee} টাকা")
 
 st.markdown("---")
@@ -121,27 +106,18 @@ st.markdown("---")
 submit_button = st.button("Save Bill and Go to Print (ডাটা সেভ করুন)")
 
 if submit_button:
-    if not name or (not selected_tests and not custom_test_name.strip()):
-        st.error("⚠️ পেশেন্টের নাম এবং অন্তত একটি টেস্ট দেওয়া বাধ্যতামূলক!")
+    if not name or not test_with_prices:
+        st.error("⚠️ পেশেন্টের নাম এবং অন্তত একটি টেস্টের দাম দেওয়া বাধ্যতামূলক!")
     else:
         current_date = datetime.now().strftime("%Y-%m-%d")
-        all_tests_list = list(selected_tests)
-        if custom_test_name.strip():
-            all_tests_list.append(custom_test_name.strip())
-        tests_str = ", ".join(all_tests_list)
+        # টেস্টের নাম ও দাম একসাথে জোড়া দিয়ে ডাটাবেজে পাঠানো হচ্ছে (যেমন: CBC:400, ESR:200)
+        tests_data_str = "|".join(test_with_prices)
         
         c.execute("""
             INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (name, age, phone, doctor, tests_str, total_fee, discount_pct, advance_paid, due_amount, current_date))
+        """, (name, age, phone, doctor, tests_data_str, total_fee, discount_pct, advance_paid, due_amount, current_date))
         conn.commit()
-        
-        if custom_test_name.strip():
-            try:
-                c.execute("INSERT OR IGNORE INTO diagnostic_tests (test_name, price) VALUES (?, ?)", (custom_test_name.strip(), custom_test_price))
-                conn.commit()
-            except:
-                pass
         
         st.session_state.last_invoice_id = c.lastrowid
         st.success("✅ সফলভাবে ডাটা সেভ হয়েছে! প্রিন্ট পেজে নিয়ে যাওয়া হচ্ছে...")
