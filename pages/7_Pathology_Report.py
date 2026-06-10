@@ -1,6 +1,7 @@
-reamlit as st
+import streamlit as st
 import sqlite3
 import json
+from datetime import datetime
 
 # সিকিউরিটি চেক
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
@@ -43,7 +44,7 @@ if search_id > 0:
         
         st.success(f"🔍 রোগী পাওয়া গেছে: {p_name} | ডাক্তার: {p_doctor}")
         
-        # ডাটাবেজ থেকে টেস্টের নামগুলো আলাদা করা (CBC:400|ESR:200 ফরম্যাট থেকে শুধু নাম নেওয়া)
+        # ডাটাবেজ থেকে টেস্টের নামগুলো আলাদা করা
         raw_tests = [item.strip() for item in p_tests_str.split('|') if item.strip()]
         tests_to_process = []
         for item in raw_tests:
@@ -70,7 +71,6 @@ if search_id > 0:
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                # ডিফল্ট ভ্যালু হিসেবে আগের সেভ করা ডাটা থাকলে তা বসবে
                 prev_res = saved_data.get(test, {}).get("result", "")
                 result = st.text_input(f"ফলাফল (Result) - {test}:", value=prev_res, key=f"res_{test}")
             with col2:
@@ -88,7 +88,7 @@ if search_id > 0:
             conn = sqlite3.connect("rogmukti_clinic_fix.db")
             c = conn.cursor()
             json_str = json.dumps(new_report_data)
-            current_time_str = st.session_state.get('current_time_str', datetime.now().strftime("%Y-%m-%d"))
+            current_time_str = datetime.now().strftime("%Y-%m-%d")
             
             c.execute("""
                 INSERT INTO pathology_reports (invoice_id, report_data, reported_date)
@@ -97,14 +97,13 @@ if search_id > 0:
             """, (search_id, json_str, current_time_str, json_str, current_time_str))
             conn.commit()
             conn.close()
-            st.success("✅ প্যাথলজি রিপোর্ট সফলভাবে ডাটাবেজে সেভ হয়েছে! নিচে প্রিন্ট প্রিভিউ দেখুন।")
+            st.success("✅ প্যাথলজি রিপোর্ট সফলভাবে ডাটাবেজে সেভ হয়েছে!")
             st.rerun()
 
         # ------------------- 🖨️ প্রিন্ট লেআউট ও ডিজাইন -------------------
         if saved_report_row:
             st.subheader("🖨️ রিপোর্ট প্রিন্ট প্রিভিউ")
             
-            # টেবিলের রো তৈরি
             report_table_rows = ""
             for t_name, t_val in saved_data.items():
                 report_table_rows += f"""
@@ -143,7 +142,7 @@ if search_id > 0:
             .signature {{ border-top: 1px solid black; width: 150px; text-align: center; font-size: 12px; padding-top: 5px; }}
             
             @media print {{
-                header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, h3, div.stWrite, .stNumberInput {{
+                header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, h3, div.stWrite, .stnumber_input, .stTextInput {{
                     display: none !important;
                 }}
                 .main .block-container {{ padding: 0 !important; margin: 0 !important; }}
@@ -155,7 +154,7 @@ if search_id > 0:
             <div class="report-box">
                 <div class="rep-header">
                     <h1>রোগমুক্তি প্যাথলজি ও ডিজিটাল ল্যাব</h1>
-                    <p style="margin: 5px 0 0 0; font-size: 12px; color: #555;">চিকনিকান্দি, বাউফল, পটুয়াখালী | মোবাইল: ০১৭XXXXXXXX</p>
+                    <p style="margin: 5px 0 0 0; font-size: 12px; color: #555;">চিকনিকান্দি, বাউফল, পটুয়াখালী</p>
                 </div>
                 
                 <table class="patient-info-table">
@@ -164,7 +163,7 @@ if search_id > 0:
                         <td style="text-align: right;"><b>বিল নং (Invoice ID):</b> #{search_id}</td>
                     </tr>
                     <tr>
-                        <td><b>বয়স ও লিঙ্গ (Age/Sex):</b> {p_age} Y / Male</td>
+                        <td><b>বয়স (Age):</b> {p_age} Y</td>
                         <td style="text-align: right;"><b>তারিখ (Date):</b> {p_date}</td>
                     </tr>
                     <tr>
