@@ -1,12 +1,15 @@
 import streamlit as st
+import sqlite3
+import pandas as pd
+import os
+from datetime import datetime
 
-# আপনার গোপন পাসওয়ার্ড
+# 🔑 ১. অ্যাডমিন সিকিউরিটি লক কোড (একদম শুরুতে)
 ADMIN_PASSWORD = "rogmukti_admin"
 
 if "admin_auth" not in st.session_state:
     st.session_state.admin_auth = False
 
-# সঠিক পাসওয়ার্ড না দেওয়া পর্যন্ত পেজটি লক থাকবে
 if not st.session_state.admin_auth:
     st.warning("🔒 এই পেজটি লক করা আছে। দেখার জন্য অ্যাডমিন পাসওয়ার্ড দিন।")
     password_box = st.text_input("🔑 পাসওয়ার্ড লিখুন:", type="password", key="lock_dashboard")
@@ -18,25 +21,35 @@ if not st.session_state.admin_auth:
             st.rerun()
         else:
             st.error("❌ ভুল পাসওয়ার্ড!")
-    st.stop() # 🛑 সঠিক পাসওয়ার্ড না দিলে নিচের বাকি কোড রান হবে না
-import streamlit as st
-import sqlite3
-import pandas as pd
-import os
-from datetime import datetime
-
-# সিকিউরিটি চেক
-if "logged_in" not in st.session_state or not st.session_state.logged_in:
-    st.warning("🔒 অ্যাক্সেস রিফিউজড! দয়া করে আগে মেইন পেজ থেকে লগইন করুন।")
     st.stop()
 
+# 📊 ২. ড্যাশবোর্ডের মূল হিসাব-নিকাশ কোড
 st.title("📊 দৈনিক ও মাসিক ক্যাশ হিসাব-নিকাশ")
 
-# ডিরেক্টরি পাথ ফিক্সড করা হলো
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
 
 conn = sqlite3.connect(DB_PATH)
+c = conn.cursor()
+
+# 🌟 জাদুকরী লজিক: ড্যাশবোর্ড লোড হওয়ার আগে টেবিলটি তৈরি থাকা নিশ্চিত করা (এরর সমাধান)
+c.execute("""
+CREATE TABLE IF NOT EXISTS billing_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_name TEXT,
+    age INTEGER,
+    phone TEXT,
+    doctor TEXT,
+    selected_tests TEXT,
+    total_amount REAL,
+    discount_percent REAL,
+    net_paid REAL,
+    due_amount REAL,
+    billing_date TEXT,
+    ref_fee REAL DEFAULT 0.0
+)
+""")
+conn.commit()
 
 try:
     df = pd.read_sql_query("SELECT * FROM billing_records", conn)
@@ -45,12 +58,9 @@ try:
         df['billing_date'] = pd.to_datetime(df['billing_date'], errors='coerce')
         df = df.dropna(subset=['billing_date'])
         
-        # রেডিও বাটন অপশন
         option = st.radio("কোন হিসাবটি দেখতে চান?", ["আজকের/দৈনিক হিসাব", "মাসিক হিসাব"], horizontal=True)
         
-        # 🌟 বাগ ফিক্সিং: রেডিও বাটনের কন্ডিশন অনুযায়ী ইনপুট বক্স আলাদা করা হলো
         if option == "আজকের/দৈনিক হিসাব":
-            # ইউজার ক্যালেন্ডার থেকে নির্দিষ্ট যেকোনো ১টি দিন সিলেক্ট করতে পারবেন
             user_date = st.date_input("📅 নির্দিষ্ট তারিখ সিলেক্ট করুন:", datetime.now().date())
             filtered_df = df[df['billing_date'].dt.date == user_date]
         else:
