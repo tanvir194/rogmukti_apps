@@ -21,7 +21,17 @@ if "last_invoice_id" in st.session_state:
     
     if row:
         # ডাটাবেজের কলামগুলো আলাদা করা
-        name, age, phone, doctor, selected_tests, total_fee, discount_pct, advance_paid, due_amount, current_date = row, row, row, row, row, row, row, row, row, row
+        name = row[1]
+        age = row[2]
+        phone = row[3]
+        doctor = row[4]
+        selected_tests = row[5]
+        total_fee = row[6]
+        discount_pct = row[7]
+        advance_paid = row[8]
+        due_amount = row[9]
+        current_date = row[10]
+        
         discount_amount = (total_fee * discount_pct) / 100.0
         tests_list = selected_tests.split(", ")
 
@@ -40,7 +50,12 @@ if "last_invoice_id" in st.session_state:
             ">🖨️ রিসিট প্রিন্ট বা পিডিএফ সেভ করুন (Print Now)</button>
         """, height=60)
         
-        # 📌 ৩. মানি রিসিট ডিজাইন এবং A4 এর অর্ধেকের (A5) সাইজ ফিক্স করার CSS
+        # ৩. টেবিলের রো (Rows) তৈরি করার লজিক
+        table_rows = ""
+        for t in tests_list:
+            table_rows += f"<tr><td style='padding: 6px; border: 1px solid #ddd; color: black;'>{t}</td><td style='padding: 6px; border: 1px solid #ddd; text-align: right; color: black;'>- ৳</td></tr>"
+        
+        # ৪. মানি রিসিট ডিজাইন এবং A4 এর অর্ধেকের (A5) সাইজ ফিক্স করার CSS
         receipt_html = f"""
         <style>
             @media print {{
@@ -50,18 +65,17 @@ if "last_invoice_id" in st.session_state:
                     position: absolute; 
                     left: 0; 
                     top: 0; 
-                    width: 148mm; /* A4 এর অর্ধেক প্রস্থ (A5 সাইজ) */
-                    max-height: 210mm; /* A4 এর অর্ধেক দৈর্ঘ্য */
+                    width: 148mm; 
+                    max-height: 210mm; 
                     box-shadow: none;
                     margin: 0;
                     padding: 10px;
                 }}
                 @page {{
-                    size: A5 portrait; /* প্রিন্টারকে সরাসরি A5 সাইজ বা অর্ধেক পেজ নির্দেশ করা */
+                    size: A5 portrait; 
                     margin: 0;
                 }}
             }}
-            /* স্ক্রিনে সুন্দর দেখার জন্য স্টাইল */
             .receipt-box {{
                 border: 2px solid #1a365d; 
                 padding: 20px; 
@@ -70,7 +84,7 @@ if "last_invoice_id" in st.session_state:
                 background-color: white; 
                 color: black; 
                 margin-top: 10px;
-                max-width: 550px; /* স্ক্রিনে বেশি বড় দেখাবে না */
+                max-width: 550px; 
             }}
         </style>
         
@@ -98,7 +112,7 @@ if "last_invoice_id" in st.session_state:
                     <th style="padding: 6px; border: 1px solid #ddd;">Description (Test Name)</th>
                     <th style="padding: 6px; text-align: right; border: 1px solid #ddd;">Amount</th>
                 </tr>
-                {"".join([f"<tr><td style='padding: 6px; border: 1px solid #ddd; color: black;'>{t}</td><td style='padding: 6px; border: 1px solid #ddd; text-align: right; color: black;'>৳</td></tr>" for t in tests_list])}
+                {table_rows}
             </table>
             
             <div style="margin-top: 15px; text-align: right; font-size: 14px; line-height: 1.5; color: black;">
@@ -113,4 +127,4 @@ if "last_invoice_id" in st.session_state:
     else:
         st.error("কোনো বিলের তথ্য পাওয়া যায়নি।")
 else:
-    st.info("ℹ️ কোনো বিল তৈরি করা হয়নি। 
+    st.info("ℹ️ কোনো বিল তৈরি করা হয়নি। প্রথমে 'Patient Entry' পেজ থেকে বিল সেভ করুন।")
