@@ -138,7 +138,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-
 # ------------------- ১. স্ট্রিমলিট প্রিন্ট বাটন -------------------
 # এই বাটনে ক্লিক করলে সরাসরি ব্রাউজারের প্রিন্ট উইন্ডো ওপেন হবে
 if st.button("🖨️ রিসিট প্রিন্ট করুন (Print Now)", type="primary", use_container_width=True):
