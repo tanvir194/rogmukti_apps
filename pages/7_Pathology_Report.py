@@ -55,7 +55,7 @@ if search_id > 0:
                 
         # পূর্বে সেভ করা ডাটা থাকলে তা লোড করা
         saved_data = {}
-        if saved_report_row:
+        if saved_report_row and saved_report_row[0]:
             try:
                 saved_data = json.loads(saved_report_row[0])
             except:
@@ -117,7 +117,6 @@ if search_id > 0:
                 
             report_html = f"""
             <style>
-            /* সাধারণ স্ক্রিন ভিউ স্টাইল */
             .report-box {{
                 max-width: 700px;
                 margin: 10px auto;
@@ -143,22 +142,16 @@ if search_id > 0:
             .sign-section {{ margin-top: 100px; display: flex; justify-content: space-between; }}
             .signature {{ border-top: 1px solid black; width: 160px; text-align: center; font-size: 13px; padding-top: 6px; color: black; }}
             
-            /* 🖨️ প্রিন্ট করার সময় এই জাদুকরী স্টাইলটি কার্যকর হবে */
             @media print {{
-                /* ১. স্ট্রিমলিটের অ্যাপের ভেতরের সমস্ত টেক্সট, ইনপুট বক্স, বাটন, আইকন এবং ওয়ার্নিং মেসেজ হাইড করা */
-                header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, h3, h5, div.stWrite, 
+                header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, h3, h4, h5, div.stWrite, 
                 [data-testid="stNumberInput"], [data-testid="stTextInput"], [data-testid="element-container"], .stAlert {{
                     display: none !important;
                     visibility: hidden !important;
                 }}
-                
-                /* ২. স্ট্রিমলিটের মূল অ্যাপের কন্টেইনার মার্জিন শূন্য করা */
                 .main .block-container {{ 
                     padding: 0 !important; 
                     margin: 0 !important; 
                 }}
-                
-                /* ৩. শুধুমাত্র মেমো বক্সটি প্রিন্ট লেআউটে ফুল উইডথ করে দেখানো */
                 .report-box {{ 
                     border: none !important; 
                     box-shadow: none !important;
@@ -169,11 +162,9 @@ if search_id > 0:
                     display: block !important;
                     visibility: visible !important;
                 }}
-                
                 .report-box * {{
                     visibility: visible !important;
                 }}
-                
                 @page {{ 
                     size: A4 portrait; 
                     margin: 15mm; 
@@ -218,3 +209,14 @@ if search_id > 0:
                 </table>
                 
                 <div class="sign-section">
+                    <div class="signature">ল্যাব টেকনোলজিস্ট</div>
+                    <div class="signature">কনসালটেন্ট প্যাথলজিস্ট</div>
+                </div>
+            </div>
+            """
+            
+            # প্রিন্ট বোতাম
+            if st.button("🖨️ রিপোর্ট প্রিন্ট করুন (Print Report)", type="primary", use_container_width=True):
+                st.components.v1.html("<script>parent.window.print();</script>", height=0)
+                
+            # রিপোর্ট স্ক্রিনে রেন্ডার করা
