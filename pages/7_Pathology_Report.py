@@ -1,4 +1,4 @@
-import streamlit as st
+reamlit as st
 import sqlite3
 import json
 
@@ -204,4 +204,3 @@ if search_id > 0:
             
     else:
         st.error("⚠️ এই বিল নম্বরের কোনো রোগীর তথ্য পাওয়া যায়নি।")
-          
