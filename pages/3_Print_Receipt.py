@@ -21,12 +21,11 @@ if "last_invoice_id" in st.session_state:
     
     if row:
         # ডাটাবেজের কলামগুলো আলাদা করা
-        name, age, phone, doctor, selected_tests, total_fee, discount_pct, advance_paid, due_amount, current_date = row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]
+        name, age, phone, doctor, selected_tests, total_fee, discount_pct, advance_paid, due_amount, current_date = row, row, row, row, row, row, row, row, row, row
         discount_amount = (total_fee * discount_pct) / 100.0
         tests_list = selected_tests.split(", ")
 
-        # 📌 ২. নতুন ও সম্পূর্ণ ফিক্সড প্রিন্ট মেকানিজম (যা ১০০% কাজ করবে)
-        # বাটনে ক্লিক করলে এই স্ক্রিপ্টটি ব্রাউজারকে সরাসরি প্রিন্ট কমান্ড পাঠাবে
+        # ২. প্রিন্ট মেকানিজম বাটন
         st.components.v1.html("""
             <button onclick="parent.window.print()" style="
                 background-color: #2f855a; 
@@ -41,44 +40,72 @@ if "last_invoice_id" in st.session_state:
             ">🖨️ রিসিট প্রিন্ট বা পিডিএফ সেভ করুন (Print Now)</button>
         """, height=60)
         
-        # মানি রিসিট ডিজাইন এবং প্রিন্ট সিএসএস
+        # 📌 ৩. মানি রিসিট ডিজাইন এবং A4 এর অর্ধেকের (A5) সাইজ ফিক্স করার CSS
         receipt_html = f"""
         <style>
             @media print {{
                 body * {{ visibility: hidden; }}
                 #print-area, #print-area * {{ visibility: visible; }}
-                #print-area {{ position: absolute; left: 0; top: 0; width: 100%; }}
+                #print-area {{ 
+                    position: absolute; 
+                    left: 0; 
+                    top: 0; 
+                    width: 148mm; /* A4 এর অর্ধেক প্রস্থ (A5 সাইজ) */
+                    max-height: 210mm; /* A4 এর অর্ধেক দৈর্ঘ্য */
+                    box-shadow: none;
+                    margin: 0;
+                    padding: 10px;
+                }}
+                @page {{
+                    size: A5 portrait; /* প্রিন্টারকে সরাসরি A5 সাইজ বা অর্ধেক পেজ নির্দেশ করা */
+                    margin: 0;
+                }}
+            }}
+            /* স্ক্রিনে সুন্দর দেখার জন্য স্টাইল */
+            .receipt-box {{
+                border: 2px solid #1a365d; 
+                padding: 20px; 
+                border-radius: 10px; 
+                font-family: sans-serif; 
+                background-color: white; 
+                color: black; 
+                margin-top: 10px;
+                max-width: 550px; /* স্ক্রিনে বেশি বড় দেখাবে না */
             }}
         </style>
-        <div id="print-area" style="border: 2px solid #1a365d; padding: 20px; border-radius: 10px; font-family: sans-serif; background-color: white; color: black; margin-top: 10px;">
+        
+        <div id="print-area" class="receipt-box">
             <div style="text-align: center; background-color: #1a365d; color: white; padding: 10px; border-radius: 5px;">
-                <h2>ROG MUKTI DIAGNOSTIC CENTRE</h2>
-                <p>Mollah Stand, Auliapur, Patuakhali<br>Phone: 01711867637</p>
+                <h2 style="margin: 0; font-size: 20px;">ROG MUKTI DIAGNOSTIC CENTRE</h2>
+                <p style="margin: 5px 0 0 0; font-size: 13px;">Mollah Stand, Auliapur, Patuakhali<br>Phone: 01711867637</p>
             </div>
-            <div style="margin-top: 15px; display: flex; justify-content: space-between;">
+            
+            <div style="margin-top: 15px; display: flex; justify-content: space-between; font-size: 14px; line-height: 1.6; color: black;">
                 <div>
-                    <p><b>Bill No:</b> #{invoice_id}</p>
-                    <p><b>Patient Name:</b> {name}</p>
-                    <p><b>Phone Number:</b> {phone}</p>
+                    <p style="margin: 0;"><b>Bill No:</b> #{invoice_id}</p>
+                    <p style="margin: 0;"><b>Patient Name:</b> {name}</p>
+                    <p style="margin: 0;"><b>Phone Number:</b> {phone}</p>
                 </div>
                 <div style="text-align: right;">
-                    <p><b>Date:</b> {current_date}</p>
-                    <p><b>Age:</b> {age} Years</p>
-                    <p><b>Refd By:</b> {doctor}</p>
+                    <p style="margin: 0;"><b>Date:</b> {current_date}</p>
+                    <p style="margin: 0;"><b>Age:</b> {age} Years</p>
+                    <p style="margin: 0;"><b>Refd By:</b> {doctor}</p>
                 </div>
             </div>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            
+            <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px;">
                 <tr style="background-color: #3182ce; color: white; text-align: left;">
-                    <th style="padding: 8px;">Description (Test Name)</th>
-                    <th style="padding: 8px; text-align: right;">Amount</th>
+                    <th style="padding: 6px; border: 1px solid #ddd;">Description (Test Name)</th>
+                    <th style="padding: 6px; text-align: right; border: 1px solid #ddd;">Amount</th>
                 </tr>
-                {"".join([f"<tr><td style='padding: 8px; border-bottom: 1px solid #ddd; color: black;'>{t}</td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right; color: black;'>৳</td></tr>" for t in tests_list])}
+                {"".join([f"<tr><td style='padding: 6px; border: 1px solid #ddd; color: black;'>{t}</td><td style='padding: 6px; border: 1px solid #ddd; text-align: right; color: black;'>৳</td></tr>" for t in tests_list])}
             </table>
-            <div style="margin-top: 20px; text-align: right; font-size: 16px;">
-                <p><b>Total Amount:</b> {total_fee} ৳</p>
-                <p><b>Discount ({discount_pct}%):</b> -{discount_amount} ৳</p>
-                <p><b>Advance Paid:</b> {advance_paid} ৳</p>
-                <p style="color: red; font-size: 18px;"><b>Due (বাকি টাকা): {due_amount} ৳</b></p>
+            
+            <div style="margin-top: 15px; text-align: right; font-size: 14px; line-height: 1.5; color: black;">
+                <p style="margin: 3px 0;"><b>Total Amount:</b> {total_fee} ৳</p>
+                <p style="margin: 3px 0;"><b>Discount ({discount_pct}%):</b> -{discount_amount} ৳</p>
+                <p style="margin: 3px 0;"><b>Advance Paid:</b> {advance_paid} ৳</p>
+                <p style="color: red; font-size: 16px; margin: 5px 0;"><b>Due (বাকি টাকা): {due_amount} ৳</b></p>
             </div>
         </div>
         """
@@ -86,5 +113,4 @@ if "last_invoice_id" in st.session_state:
     else:
         st.error("কোনো বিলের তথ্য পাওয়া যায়নি।")
 else:
-    st.info("ℹ️ কোনো বিল তৈরি করা হয়নি। প্রথমে 'Patient Entry' পেজ থেকে বিল সেভ করুন।")
-    
+    st.info("ℹ️ কোনো বিল তৈরি করা হয়নি। 
