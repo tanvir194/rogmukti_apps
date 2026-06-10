@@ -69,155 +69,41 @@ st.components.v1.html("""
     </button>
 """, height=80)
 
-# ------------------- সিএসএস স্টাইল (CSS Style) -------------------
-st.markdown("""
-<style>
-@media print {
-    body * {
-        visibility: hidden;
-    }
-    #receipt, #receipt * {
-        visibility: visible;
-    }
-    #receipt {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-    }
-    @page {
-        size: A4 portrait;
-        margin: 10mm;
-    }
-}
 
-.receipt-box {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 30px;
-    border: 2px solid #1a365d;
-    border-radius: 12px;
-    background-color: white;
-    font-family: Arial, sans-serif;
-    color: black;
-}
-.header {
-    text-align: center;
-    background-color: #1a365d;
-    color: white;
-    padding: 20px;
-    border-radius: 8px 8px 0 0;
-    margin-bottom: 20px;
-}
-.header h2 {
-    margin: 0;
-    font-size: 24px;
-}
-.info-table, .test-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-    color: black;
-}
-.info-table td {
-    padding: 6px 0;
-    font-size: 15px;
-}
-.test-table th, .test-table td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: left;
-    font-size: 14px;
-}
-.test-table th {
-    background-color: #f2f2f2;
-}
-.total-section {
-    text-align: right;
-    font-size: 16px;
-    line-height: 1.6;
-}
-.total-section b {
-    color: #1a365d;
-}
-</style>
-""", unsafe_allow_html=True)
+# ------------------- ডাইনামিক রসিদের সম্পূর্ণ HTML ও CSS জেনারেটর -------------------
+# এখানে পাইথনের f-string ফরমেটিং এর ঝামেলা এড়াতে আমরা একদম ফ্রেশ HTML ব্লক তৈরি করছি
 
-# ------------------- ডাইনামিক রসিদ জেনারেটর -------------------
-receipt_html = f"""
-<div id="receipt" class="receipt-box">
-    <div class="header">
-        <h2>রোগমুক্তি ক্লিনিক</h2>
-        <p style="margin: 5px 0 0 0;">রোগীর অফিশিয়াল মানি রিসিট</p>
-    </div>
-    
-    <table class="info-table">
-        <tr>
-            <td><b>ইনভয়েস আইডি:</b> #{invoice_id}</td>
-            <td style="text-align: right;"><b>তারিখ:</b> {current_date}</td>
-        </tr>
-        <tr>
-            <td><b>রোগীর নাম:</b> {name}</td>
-            <td style="text-align: right;"><b>বয়স:</b> {age}</td>
-        </tr>
-        <tr>
-            <td><b>মোবাইল:</b> {phone}</td>
-            <td style="text-align: right;"><b>ডাক্তার:</b> {doctor}</td>
-        </tr>
-    </table>
-    
-    <h3 style="color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 5px; font-size: 16px;">টেস্ট ও রেট বিবরণী</h3>
-    <table class="test-table">
-        <thead>
-            <tr>
-                <th style="width: 10%;">নং</th>
-                <th style="width: 65%;">টেস্টের নাম</th>
-                <th style="width: 25%; text-align: right;">মূল্য (টাকা)</th>
-            </tr>
-        </thead>
-        <tbody>
-"""
-
-# টেস্টের নাম ও দাম আলাদা করে টেবিলে যোগ করা
+table_rows = ""
 for index, item in enumerate(tests_list, start=1):
     if ":" in item:
         t_name, t_price = item.split(":", 1)
     else:
         t_name, t_price = item, "0.0"
+    
+    try:
+        t_price_val = float(t_price)
+    except:
+        t_price_val = 0.0
         
-    receipt_html += f"""
-            <tr>
-                <td>{index}</td>
-                <td>{t_name}</td>
-                <td style="text-align: right;">{float(t_price):.2f} ৳</td>
-            </tr>
+    table_rows += f"""
+    <tr>
+        <td>{index}</td>
+        <td>{t_name}</td>
+        <td style="text-align: right;">{t_price_val:.2f} ৳</td>
+    </tr>
     """
-
-receipt_html += f"""
-        </tbody>
-    </table>
-    
-    <div class="total-section">
-        <p>মোট বিল (Total): {total_amount:.2f} ৳</p>
-        <p>ছাড় (Discount): {discount_amount:.2f} ৳ ({discount_pct}%)</p>
-        <p>অগ্রিম পরিশোধ (Paid): <b>{advance_paid:.2f} ৳</b></p>
-        <p style="font-size: 18px; border-top: 1px dashed #1a365d; padding-top: 5px; margin-top: 5px;">
-            <b>বাকি টাকা (Due Amount): <span style="color: red;">{due_amount:.2f} ৳</span></b>
-        </p>
-    </div>
-    
-    <div style="margin-top: 25px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #eee; padding-top: 10px;">
-        <p>আমাদের ওপর আস্থা রাখার জন্য ধন্যবাদ।</p>
-    </div>
-</div>
-"""
-# --- কোডের একেবারে শেষ লাইনে st.markdown-এর পরিবর্তে এটি লিখুন ---
-
-# CSS স্টাইল এবং HTML কন্টেন্টকে একসাথে জোড়া দেওয়া হচ্ছে
-full_html_content = f"""
+    full_html_page = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
 <style>
-/* প্রিন্ট করার সময় শুধু রসিদের অংশটি দেখানোর জন্য মিডিয়া কুয়েরি */
 @media print {{
+    body {{
+        background: white;
+        color: black;
+    }}
+    /* প্রিন্ট করার সময় শুধু রসিদের অংশটি দেখানোর জন্য মিডিয়া কুয়েরি */
     body * {{
         visibility: hidden !important;
     }}
@@ -236,11 +122,10 @@ full_html_content = f"""
     }}
 }}
 
-/* স্ক্রিনে রসিদটি যেভাবে দেখাবে */
 .receipt-box {{
-    max-width: 600px;
+    max-width: 550px;
     margin: 10px auto;
-    padding: 30px;
+    padding: 25px;
     border: 2px solid #1a365d;
     border-radius: 12px;
     background-color: white;
@@ -251,13 +136,17 @@ full_html_content = f"""
     text-align: center;
     background-color: #1a365d;
     color: white;
-    padding: 20px;
+    padding: 15px;
     border-radius: 8px 8px 0 0;
     margin-bottom: 20px;
 }}
 .header h2 {{
     margin: 0;
-    font-size: 24px;
+    font-size: 22px;
+}}
+.header p {{
+    margin: 5px 0 0 0;
+    font-size: 14px;
 }}
 .info-table, .test-table {{
     width: 100%;
@@ -266,30 +155,82 @@ full_html_content = f"""
     color: black;
 }}
 .info-table td {{
-    padding: 6px 0;
-    font-size: 15px;
+    padding: 5px 0;
+    font-size: 14px;
 }}
 .test-table th, .test-table td {{
     border: 1px solid #ddd;
-    padding: 10px;
+    padding: 8px;
     text-align: left;
-    font-size: 14px;
+    font-size: 13px;
 }}
 .test-table th {{
     background-color: #f2f2f2;
 }}
 .total-section {{
     text-align: right;
-    font-size: 16px;
+    font-size: 15px;
     line-height: 1.6;
 }}
 .total-section b {{
     color: #1a365d;
 }}
 </style>
+</head>
+<body>
 
-{receipt_html}
+<div id="receipt" class="receipt-box">
+    <div class="header">
+        <h2>রোগমুক্তি ক্লিনিক</h2>
+        <p>রোগীর অফিশিয়াল মানি রিসিট</p>
+    </div>
+    
+    <table class="info-table">
+        <tr>
+            <td><b>ইনভয়েস আইডি:</b> #{invoice_id}</td>
+            <td style="text-align: right;"><b>তারিখ:</b> {current_date}</td>
+        </tr>
+        <tr>
+            <td><b>রোগীর নাম:</b> {name}</td>
+            <td style="text-align: right;"><b>বয়স:</b> {age}</td>
+        </tr>
+        <tr>
+            <td><b>মোবাইল:</b> {phone}</td>
+            <td style="text-align: right;"><b>ডাক্তার:</b> {doctor}</td>
+        </tr>
+    </table>
+    
+    <h3 style="color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 5px; font-size: 15px; margin-top: 10px;">টেস্ট ও রেট বিবরণী</h3>
+    <table class="test-table">
+        <thead>
+            <tr>
+                <th style="width: 10%;">নং</th>
+                <th style="width: 65%;">টেস্টের নাম</th>
+                <th style="width: 25%; text-align: right;">মূল্য (টাকা)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {table_rows}
+        </tbody>
+    </table>
+    
+    <div class="total-section">
+        <p>মোট বিল (Total): {total_amount:.2f} ৳</p>
+        <p>ছাড় (Discount): {discount_amount:.2f} ৳ ({discount_pct}%)</p>
+        <p>অগ্রিম পরিশোধ (Paid): <b>{advance_paid:.2f} ৳</b></p>
+        <p style="font-size: 16px; border-top: 1px dashed #1a365d; padding-top: 5px; margin-top: 5px;">
+            <b>বাকি টাকা (Due Amount): <span style="color: red;">{due_amount:.2f} ৳</span></b>
+        </p>
+    </div>
+    
+    <div style="margin-top: 20px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #eee; padding-top: 10px;">
+        <p>আমাদের ওপর আস্থা রাখার জন্য ধন্যবাদ।</p>
+    </div>
+</div>
+
+</body>
+</html>
 """
 
-# নিখুঁতভাবে HTML রেন্ডার করার কম্পোনেন্ট (উচ্চতা ১০০০ পিক্সেল দেওয়া হয়েছে যেন পুরো রসিদ ধরে)
-st.components.v1.html(full_html_content, height=1000, scroller=True)
+# এবার স্ট্রিক্টলি st.components.v1.html এর মাধ্যমে কোনো এরর বা টেক্সট লিক ছাড়া রেন্ডার হবে
+st.components.v1.html(full_html_page, height=750)
