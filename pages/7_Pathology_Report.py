@@ -108,62 +108,92 @@ if search_id > 0:
             for t_name, t_val in saved_data.items():
                 report_table_rows += f"""
                 <tr>
-                    <td style="font-weight: bold;">{t_name}</td>
-                    <td style="text-align: center; color: #1a365d; font-weight: bold;">{t_val['result']}</td>
-                    <td style="text-align: center;">{t_val['unit']}</td>
-                    <td style="text-align: center; color: #555;">{t_val['ref']}</td>
+                    <td style="font-weight: bold; padding: 10px; border-bottom: 1px solid #ddd;">{t_name}</td>
+                    <td style="text-align: center; color: #1a365d; font-weight: bold; padding: 10px; border-bottom: 1px solid #ddd;">{t_val['result']}</td>
+                    <td style="text-align: center; padding: 10px; border-bottom: 1px solid #ddd;">{t_val['unit']}</td>
+                    <td style="text-align: center; color: #555; padding: 10px; border-bottom: 1px solid #ddd;">{t_val['ref']}</td>
                 </tr>
                 """
                 
             report_html = f"""
             <style>
+            /* সাধারণ স্ক্রিন ভিউ স্টাইল */
             .report-box {{
                 max-width: 700px;
                 margin: 10px auto;
-                padding: 30px;
-                border: 1px solid #ccc;
+                padding: 35px;
+                border: 2px solid #1a365d;
+                border-radius: 12px;
                 background-color: white;
                 color: black;
                 font-family: 'Arial', sans-serif;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             }}
             .rep-header {{
                 text-align: center;
                 border-bottom: 3px double #1a365d;
-                padding-bottom: 10px;
-                margin-bottom: 20px;
+                padding-bottom: 12px;
+                margin-bottom: 25px;
             }}
             .rep-header h1 {{ margin: 0; color: #1a365d; font-size: 26px; }}
-            .patient-info-table {{ width: 100%; margin-bottom: 25px; border-bottom: 1px solid #1a365d; padding-bottom: 10px; }}
-            .patient-info-table td {{ padding: 4px 0; font-size: 14px; }}
-            .main-report-table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
-            .main-report-table th, .main-report-table td {{ border-bottom: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }}
-            .main-report-table th {{ background-color: #f8f9fa; color: #1a365d; }}
-            .sign-section {{ margin-top: 80px; display: flex; justify-content: space-between; }}
-            .signature {{ border-top: 1px solid black; width: 150px; text-align: center; font-size: 12px; padding-top: 5px; }}
+            .patient-info-table {{ width: 100%; margin-bottom: 25px; border-bottom: 2px solid #1a365d; padding-bottom: 12px; border-collapse: collapse; }}
+            .patient-info-table td {{ padding: 6px 0; font-size: 15px; color: black; }}
+            .main-report-table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
+            .main-report-table th {{ background-color: #f2f5f9; color: #1a365d; padding: 12px 10px; text-align: left; font-size: 14px; border-bottom: 2px solid #1a365d; }}
+            .sign-section {{ margin-top: 100px; display: flex; justify-content: space-between; }}
+            .signature {{ border-top: 1px solid black; width: 160px; text-align: center; font-size: 13px; padding-top: 6px; color: black; }}
             
+            /* 🖨️ প্রিন্ট করার সময় এই জাদুকরী স্টাইলটি কার্যকর হবে */
             @media print {{
-                header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, h3, div.stWrite, .stnumber_input, .stTextInput {{
+                /* ১. স্ট্রিমলিটের অ্যাপের ভেতরের সমস্ত টেক্সট, ইনপুট বক্স, বাটন, আইকন এবং ওয়ার্নিং মেসেজ হাইড করা */
+                header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, h3, h5, div.stWrite, 
+                [data-testid="stNumberInput"], [data-testid="stTextInput"], [data-testid="element-container"], .stAlert {{
                     display: none !important;
+                    visibility: hidden !important;
                 }}
-                .main .block-container {{ padding: 0 !important; margin: 0 !important; }}
-                .report-box {{ border: none !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; }}
-                @page {{ size: A4 portrait; margin: 15mm 15mm 15mm 15mm; }}
+                
+                /* ২. স্ট্রিমলিটের মূল অ্যাপের কন্টেইনার মার্জিন শূন্য করা */
+                .main .block-container {{ 
+                    padding: 0 !important; 
+                    margin: 0 !important; 
+                }}
+                
+                /* ৩. শুধুমাত্র মেমো বক্সটি প্রিন্ট লেআউটে ফুল উইডথ করে দেখানো */
+                .report-box {{ 
+                    border: none !important; 
+                    box-shadow: none !important;
+                    width: 100% !important; 
+                    max-width: 100% !important; 
+                    margin: 0 !important; 
+                    padding: 0 !important;
+                    display: block !important;
+                    visibility: visible !important;
+                }}
+                
+                .report-box * {{
+                    visibility: visible !important;
+                }}
+                
+                @page {{ 
+                    size: A4 portrait; 
+                    margin: 15mm; 
+                }}
             }}
             </style>
             
             <div class="report-box">
                 <div class="rep-header">
                     <h1>রোগমুক্তি প্যাথলজি ও ডিজিটাল ল্যাব</h1>
-                    <p style="margin: 5px 0 0 0; font-size: 12px; color: #555;">চিকনিকান্দি, বাউফল, পটুয়াখালী</p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #333; font-weight: bold;">চিকনিকান্দি, বাউফল, পটুয়াখালী</p>
                 </div>
                 
                 <table class="patient-info-table">
                     <tr>
-                        <td><b>রোগীর নাম (Patient Name):</b> {p_name}</td>
+                        <td style="width: 60%;"><b>রোগীর নাম (Patient Name):</b> {p_name}</td>
                         <td style="text-align: right;"><b>বিল নং (Invoice ID):</b> #{search_id}</td>
                     </tr>
                     <tr>
-                        <td><b>বয়স (Age):</b> {p_age} Y</td>
+                        <td><b>বয়স (Age):</b> {p_age} Years</td>
                         <td style="text-align: right;"><b>তারিখ (Date):</b> {p_date}</td>
                     </tr>
                     <tr>
@@ -171,7 +201,7 @@ if search_id > 0:
                     </tr>
                 </table>
                 
-                <h3 style="text-align: center; color: #1a365d; text-transform: uppercase; letter-spacing: 1px; font-size: 16px; margin-bottom: 15px;">BIOCHEMISTRY & PATHOLOGY REPORT</h3>
+                <h4 style="text-align: center; color: #1a365d; text-transform: uppercase; letter-spacing: 1px; font-size: 16px; margin: 20px 0 15px 0;">BIOCHEMISTRY & PATHOLOGY REPORT</h4>
                 
                 <table class="main-report-table">
                     <thead>
@@ -188,18 +218,3 @@ if search_id > 0:
                 </table>
                 
                 <div class="sign-section">
-                    <div class="signature">ল্যাব টেকনোলজিস্ট</div>
-                    <div class="signature">কনসালটেন্ট প্যাথলজিস্ট</div>
-                </div>
-            </div>
-            """
-            
-            # প্রিন্ট বোতাম
-            if st.button("🖨️ রিপোর্ট প্রিন্ট করুন (Print Report)", type="primary", use_container_width=True):
-                st.components.v1.html("<script>parent.window.print();</script>", height=0)
-                
-            # রিপোর্ট স্ক্রিনে রেন্ডার করা
-            st.html(report_html)
-            
-    else:
-        st.error("⚠️ এই বিল নম্বরের কোনো রোগীর তথ্য পাওয়া যায়নি।")
