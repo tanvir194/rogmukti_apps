@@ -1,6 +1,6 @@
 import streamlit as st
 
-# আপনার গোপন পাসওয়ার্ড (এটি আপনি চাইলে পরিবর্তন করতে পারেন)
+# আপনার গোপন পাসওয়ার্ড
 ADMIN_PASSWORD = "rogmukti_admin"
 
 if "admin_auth" not in st.session_state:
@@ -9,18 +9,17 @@ if "admin_auth" not in st.session_state:
 # সঠিক পাসওয়ার্ড না দেওয়া পর্যন্ত পেজটি লক থাকবে
 if not st.session_state.admin_auth:
     st.warning("🔒 এই পেজটি লক করা আছে। দেখার জন্য অ্যাডমিন পাসওয়ার্ড দিন।")
-    password_box = st.text_input("🔑 পাসওয়ার্ড লিখুন:", type="password", key=f"lock_{st.runtime.scriptrunner.script_run_context.get_script_run_context().page_script_hash}")
+    password_box = st.text_input("🔑 পাসওয়ার্ড লিখুন:", type="password", key="lock_dr_ref")
     
-    if st.button("🔓 আনলক করুন", type="primary", key=f"btn_{st.runtime.scriptrunner.script_run_context.get_script_run_context().page_script_hash}"):
+    if st.button("🔓 আনলক করুন", type="primary", key="btn_dr_ref"):
         if password_box == ADMIN_PASSWORD:
             st.session_state.admin_auth = True
             st.success("🎉 সফলভাবে আনলক হয়েছে!")
             st.rerun()
         else:
             st.error("❌ ভুল পাসওয়ার্ড!")
-    st.stop() # 🛑 সঠিক পাসওয়ার্ড না দিলে নিচের বাকি কোড রান হবে না  
-import streamlit as st
-import sqlite3
+    st.stop() # 🛑 সঠিক পাসওয়ার্ড না দিলে নিচের বাকি কোড রান হবে না
+    
 import pandas as pd
 from datetime import datetime
 
