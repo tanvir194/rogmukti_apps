@@ -3,36 +3,36 @@ import streamlit as st
 # 1. Setting the page configuration
 st.set_page_config(page_title="Rog Mukti Diagnostic", layout="wide")
 
-#2. Creating session state (login tracking)
+# 2. Creating session state (login tracking)
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 # 3. Login screen or view
 if not st.session_state.logged_in:
-    st.title("🏥 রোগ মুক্তি ডায়াগনস্টিক সেন্টার")
-    st.subheader("🔒 অ্যাডমিন লগইন")
+    st.title("🏥 Rog Mukti Diagnostic Center")
+    st.subheader("🔒 Admin Login")
     
-    password = st.text_input("সিকিউরিটি পাসওয়ার্ড দিন:", type="password")
-    if st.button("লগইন করুন"):
+    password = st.text_input("Enter Security Password:", type="password")
+    if st.button("Login"):
         if password == "admin":
             st.session_state.logged_in = True
-            st.success("লগইন সফল হয়েছে! বাম পাশের মেনু থেকে অন্য পেজে যান।")
+            st.success("Login successful! Please select a page from the sidebar menu.")
             st.rerun()
         else:
-            st.error("ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।")
+            st.error("Incorrect password! Please try again.")
 else:
-    st.title("👋 স্বাগতম, অ্যাডমিন!")
-    st.info("আপনার প্রজেক্টের কাজ শুরু করতে বাম পাশের সাইডবার (Sidebar) থেকে যেকোনো পেজ সিলেক্ট করুন।")
+    st.title("👋 Welcome, Admin!")
+    st.info("To start working on your project, select any page from the sidebar menu.")
     
     # 🚨 Force navigation links (all lines are equally spaced from the beginning of the line)
-    st.sidebar.markdown("### 🗂️ মেনু অপশন")
-    st.sidebar.page_link("pages/1_Patient_Entry.py", label="📝 পেশেন্ট এন্ট্রি ও বিলিং", icon="📝")
-    st.sidebar.page_link("pages/2_Dashboard.py", label="📊 দৈনিক ও মাসিক হিসাব", icon="📊")
-    st.sidebar.page_link("pages/3_Print_Receipt.py", label="🖨️ মানি রিসিট ও প্রিন্ট", icon="🖨️")
+    st.sidebar.markdown("### 🗂️ Menu Options")
+    st.sidebar.page_link("pages/1_Patient_Entry.py", label="📝 Patient Entry & Billing", icon="📝")
+    st.sidebar.page_link("pages/2_Dashboard.py", label="📊 Daily & Monthly Dashboard", icon="📊")
+    st.sidebar.page_link("pages/3_Print_Receipt.py", label="🖨️ Money Receipt & Print", icon="🖨️")
     
     st.sidebar.markdown("---")
     # Logout button
-    if st.sidebar.button("লগআউট (Logout)"):
+    if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.rerun()
-        
+
