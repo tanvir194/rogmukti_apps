@@ -1,13 +1,13 @@
 import streamlit as st
 
-# ১. পেজ কনফিগারেশন সেট করা
+# 1. Setting the page configuration
 st.set_page_config(page_title="Rog Mukti Diagnostic", layout="wide")
 
-# ২. সেশন স্টেট তৈরি করা (লগইন ট্র্যাকিং)
+#2. Creating session state (login tracking)
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# ৩. লগইন স্ক্রিন বা ভিউ
+# 3. Login screen or view
 if not st.session_state.logged_in:
     st.title("🏥 রোগ মুক্তি ডায়াগনস্টিক সেন্টার")
     st.subheader("🔒 অ্যাডমিন লগইন")
@@ -24,14 +24,14 @@ else:
     st.title("👋 স্বাগতম, অ্যাডমিন!")
     st.info("আপনার প্রজেক্টের কাজ শুরু করতে বাম পাশের সাইডবার (Sidebar) থেকে যেকোনো পেজ সিলেক্ট করুন।")
     
-    # 🚨 জোরপূর্বক নেভিগেশন লিংক তৈরি (সবগুলো লাইন লাইনের শুরু থেকে সমান স্পেসে আছে)
+    # 🚨 Force navigation links (all lines are equally spaced from the beginning of the line)
     st.sidebar.markdown("### 🗂️ মেনু অপশন")
     st.sidebar.page_link("pages/1_Patient_Entry.py", label="📝 পেশেন্ট এন্ট্রি ও বিলিং", icon="📝")
     st.sidebar.page_link("pages/2_Dashboard.py", label="📊 দৈনিক ও মাসিক হিসাব", icon="📊")
     st.sidebar.page_link("pages/3_Print_Receipt.py", label="🖨️ মানি রিসিট ও প্রিন্ট", icon="🖨️")
     
     st.sidebar.markdown("---")
-    # লগআউট বাটন
+    # Logout button
     if st.sidebar.button("লগআউট (Logout)"):
         st.session_state.logged_in = False
         st.rerun()
