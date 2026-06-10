@@ -14,7 +14,7 @@ if not st.session_state.logged_in:
     
     password = st.text_input("সিকিউরিটি পাসওয়ার্ড দিন:", type="password")
     if st.button("লগইন করুন"):
-        if password == "admin123":
+        if password == "admin":
             st.session_state.logged_in = True
             st.success("লগইন সফল হয়েছে! বাম পাশের মেনু থেকে অন্য পেজে যান।")
             st.rerun()
