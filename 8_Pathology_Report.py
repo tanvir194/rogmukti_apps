@@ -13,11 +13,7 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 st.title("🔬 প্যাথলজি রিপোর্ট (কাস্টম ওয়ার্ড ফরম্যাট)")
 st.write("---")
 
-# গিটহাব থেকে আসা ডিরেক্টরি পাথ
-TEMPLATE_DIR = "report_templates"
-TEMPLATE_PATH = os.path.join(TEMPLATE_DIR, "pathology_template.docx")
-
-# ডাটাবেজ কানেকশন ও রিপোর্ট টেবিল তৈরি
+# ডাটাবেজ কানেকশন
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
 c.execute("""
@@ -30,19 +26,7 @@ CREATE TABLE IF NOT EXISTS pathology_reports (
 conn.commit()
 conn.close()
 
-# ফরম্যাট ফাইলটি আপলোড করা আছে কি না চেক
-if not os.path.exists(TEMPLATE_PATH):
-    st.error("⚠️ গিটহাবে 'report_templates/pathology_template.docx' ফাইলটি খুঁজে পাওয়া যায়নি!")
-    st.markdown("""
-    💡 **করণীয়:** আপনার গিটহাব অ্যাকাউন্টে লগইন করে মেইন ফোল্ডারে `report_templates` নামে একটি ফোল্ডার বানান এবং তার ভেতর আপনার ওয়ার্ড ফরম্যাটটি `pathology_template.docx` নামে আপলোড (Upload) করে Commit করুন।
-    """)
-    st.stop()
-else:
-    st.success("✅ ল্যাবের নিজস্ব ওয়ার্ড ফরম্যাটটি ডাটাবেজে সফলভাবে সংযুক্ত আছে।")
-
-st.write("---")
-
-# --- বিল নম্বর দিয়ে রোগী খোঁজা ও ডাটা এন্ট্রি ---
+# --- ১. বিল নম্বর দিয়ে রোগী খোঁজা ও ডাটা এন্ট্রি ---
 search_id = st.number_input("বিল নম্বর (Invoice ID) দিয়ে রোগীর টেস্ট খুঁজুন:", min_value=0, step=1, value=0)
 
 if search_id > 0:
@@ -59,7 +43,6 @@ if search_id > 0:
         p_name, p_age, p_phone, p_doctor, p_tests_str, p_date = patient_row
         st.success(f"🔍 রোগী পাওয়া গেছে: {p_name} | ডাক্তার: {p_doctor}")
         
-        # টেস্ট আলাদা করা
         raw_tests = [item.strip() for item in p_tests_str.split('|') if item.strip()]
         tests_to_process = []
         for item in raw_tests:
@@ -70,12 +53,10 @@ if search_id > 0:
                 
         saved_data = {}
         if saved_report_row:
-            try:
-                saved_data = json.loads(saved_report_row)
-            except:
-                pass
+            try: saved_data = json.loads(saved_report_row)
+            except: pass
 
-        st.subheader("📝 টেস্টের ফলাফল ও রেফারেন্স ভ্যালু লিখুন")
+        st.subheader("📝 টেস্টের ফলাফল লিখুন")
         new_report_data = {}
         
         for test in tests_to_process:
@@ -96,7 +77,6 @@ if search_id > 0:
             c = conn.cursor()
             json_str = json.dumps(new_report_data)
             current_time_str = datetime.now().strftime("%Y-%m-%d")
-            
             c.execute("""
                 INSERT INTO pathology_reports (invoice_id, report_data, reported_date)
                 VALUES (?, ?, ?)
@@ -104,57 +84,74 @@ if search_id > 0:
             """, (search_id, json_str, current_time_str, json_str, current_time_str))
             conn.commit()
             conn.close()
-            st.success("✅ ডাটা সেভ হয়েছে! নিচে ফাইল ডাউনলোড অপশন চালু হয়েছে।")
+            st.success("✅ ডাটা সেভ হয়েছে! এবার নিচে আপনার প্যাড আপলোডের অপশন চালু হয়েছে।")
             st.rerun()
 
-        # --- ওয়ার্ড ফাইল জেনারেট ও ডাউনলোড লজিক ---
+        # --- ২. কাস্টম ওয়ার্ড ফরম্যাট আপলোড ও মেগা ডাউনলোড লজিক ---
         if saved_report_row:
-            st.subheader("📥 আপনার কাস্টমাইজড ওয়ার্ড রিপোর্টটি ডাউনলোড করুন")
+            st.write("---")
+            st.subheader("📁 এই রিপোর্টের জন্য আপনার MS Word ফরম্যাট ফাইলটি দিন")
             
-            try:
-                doc = Document(TEMPLATE_PATH)
-                
-                # সাধারণ প্যারাগ্রাফের ভেতরের ট্যাগগুলো পরিবর্তন করা
-                for paragraph in doc.paragraphs:
-                    if "{{PATIENT_NAME}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{PATIENT_NAME}}", str(p_name))
-                    if "{{INVOICE_ID}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{INVOICE_ID}}", f"#{search_id}")
-                    if "{{AGE}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{AGE}}", str(p_age))
-                    if "{{DOCTOR}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{DOCTOR}}", str(p_doctor))
-                    if "{{DATE}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{DATE}}", str(p_date))
-                
-                # টেবিলের ভেতরের ট্যাগ পরিবর্তন
-                for table in doc.tables:
-                    for row in table.rows:
-                        for cell in row.cells:
-                            if "{{PATIENT_NAME}}" in cell.text: cell.text = cell.text.replace("{{PATIENT_NAME}}", str(p_name))
-                            if "{{INVOICE_ID}}" in cell.text: cell.text = cell.text.replace("{{INVOICE_ID}}", f"#{search_id}")
-                            if "{{AGE}}" in cell.text: cell.text = cell.text.replace("{{AGE}}", str(p_age))
-                            if "{{DOCTOR}}" in cell.text: cell.text = cell.text.replace("{{DOCTOR}}", str(p_doctor))
-                            if "{{DATE}}" in cell.text: cell.text = cell.text.replace("{{DATE}}", str(p_date))
-                            
-                            if "{{TEST_RESULTS}}" in cell.text:
-                                cell.text = "" 
-                                results_text = ""
-                                for t_name, t_val in saved_data.items():
-                                    results_text += f"{t_name} \t\t Result: {t_val['result']} \t Unit: {t_val['unit']} \t Ref: {t_val['ref']}\n"
-                                cell.text = results_text
-
-                output_path = f"Report_{search_id}.docx"
-                doc.save(output_path)
-                
-                with open(output_path, "rb") as file:
-                    st.download_button(
-                        label="📥 জেনারেটেড MS Word (.docx) ফাইল ডাউনলোড করুন",
-                        data=file,
-                        file_name=f"Pathology_Report_ID_{search_id}.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        use_container_width=True
-                    )
-                
-                if os.path.exists(output_path):
-                    os.remove(output_path)
+            # 🌟 জাদুকরী পরিবর্তন: এখানে doc এবং docx দুইটাই টাইপ হিসেবে দিয়ে দেওয়া হয়েছে
+            uploaded_template = st.file_uploader(
+                "আপনার মোবাইল থেকে টেস্টের ফাইলটি সিলেক্ট করুন:", 
+                type=["doc", "docx"], 
+                key="doc_uploader"
+            )
+            
+            if uploaded_template is not None:
+                try:
+                    # ফাইল নেম এক্সটেনশন চেক
+                    file_extension = os.path.splitext(uploaded_template.name).lower()
                     
-            except Exception as e:
-                st.error(f"❌ ওয়ার্ড ফাইলটি প্রসেস করতে সমস্যা হচ্ছে। এরর: {e}")
+                    # বাইনারি ডাটা থেকে ডকুমেন্ট ওপেন করা
+                    doc = Document(uploaded_template)
+                    
+                    # প্যারাগ্রাফের ট্যাগ পরিবর্তন
+                    for paragraph in doc.paragraphs:
+                        if "{{PATIENT_NAME}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{PATIENT_NAME}}", str(p_name))
+                        if "{{INVOICE_ID}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{INVOICE_ID}}", f"#{search_id}")
+                        if "{{AGE}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{AGE}}", str(p_age))
+                        if "{{DOCTOR}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{DOCTOR}}", str(p_doctor))
+                        if "{{DATE}}" in paragraph.text: paragraph.text = paragraph.text.replace("{{DATE}}", str(p_date))
+                    
+                    # টেবিলের ভেতরের ট্যাগ পরিবর্তন
+                    for table in doc.tables:
+                        for row in table.rows:
+                            for cell in row.cells:
+                                if "{{PATIENT_NAME}}" in cell.text: cell.text = cell.text.replace("{{PATIENT_NAME}}", str(p_name))
+                                if "{{INVOICE_ID}}" in cell.text: cell.text = cell.text.replace("{{INVOICE_ID}}", f"#{search_id}")
+                                if "{{AGE}}" in cell.text: cell.text = cell.text.replace("{{AGE}}", str(p_age))
+                                if "{{DOCTOR}}" in cell.text: cell.text = cell.text.replace("{{DOCTOR}}", str(p_doctor))
+                                if "{{DATE}}" in cell.text: cell.text = cell.text.replace("{{DATE}}", str(p_date))
+                                
+                                if "{{TEST_RESULTS}}" in cell.text:
+                                    cell.text = "" 
+                                    results_text = ""
+                                    for t_name, t_val in saved_data.items():
+                                        results_text += f"{t_name} \t Result: {t_val['result']} \t Unit: {t_val['unit']} \t Ref: {t_val['ref']}\n"
+                                    cell.text = results_text
+
+                    # রোগীর আইডি অনুযায়ী আউটপুট ফাইল তৈরি
+                    output_filename = f"Final_Report_ID_{search_id}{file_extension}"
+                    doc.save(output_filename)
+                    
+                    with open(output_filename, "rb") as file:
+                        st.download_button(
+                            label="📥 তৈরি হওয়া ফাইনাল রিপোর্ট ফাইলটি ডাউনলোড করুন",
+                            data=file,
+                            file_name=output_filename,
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document" if file_extension == ".docx" else "application/msword",
+                            use_container_width=True
+                        )
+                    
+                    if os.path.exists(output_filename):
+                        os.remove(output_filename)
+                        
+                except Exception as e:
+                    st.error(f"❌ এই ফাইলটি সরাসরি প্রসেস করতে সমস্যা হচ্ছে। মাইক্রোসফট ওয়ার্ডের অনেক পুরনো সংস্করণের ফাইল হলে এই সমস্যা হতে পারে।")
+                    st.info("💡 বিকল্প করণীয়: যদি এরর দেখায়, তবে ফাইলটিকে WPS Office দিয়ে একবার ওপেন করে জাস্ট 'Save As' করে নতুন নামে সেভ করে নিয়ে ট্রাই করুন।")
+            else:
+                st.info("💡 ডাটা সেভ করা আছে। ওপরে আপনার মোবাইল থেকে এই টেস্টের নির্দিষ্ট ফাইলটি (যেমন: Widal.doc) সিলেক্ট করলে ডাউনলোড বাটন চলে আসবে।")
     else:
         st.error("⚠️ এই বিল নম্বরের কোনো রোগীর তথ্য পাওয়া যায়নি।")
