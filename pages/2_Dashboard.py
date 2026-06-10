@@ -11,20 +11,20 @@ if "admin_auth" not in st.session_state:
     st.session_state.admin_auth = False
 
 if not st.session_state.admin_auth:
-    st.warning("🔒 এই পেজটি লক করা আছে। দেখার জন্য অ্যাডমিন পাসওয়ার্ড দিন।")
-    password_box = st.text_input("🔑 পাসওয়ার্ড লিখুন:", type="password", key="lock_dashboard")
+    st.warning("🔒 "This page is locked. Enter the admin password to view.")
+    password_box = st.text_input("🔑 Enter password:", type="password", key="lock_dashboard")
     
-    if st.button("🔓 আনলক করুন", type="primary", key="btn_dashboard"):
+    if st.button("🔓 Unlock", type="primary", key="btn_dashboard"):
         if password_box == ADMIN_PASSWORD:
             st.session_state.admin_auth = True
-            st.success("🎉 সফলভাবে আনলক হয়েছে!")
+            st.success("🎉 Unlocked successfully!")
             st.rerun()
         else:
-            st.error("❌ ভুল পাসওয়ার্ড!")
+            st.error("❌ Wrong password!")
     st.stop()
 
 # 📊 2. Dashboard main accounting code
-st.title("📊 দৈনিক ও মাসিক ক্যাশ হিসাব-নিকাশ")
+st.title("📊 Daily and monthly cash accounting")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
@@ -58,10 +58,10 @@ try:
         df['billing_date'] = pd.to_datetime(df['billing_date'], errors='coerce')
         df = df.dropna(subset=['billing_date'])
         
-        option = st.radio("কোন হিসাবটি দেখতে চান?", ["আজকের/দৈনিক হিসাব", "মাসিক হিসাব"], horizontal=True)
+        option = st.radio("Which account would you like to view?", ["Today's/Daily Account", "Monthly Account"], horizontal=True)
         
-        if option == "আজকের/দৈনিক হিসাব":
-            user_date = st.date_input("📅 নির্দিষ্ট তারিখ সিলেক্ট করুন:", datetime.now().date())
+        if option == "Today's/Daily Account":
+            user_date = st.date_input("📅 Select a specific date:", datetime.now().date())
             filtered_df = df[df['billing_date'].dt.date == user_date]
         else:
             col_m1, col_m2 = st.columns(2)
@@ -69,7 +69,7 @@ try:
                 available_years = sorted(df['billing_date'].dt.year.unique())
                 if datetime.now().year not in available_years:
                     available_years.append(datetime.now().year)
-                selected_year = st.selectbox("বছর সিলেক্ট করুন:", available_years, index=available_years.index(datetime.now().year))
+                selected_year = st.selectbox("Select year:", available_years, index=available_years.index(datetime.now().year))
             
             with col_m2:
                 months_bn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
