@@ -4,7 +4,7 @@ import pandas as pd
 import os
 from datetime import datetime
 
-# 🔑 ১. অ্যাডমিন সিকিউরিটি লক কোড (একদম শুরুতে)
+# 🔑 1. Admin Security Lock Code (at the very beginning)
 ADMIN_PASSWORD = "12345"
 
 if "admin_auth" not in st.session_state:
@@ -23,7 +23,7 @@ if not st.session_state.admin_auth:
             st.error("❌ ভুল পাসওয়ার্ড!")
     st.stop()
 
-# 📊 ২. ড্যাশবোর্ডের মূল হিসাব-নিকাশ কোড
+# 📊 2. Dashboard main accounting code
 st.title("📊 দৈনিক ও মাসিক ক্যাশ হিসাব-নিকাশ")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,7 +32,7 @@ DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
 conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
 
-# 🌟 জাদুকরী লজিক: ড্যাশবোর্ড লোড হওয়ার আগে টেবিলটি তৈরি থাকা নিশ্চিত করা (এরর সমাধান)
+# 🌟 Magical logic: ensuring the table is created before the dashboard loads (error resolution)
 c.execute("""
 CREATE TABLE IF NOT EXISTS billing_records (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,7 +72,7 @@ try:
                 selected_year = st.selectbox("বছর সিলেক্ট করুন:", available_years, index=available_years.index(datetime.now().year))
             
             with col_m2:
-                months_bn = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"]
+                months_bn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
                 current_month = datetime.now().month
                 selected_month = st.selectbox("মাস সিলেক্ট করুন:", range(1, 13), index=current_month-1, format_func=lambda x: months_bn[x-1])
             
