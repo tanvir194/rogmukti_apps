@@ -25,14 +25,21 @@ if "last_invoice_id" in st.session_state:
         discount_amount = (total_fee * discount_pct) / 100.0
         tests_list = selected_tests.split(", ")
 
-        # প্রিন্ট বাটন
-        st.markdown("""
-            <button onclick="window.print()" style="
-                background-color: #2f855a; color: white; padding: 12px 30px; 
-                border: none; border-radius: 5px; font-size: 16px; 
-                cursor: pointer; font-weight: bold; margin-bottom: 20px;
-            ">🖨️ রিসিট প্রিন্ট করুন (Print / Save PDF)</button>
-        """, unsafe_allow_html=True)
+        # 📌 ২. নতুন ও সম্পূর্ণ ফিক্সড প্রিন্ট মেকানিজম (যা ১০০% কাজ করবে)
+        # বাটনে ক্লিক করলে এই স্ক্রিপ্টটি ব্রাউজারকে সরাসরি প্রিন্ট কমান্ড পাঠাবে
+        st.components.v1.html("""
+            <button onclick="parent.window.print()" style="
+                background-color: #2f855a; 
+                color: white; 
+                padding: 12px 30px; 
+                border: none; 
+                border-radius: 5px; 
+                font-size: 16px; 
+                cursor: pointer; 
+                font-weight: bold;
+                width: 100%;
+            ">🖨️ রিসিট প্রিন্ট বা পিডিএফ সেভ করুন (Print Now)</button>
+        """, height=60)
         
         # মানি রিসিট ডিজাইন এবং প্রিন্ট সিএসএস
         receipt_html = f"""
@@ -43,7 +50,7 @@ if "last_invoice_id" in st.session_state:
                 #print-area {{ position: absolute; left: 0; top: 0; width: 100%; }}
             }}
         </style>
-        <div id="print-area" style="border: 2px solid #1a365d; padding: 20px; border-radius: 10px; font-family: sans-serif; background-color: white; color: black;">
+        <div id="print-area" style="border: 2px solid #1a365d; padding: 20px; border-radius: 10px; font-family: sans-serif; background-color: white; color: black; margin-top: 10px;">
             <div style="text-align: center; background-color: #1a365d; color: white; padding: 10px; border-radius: 5px;">
                 <h2>ROG MUKTI DIAGNOSTIC CENTRE</h2>
                 <p>Mollah Stand, Auliapur, Patuakhali<br>Phone: 01711867637</p>
@@ -80,4 +87,4 @@ if "last_invoice_id" in st.session_state:
         st.error("কোনো বিলের তথ্য পাওয়া যায়নি।")
 else:
     st.info("ℹ️ কোনো বিল তৈরি করা হয়নি। প্রথমে 'Patient Entry' পেজ থেকে বিল সেভ করুন।")
-      
+    
