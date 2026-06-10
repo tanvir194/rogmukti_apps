@@ -30,7 +30,6 @@ conn.commit()
 
 st.title("📝 টেস্ট এবং বিলিং সেকশন")
 
-# ফর্ম ছাড়া সরাসরি ইনপুট (যাতে লাইভ আপডেট হয়)
 st.subheader("পেশেন্ট ইনফরমেশন")
 col1, col2 = st.columns(2)
 with col1:
@@ -43,7 +42,6 @@ with col2:
 st.markdown("---")
 st.subheader("টেস্ট সিলেকশন")
 
-# 📌 টেস্টের নাম ও প্রাইস তালিকা
 test_prices = {
     "Urine Pregnancy Test (HCG)": 200.0,
     "AFP (Alpha Fetoprotein)": 1200.0,
@@ -51,10 +49,7 @@ test_prices = {
     "Anti-HCV": 600.0
 }
 
-# ড্রপডাউনে অপশন সিলেক্ট
 selected_tests = st.multiselect("টেস্ট সিলেক্ট করুন (Description):", list(test_prices.keys()))
-
-# 💥 ম্যাজিক: টেস্ট সিলেক্ট করার সাথে সাথে এখানে লাইভ যোগ হবে
 total_fee = sum(test_prices[test] for test in selected_tests)
 st.info(f"📋 লাইভ টোটাল ফি: {total_fee} টাকা")
 
@@ -62,10 +57,9 @@ st.markdown("---")
 st.subheader("পেমেন্ট ও ডিসকাউন্ট")
 col3, col4 = st.columns(2)
 with col3:
-    discount_pct = st.number_input("ডিসকাউন্ট (Discount %)", min_value=0.0, max_value=100.0, value=0.0, step=1.0)
-    advance_paid = st.number_input("অগ্রিম পরিশোধ (Advance Paid)", min_value=0.0, value=0.0, step=50.0)
+    discount_pct = st.number_input("ডিসকাউন্ট (Discount %)", min_value=0.0, max_value=100.0, value=0.0)
+    advance_paid = st.number_input("অগ্রিম পরিশোধ (Advance Paid)", min_value=0.0, value=0.0)
 
-# 💥 ম্যাজিক: ডিসকাউন্ট বা অ্যাডভান্স লেখার সাথে সাথে লাইভ হিসাব হবে
 discount_amount = (total_fee * discount_pct) / 100.0
 net_payable = total_fee - discount_amount
 due_amount = net_payable - advance_paid
@@ -75,8 +69,7 @@ with col4:
     st.metric("মোট বাকি টাকা (Due)", f"{due_amount} ৳")
 
 st.markdown("---")
-# আলাদাভাবে নিচে সেভ বাটন
-submit_button = st.button("Save Bill and Generate Receipt (ডাটা সেভ করুন)")
+submit_button = st.button("Save Bill and Go to Print (ডাটা সেভ করুন)")
 
 # ডাটা সেভ লজিক
 if submit_button:
@@ -86,49 +79,18 @@ if submit_button:
         current_date = datetime.now().strftime("%Y-%m-%d")
         tests_str = ", ".join(selected_tests)
         
+        # ডাটা সেভ করা
         c.execute("""
             INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (name, age, phone, doctor, tests_str, total_fee, discount_pct, advance_paid, due_amount, current_date))
         conn.commit()
         
-        st.success("✅ সফলভাবে ডাটা সেভ হয়েছে!")
-        st.balloons()
+        # ৩. ম্যাজিক: সর্বশেষ আইডির ট্র্যাকিং রাখা এবং সরাসরি প্রিন্ট পেজে পাঠিয়ে দেওয়া
+        st.session_state.last_invoice_id = c.lastrowid
+        st.success("✅ সফলভাবে ডাটা সেভ হয়েছে! প্রিন্ট পেজে নিয়ে যাওয়া হচ্ছে...")
         
-        # মানি রিসিট ভিউ
-        st.subheader("📄 মানি রিসিট")
-        receipt_html = f"""
-        <div style="border: 2px solid #1a365d; padding: 20px; border-radius: 10px; font-family: sans-serif; background-color: white; color: black;">
-            <div style="text-align: center; background-color: #1a365d; color: white; padding: 10px; border-radius: 5px;">
-                <h2>ROG MUKTI DIAGNOSTIC CENTRE</h2>
-                <p>Mollah Stand, Auliapur, Patuakhali<br>Phone: 01711867637</p>
-            </div>
-            <div style="margin-top: 15px; display: flex; justify-content: space-between;">
-                <div>
-                    <p><b>Patient Name:</b> {name}</p>
-                    <p><b>Phone Number:</b> {phone}</p>
-                </div>
-                <div style="text-align: right;">
-                    <p><b>Date:</b> {current_date}</p>
-                    <p><b>Age:</b> {age} Years</p>
-                    <p><b>Refd By:</b> {doctor}</p>
-                </div>
-            </div>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                <tr style="background-color: #3182ce; color: white; text-align: left;">
-                    <th style="padding: 8px;">Description (Test Name)</th>
-                    <th style="padding: 8px; text-align: right;">Amount</th>
-                </tr>
-                {"".join([f"<tr><td style='padding: 8px; border-bottom: 1px solid #ddd;'>{t}</td><td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>{test_prices[t]} ৳</td></tr>" for t in selected_tests])}
-            </table>
-            <div style="margin-top: 20px; text-align: right; font-size: 16px;">
-                <p><b>Total Amount:</b> {total_fee} ৳</p>
-                <p><b>Discount ({discount_pct}%):</b> -{discount_amount} ৳</p>
-                <p><b>Advance Paid:</b> {advance_paid} ৳</p>
-                <p style="color: red; font-size: 18px;"><b>Due (বাকি টাকা): {due_amount} ৳</b></p>
-            </div>
-        </div>
-        """
-        st.markdown(receipt_html, unsafe_allow_html=True)
+        # স্ট্রিমলিটের মাধ্যমে স্বয়ংক্রিয়ভাবে ৩ নম্বর প্রিন্ট পেজে পাঠানো
+        st.switch_page("pages/3_Print_Receipt.py")
 
 conn.close()
