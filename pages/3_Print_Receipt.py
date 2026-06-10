@@ -1,12 +1,13 @@
 import streamlit as st
 import sqlite3
+import os
 
 # সিকিউরিটি বা লগইন চেক
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
     st.warning("⚠️ আগে লগইন করুন।")
     st.stop()
 
-st.title("🏥 ⁠মেডিকেল রিসিট প্রিন্ট")
+st.title("🏥 মেডিকেল রিসিট প্রিন্ট")
 st.write("------------------- Invoice ID তথ্য -------------------")
 
 invoice_id = None
@@ -21,8 +22,12 @@ if not invoice_id:
     st.info("💡 কোনো ইনভয়েস আইডি পাওয়া যায়নি। অনুগ্রহ করে 'Patient Entry' পেজ থেকে তথ্য সাবমিট করুন।")
     st.stop()
 
+# ডিরেক্টরি পাথ ফিক্সড করা হলো
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
+
 # ডাটাবেজ কানেকশন
-conn = sqlite3.connect("rogmukti_clinic_fix.db")
+conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
 
 c.execute("SELECT * FROM billing_records WHERE id = ?", (invoice_id,))
@@ -66,9 +71,8 @@ for index, item in enumerate(tests_list, start=1):
         
     table_rows += f"<tr><td>{index}</td><td>{t_name}</td><td style='text-align: right;'>{t_price_val:.2f} ৳</td></tr>"
 
-# ------------------- গ্লোবাল সিএসএস এবং এইচটিএমএল কন্টেন্ট -------------------
-# ইনডেন্টেশনের ত্রুটি এড়াতে সম্পূর্ণ কোডটি বামদিকের মার্জিন ঘেঁষে (Unindented) রাখা হয়েছে
-receipt_html = f"""
+# ------------------- সম্পূর্ণ HTML, CSS এবং প্রিন্ট লজিক একসাথে -------------------
+full_html_page = f"""
 <style>
 .receipt-box {{
     max-width: 550px;
@@ -89,8 +93,8 @@ receipt_html = f"""
     border-radius: 8px 8px 0 0;
     margin-bottom: 20px;
 }}
-.header h2 {{ margin: 0; font-size: 22px; }}
-.header p {{ margin: 5px 0 0 0; font-size: 14px; }}
+.header h2 {{ margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; }}
+.header p {{ margin: 5px 0 0 0; font-size: 13px; opacity: 0.9; }}
 .info-table, .test-table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; color: black; }}
 .info-table td {{ padding: 5px 0; font-size: 14px; }}
 .test-table th, .test-table td {{ border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }}
@@ -124,9 +128,11 @@ receipt_html = f"""
 </style>
 
 <div class="receipt-box">
+    <!-- 🌟 নতুন আপডেট করা রসিদের হেডার সেকশন 🌟 -->
     <div class="header">
-        <h2>রোগমুক্তি ক্লিনিক</h2>
-        <p>রোগীর অফিশিয়াল মানি রিসিট</p>
+        <h2>Rogmukti Diagnostic Centre</h2>
+        <p style="font-size: 15px; font-weight: bold; margin-top: 3px;">Mollah stand, Auliapur, Patuakhali</p>
+        <p style="font-size: 13px;">📞 Mobile: 01711867637</p>
     </div>
     
     <table class="info-table">
@@ -161,7 +167,7 @@ receipt_html = f"""
     <div class="total-section">
         <p>মোট বিল (Total): {total_amount:.2f} ৳</p>
         <p>ছাড় (Discount): {discount_amount:.2f} ৳ ({discount_pct}%)</p>
-        <p>অগ্রিম পরিশোধ (Paid): <b>{advance_paid:.2f} ৳</b></p>
+        <p>градаণ পরিশোধ (Paid): <b>{advance_paid:.2f} ৳</b></p>
         <p style="font-size: 16px; border-top: 1px dashed #1a365d; padding-top: 5px; margin-top: 5px;">
             <b>বাকি টাকা (Due Amount): <span style="color: red;">{due_amount:.2f} ৳</span></b>
         </p>
@@ -173,10 +179,9 @@ receipt_html = f"""
 </div>
 """
 
-# ------------------- ১. স্ট্রিমলিট বোতাম -------------------
+# ------------------- ১. স্ট্রিমলিট প্রিন্ট বোতাম -------------------
 if st.button("🖨️ রিসিট প্রিন্ট করুন (Print Now)", type="primary", use_container_width=True):
     st.components.v1.html("<script>parent.window.print();</script>", height=0)
 
 # ------------------- ২. মূল মেমো রেন্ডার -------------------
-# st.markdown এর জায়গায় ডিরেক্ট st.html ব্যবহার করা হয়েছে, যা ব্রাউজারে কোড লিক হওয়া বন্ধ করবে
-st.html(receipt_html)
+st.html(full_html_page)
