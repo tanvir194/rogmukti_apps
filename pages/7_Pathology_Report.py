@@ -9,7 +9,7 @@ st.set_page_config(page_title="Pathology Report", layout="wide")
 st.title("🧪 Pathology Reports")
 st.markdown("**সকল ধরনের প্যাথলজি ও ল্যাবরেটরি রিপোর্ট এখানে সেভ করা হবে**")
 
-# Database and Folder Setup
+# Database Setup
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "pathology_reports")
@@ -18,7 +18,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
 
-# Create Table
+# Create Table (এখানে জোর করে টেবিল তৈরি করা হচ্ছে)
 c.execute("""
 CREATE TABLE IF NOT EXISTS pathology_reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,39 +58,44 @@ with tab1:
 
     if st.button("💾 রিপোর্ট সেভ করুন", type="primary", use_container_width=True):
         if patient_name and test_name:
-            file_path_db = None
+            file_path = None
             if uploaded_file:
                 filename = f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uploaded_file.name}"
                 save_path = os.path.join(UPLOAD_FOLDER, filename)
                 with open(save_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
-                file_path_db = filename
+                file_path = filename
 
-            c.execute("""
-                INSERT INTO pathology_reports 
+            c.execute("""INSERT INTO pathology_reports 
                 (patient_name, patient_phone, test_name, report_date, doctor_name, result, notes, file_path)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (patient_name, patient_phone, test_name, str(report_date), 
-                  doctor_name, result, notes, file_path_db))
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (patient_name, patient_phone, test_name, str(report_date), 
+                 doctor_name, result, notes, file_path))
             conn.commit()
-            
             st.success("✅ রিপোর্ট সফলভাবে সেভ হয়েছে!")
             st.rerun()
         else:
-            st.error("রোগীর নাম এবং টেস্টের নাম দিতে হবে!")
+            st.error("রোগীর নাম এবং টেস্টের নাম দিতে হবে")
 
 with tab2:
     st.subheader("সকল সেভকৃত রিপোর্ট")
-    df = pd.read_sql_query("SELECT * FROM pathology_reports ORDER BY report_date DESC, id DESC", conn)
-    
-    if not df.empty:
-        search = st.text_input("🔍 রোগী বা টেস্ট দিয়ে সার্চ করুন")
-        if search:
-            df = df[df['patient_name'].str.contains(search, case=False, na=False) | 
-                    df['test_name'].str.contains(search, case=False, na=False)]
+    try:
+        df = pd.read_sql_query("""
+            SELECT id, patient_name, patient_phone, test_name, 
+                   report_date, doctor_name, result, notes 
+            FROM pathology_reports 
+            ORDER BY report_date DESC, id DESC
+        """, conn)
         
-        st.dataframe(df, use_container_width=True, hide_index=True)
-    else:
-        st.info("এখনো কোনো রিপোর্ট সেভ করা হয়নি।")
+        if not df.empty:
+            search = st.text_input("🔍 রোগী বা টেস্ট দিয়ে সার্চ করুন")
+            if search:
+                df = df[df['patient_name'].str.contains(search, case=False, na=False) | 
+                        df['test_name'].str.contains(search, case=False, na=False)]
+            st.dataframe(df, use_container_width=True, hide_index=True)
+        else:
+            st.info("এখনো কোনো রিপোর্ট সেভ করা হয়নি।")
+    except Exception as e:
+        st.error(f"ডাটাবেসে সমস্যা: {e}")
 
 conn.close()
