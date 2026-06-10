@@ -3,7 +3,7 @@ import sqlite3
 
 # ১. সিকিউরিটি চেক
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
-    st.warning("🔒 অ্যাক্সেস রিফিউজড! দয়া করে আগে মেইন পেজ থেকে লগইন করুন।")
+    st.warning("🔒 অ্যাক্সেস রিফিউজ드! দয়া করে আগে মেইন পেজ থেকে লগইন করুন।")
     st.stop()
 
 st.title("🖨️ মানি রিসিট ও প্রিন্ট সেকশন")
@@ -16,15 +16,10 @@ c = conn.cursor()
 c.execute("SELECT test_name, price FROM diagnostic_tests")
 test_prices = {row[0].strip(): row[1] for row in c.fetchall()}
 
-# 🚨 জাদুকরী ট্রিকস: সেশন স্টেট থেকে আইডি না পেলে সরাসরি ডাটাবেজের সর্বশেষ সেভ হওয়া বিলের আইডি তুলে আনা
-invoice_id = None
-if "last_invoice_id" in st.session_state and st.session_state.last_invoice_id:
-    invoice_id = st.session_state.last_invoice_id
-else:
-    c.execute("SELECT MAX(id) FROM billing_records")
-    last_id_result = c.fetchone()
-    if last_id_result and last_id_result[0]:
-        invoice_id = last_id_result[0]
+# সর্বশেষ সেভ হওয়া বিলের আইডি বা ম্যাক্সিমাম আইডি তুলে আনা
+c.execute("SELECT MAX(id) FROM billing_records")
+last_id_result = c.fetchone()
+invoice_id = last_id_result[0] if last_id_result else None
 
 # ৪. বিলের তথ্য ডাটাবেজ থেকে তুলে আনা
 if invoice_id:
@@ -33,19 +28,23 @@ if invoice_id:
     conn.close()
     
     if row:
-        # কলাম ইনডেক্সিং (সঠিকভাবে ডাটা ভাগ করা)
+        # 📌 ডাটাবেজের কলাম ইনডেক্সিং একদম নিখুঁতভাবে রি-ম্যাপ করা হলো
         name = row[1]
         age = row[2]
         phone = row[3]
         doctor = row[4]
         selected_tests = row[5]
-        total_fee = row[6]
-        discount_pct = row[7]
-        advance_paid = row[8]
-        due_amount = row[9]
+        total_amount = float(row[6])    # মূল টোটাল বিল
+        discount_pct = float(row[7])    # ডিসকাউন্ট %
+        advance_paid = float(row[8])    # অগ্রিম নগদ পরিশোধ
+        due_amount = float(row[9])      # বাকি (Due) টাকা
         current_date = row[10]
         
-        discount_amount = (total_fee * discount_pct) / 100.0
+        # 💥 হিসাবের ফর্মুলা পুনরায় রি-ক্যালকুলেট করা (ডাটাবেজের ভুলের সুরক্ষাকবচ)
+        discount_amount = (total_amount * discount_pct) / 100.0
+        net_payable = total_amount - discount_amount
+        due_amount = net_payable - advance_paid
+        
         tests_list = selected_tests.split(", ")
 
         # প্রিন্ট মেকানিজম বাটন
@@ -120,8 +119,8 @@ if invoice_id:
                 </tbody>
             </table>
             <div class="summary-text">
-                <p style="margin: 3px 0; color: black;"><b>Total Amount:</b> {total_fee:.2f} ৳</p>
-                <p style="margin: 3px 0; color: black;"><b>Discount ({discount_pct}%):</b> -{discount_amount:.2f} ৳</p>
+                <p style="margin: 3px 0; color: black;"><b>Total Amount:</b> {total_amount:.2f} ৳</p>
+                <p style="margin: 3px 0; color: black;"><b>Discount ({discount_pct:.1f}%):</b> -{discount_amount:.2f} ৳</p>
                 <p style="margin: 3px 0; color: black;"><b>Advance Paid:</b> {advance_paid:.2f} ৳</p>
                 <p style="color: red; font-size: 18px; margin: 8px 0 0 0;"><b>Due (বাকি টাকা): {due_amount:.2f} ৳</b></p>
             </div>
