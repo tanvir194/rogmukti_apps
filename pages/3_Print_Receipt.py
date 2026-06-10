@@ -8,6 +8,7 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 
 st.title("🖨️ মানি রিসিট ও প্রিন্ট সেকশন")
 
+# সেশন স্টেট থেকে সর্বশেষ সেভ হওয়া বিলের আইডি নেওয়া
 if "last_invoice_id" in st.session_state:
     invoice_id = st.session_state.last_invoice_id
     
@@ -16,7 +17,7 @@ if "last_invoice_id" in st.session_state:
     
     # মাস্টার টেবিল থেকে সব টেস্টের লাইভ প্রাইস ডিকশনারি নিয়ে আসা
     c.execute("SELECT test_name, price FROM diagnostic_tests")
-    test_prices = {row[0]: row[1] for row in c.fetchall()}
+    test_prices = {row[0].strip(): row[1] for row in c.fetchall()}
     
     # বিলের তথ্য তুলে আনা
     c.execute("SELECT * FROM billing_records WHERE id = ?", (invoice_id,))
@@ -24,6 +25,7 @@ if "last_invoice_id" in st.session_state:
     conn.close()
     
     if row:
+        # 📌 ডাটাবেজের সঠিক কলাম ইনডেক্স (0=id, 1=name, 2=age, 3=phone, 4=doctor, 5=tests, 6=total, 7=discount, 8=paid, 9=due, 10=date)
         name = row[1]
         age = row[2]
         phone = row[3]
@@ -37,6 +39,7 @@ if "last_invoice_id" in st.session_state:
         
         discount_amount = (total_fee * discount_pct) / 100.0
 
+        # প্রিন্ট মেকানিজম বাটন
         st.components.v1.html("""
             <button onclick="parent.window.print()" style="
                 background-color: #1a365d; color: white; padding: 12px 30px; 
@@ -63,13 +66,19 @@ if "last_invoice_id" in st.session_state:
         </style>
         """, unsafe_allow_html=True)
         
-        # 📌 ডাইনামিক টেস্টের নাম এবং ডাটাবেজ থেকে তার আসল দাম বসানো
+        # 📌 টেস্টের নাম এবং ডাটাবেজ থেকে তার সঠিক দাম মেলানোর লজিক ফিক্সড
         table_rows = ""
+        # কাস্টম টেস্ট ও অফিশিয়াল টেস্টের মধ্যে প্যাঁচ এড়াতে কমা দিয়ে স্প্লিট করা হয়েছে
         for t in selected_tests.split(","):
             cleaned_test_name = t.strip()
             if cleaned_test_name:
-                # ডাটাবেজের মাস্টার টেবিল থেকে লাইভ দাম ম্যাচ করানো হচ্ছে
                 price = test_prices.get(cleaned_test_name, 0.0)
+                # যদি কমা দিয়ে আলাদা করার কারণে ০ দেখায়, তবে ব্যাকআপ হিসেবে আংশিক মিল চেক করা
+                if price == 0.0:
+                    for k, v in test_prices.items():
+                        if cleaned_test_name in k or k in cleaned_test_name:
+                            price = v
+                            break
                 table_rows += f"<tr><td style='color: black;'>{cleaned_test_name}</td><td style='text-align: right; color: black;'>{price:.2f} ৳</td></tr>"
             
         receipt_body = f"""
@@ -104,10 +113,10 @@ if "last_invoice_id" in st.session_state:
                 </tbody>
             </table>
             <div class="summary-text">
-                <p style="margin: 3px 0; color: black;"><b>Total Amount:</b> {total_fee} ৳</p>
-                <p style="margin: 3px 0; color: black;"><b>Discount ({discount_pct}%):</b> -{discount_amount} ৳</p>
-                <p style="margin: 3px 0; color: black;"><b>Advance Paid:</b> {advance_paid} ৳</p>
-                <p style="color: red; font-size: 18px; margin: 8px 0 0 0;"><b>Due (বাকি টাকা): {due_amount} ৳</b></p>
+                <p style="margin: 3px 0; color: black;"><b>Total Amount:</b> {total_fee:.2f} ৳</p>
+                <p style="margin: 3px 0; color: black;"><b>Discount ({discount_pct}%):</b> -{discount_amount:.2f} ৳</p>
+                <p style="margin: 3px 0; color: black;"><b>Advance Paid:</b> {advance_paid:.2f} ৳</p>
+                <p style="color: red; font-size: 18px; margin: 8px 0 0 0;"><b>Due (বাকি টাকা): {due_amount:.2f} ৳</b></p>
             </div>
         </div>
         """
