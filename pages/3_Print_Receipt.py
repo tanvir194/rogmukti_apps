@@ -20,7 +20,7 @@ if "last_invoice_id" in st.session_state:
     conn.close()
     
     if row:
-        # ডাটাবেজের ইনডেক্স অনুযায়ী সঠিক ভেরিয়েবল আলাদা করা
+        # ডাটাবেজের সঠিক ইনডেক্স অনুযায়ী ডেটা অ্যাসাইন করা
         name = row[1]
         age = row[2]
         phone = row[3]
@@ -127,4 +127,4 @@ if "last_invoice_id" in st.session_state:
     else:
         st.error("কোনো বিলের তথ্য পাওয়া যায়নি।")
 else:
-    st.info("ℹ️ কোনো বিল তৈরি করা হয়নি। প্রথমে 'Patient Entry' 
+    st.info("ℹ️ কোনো বিল তৈরি করা হয়নি। প্রথমে 'Patient Entry' পেজ থেকে বিল সেভ করুন।")
