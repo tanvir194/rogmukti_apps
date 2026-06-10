@@ -1,53 +1,38 @@
 import streamlit as st
 import sqlite3
 
-# ১. সিকিউরিটি চেক
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
-    st.warning("🔒 অ্যাক্সেস রিফিউজ드! দয়া করে আগে মেইন পেজ থেকে লগইন করুন।")
+    st.warning("🔒 অ্যাক্সেস রিফিউজড! দয়া করে আগে মেইন পেজ থেকে লগইন করুন।")
     st.stop()
 
 st.title("🖨️ মানি রিসিট ও প্রিন্ট সেকশন")
 
-# ২. ডাটাবেজ কানেকশন
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
-
-# ৩. মাস্টার টেস্ট ডিকশনারি তৈরি করা
-c.execute("SELECT test_name, price FROM diagnostic_tests")
-test_prices = {row[0].strip(): row[1] for row in c.fetchall()}
-
-# সর্বশেষ সেভ হওয়া বিলের আইডি বা ম্যাক্সিমাম আইডি তুলে আনা
 c.execute("SELECT MAX(id) FROM billing_records")
 last_id_result = c.fetchone()
-invoice_id = last_id_result[0] if last_id_result else None
+invoice_id = last_id_result if last_id_result else None
 
-# ৪. বিলের তথ্য ডাটাবেজ থেকে তুলে আনা
 if invoice_id:
     c.execute("SELECT * FROM billing_records WHERE id = ?", (invoice_id,))
     row = c.fetchone()
     conn.close()
     
     if row:
-        # 📌 ডাটাবেজের কলাম ইনডেক্সিং একদম নিখুঁতভাবে রি-ম্যাপ করা হলো
-        name = row[1]
-        age = row[2]
-        phone = row[3]
-        doctor = row[4]
-        selected_tests = row[5]
-        total_amount = float(row[6])    # মূল টোটাল বিল
-        discount_pct = float(row[7])    # ডিসকাউন্ট %
-        advance_paid = float(row[8])    # অগ্রিম নগদ পরিশোধ
-        due_amount = float(row[9])      # বাকি (Due) টাকা
-        current_date = row[10]
+        name = row
+        age = row
+        phone = row
+        doctor = row
+        selected_tests_data = row # এখানে নাম ও দাম মিক্সড আছে (যেমন: CBC:400|ESR:200)
+        total_amount = float(row)
+        discount_pct = float(row)
+        advance_paid = float(row)
+        current_date = row
         
-        # 💥 হিসাবের ফর্মুলা পুনরায় রি-ক্যালকুলেট করা (ডাটাবেজের ভুলের সুরক্ষাকবচ)
         discount_amount = (total_amount * discount_pct) / 100.0
-        net_payable = total_amount - discount_amount
-        due_amount = net_payable - advance_paid
-        
-        tests_list = selected_tests.split(", ")
+        due_amount = total_amount - discount_amount - advance_paid
+        if due_amount < 0: due_amount = 0.0
 
-        # প্রিন্ট মেকানিজম বাটন
         st.components.v1.html("""
             <button onclick="parent.window.print()" style="
                 background-color: #1a365d; color: white; padding: 12px 30px; 
@@ -74,18 +59,16 @@ if invoice_id:
         </style>
         """, unsafe_allow_html=True)
         
-        # টেস্ট এবং তার আসল দাম মেলানো
+        # 📌 আপনার হাতে লেখা দামগুলো মেমোর টেবিলে সাজানোর লজিক
         table_rows = ""
-        for t in tests_list:
-            cleaned_test_name = t.strip()
-            if cleaned_test_name:
-                price = test_prices.get(cleaned_test_name, 0.0)
-                if price == 0.0:
-                    for k, v in test_prices.items():
-                        if cleaned_test_name in k or k in cleaned_test_name:
-                            price = v
-                            break
-                table_rows += f"<tr><td style='color: black;'>{cleaned_test_name}</td><td style='text-align: right; color: black;'>{price:.2f} ৳</td></tr>"
+        for item in selected_tests_data.split("|"):
+            if ":" in item:
+                t_name, t_price = item.split(":", 1)
+                try:
+                    t_price_val = float(t_price)
+                except:
+                    t_price_val = 0.0
+                table_rows += f"<tr><td style='color: black;'>{t_name.strip()}</td><td style='text-align: right; color: black;'>{t_price_val:.2f} ৳</td></tr>"
             
         receipt_body = f"""
         <div id="print-area" class="receipt-container">
@@ -130,5 +113,4 @@ if invoice_id:
     else:
         st.error("কোনো বিলের তথ্য পাওয়া যায়নি।")
 else:
-    conn.close()
     st.info("ℹ️ কোনো বিল তৈরি করা হয়নি। প্রথমে 'Patient Entry' পেজ থেকে বিল সেভ করুন।")
