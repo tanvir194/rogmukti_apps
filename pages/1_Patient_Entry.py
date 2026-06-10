@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS billing_records (
 )
 """)
 
-# 📌 নতুন টেস্ট লিস্ট এবং প্রাইস রাখার মাস্টার টেবিল
+# টেস্ট লিস্ট এবং প্রাইস রাখার মাস্টার টেবিল
 c.execute("""
 CREATE TABLE IF NOT EXISTS diagnostic_tests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,43 +38,54 @@ CREATE TABLE IF NOT EXISTS diagnostic_tests (
 """)
 conn.commit()
 
-# ডাটাবেজে যদি কোনো টেস্ট না থাকে, তবে শুরুর জন্য কিছু টেস্ট অটোমেটিক ঢুকিয়ে দেওয়া
+# 📌 ৩. অফিশিয়াল গলাচিপা লিস্ট ডাটাবেজে অটো-লোড করা (যদি আগে থেকে না থাকে)
 c.execute("SELECT COUNT(*) FROM diagnostic_tests")
-if c.fetchone()[0] == 0:
-    sample_tests = [
-        ("Urine Pregnancy Test (HCG)", 200.0),
-        ("AFP (Alpha Fetoprotein)", 1200.0),
-        ("Blood Sugar (RBS / Fasting)", 200.0),
-        ("Anti-HCV", 600.0),
-        ("CBC (Complete Blood Count)", 400.0),
-        ("Lipid Profile", 1000.0),
-        ("Serum Creatinine", 300.0),
-        ("S. Bilirubin", 250.0),
-        ("Ultrasonography (USG)", 800.0),
-        ("X-Ray Chest", 500.0)
+if c.fetchone() < 15:
+    c.execute("DELETE FROM diagnostic_tests")
+    galachipa_official_tests = [
+        # HAEMATOLOGY
+        ("(CBC), ESR", 400.0), ("TC.DC", 250.0), ("HB%", 250.0), ("ESR", 200.0),
+        ("Platelet Count", 300.0), ("MP", 200.0), ("BT/CT", 350.0), ("C/E Count", 250.0),
+        # SEROLOGY
+        ("Widal", 450.0), ("Aso Titre", 450.0), ("CRP", 450.0), ("RA/RF", 450.0),
+        ("HBs Ag (Screen Test)", 450.0), ("TPHA", 450.0), ("VDRL", 400.0),
+        ("Group & Rh Factor", 200.0), ("Mantaux-Test (M.T)", 250.0), ("Triple Antigen", 500.0),
+        ("R.Fever", 450.0), ("HIV", 500.0), ("HCV", 500.0), ("TB (ICT)", 750.0),
+        ("Malaria. pf/pv", 700.0), ("H. Pylori", 850.0), ("Fallaria (ICT)", 750.0),
+        ("Dengue NS1. IGG/IgM", 300.0),
+        # HORMONE PANEL
+        ("T3", 1200.0), ("T4", 1200.0), ("FT3", 900.0), ("FT4", 900.0), ("TSH", 1100.0),
+        ("HbA1c", 1500.0), ("Prolactin", 1200.0), ("S. IgE", 1500.0), ("S.IgE (Device Test)", 700.0),
+        # BIO CHEMICAL ANALYSIS
+        ("Random Blood Sugar (RBS)", 200.0), ("Fasting Blood Sugar (FBS)", 200.0),
+        ("2hr. After Breakfast", 200.0), ("2hr. After 75gm Glucose", 200.0), ("O.G.T.T", 500.0),
+        ("Blood Urea", 400.0), ("Cholesterol", 350.0), ("HDL", 400.0), ("TG (Triglycerides)", 350.0),
+        ("LDL", 300.0), ("S.GPT (ALT)", 500.0), ("S.GOT (AST)", 500.0), ("Bilirubin Total", 350.0),
+        ("Lipid Profile", 1000.0), ("Bilirubin Direct/Indirect", 450.0), ("Serum Creatinine", 400.0),
+        ("Uric Acid", 400.0), ("Amylase", 700.0), ("Calcium", 600.0),
+        # URINE EXAM
+        ("Urine Pregnancy Test (PT)", 200.0), ("Urine R/E", 250.0),
+        # STOOL EXAM
+        ("Stool R/E", 400.0), ("Stool OBT", 400.0),
+        # UI ULTRASOUND IMAGING
+        ("USG Whole Abdomen", 1000.0), ("USG Upper Abdomen", 800.0), ("USG Lower Abdomen", 800.0),
+        ("USG KUB", 1000.0), ("USG Pregnancy Profile", 800.0), ("USG Breast", 1200.0),
+        # X-RAY DIGITAL
+        ("X-Ray Chest", 500.0), ("X-Ray PNS", 500.0), ("X-Ray Maxilla", 500.0), ("X-Ray Nasopharynx", 550.0),
+        ("X-Ray Abdomen A/P", 500.0), ("X-Ray Cervical Spine", 600.0), ("X-Ray Plane X-Ray Abdomen", 500.0),
+        ("X-Ray Mastoid Towns View", 500.0), ("X-Ray Skull", 600.0), ("X-Ray Pelvic", 500.0),
+        ("X-Ray Mandible B/V", 600.0), ("X-Ray KUB", 500.0), ("X-Ray D/S Spine", 600.0),
+        ("X-Ray L/S Spine", 600.0), ("X-Ray Foot B/V", 500.0), ("X-Ray Knee B/V", 550.0),
+        ("X-Ray Elbow B/V", 500.0), ("X-Ray Shoulder Joint B/V", 550.0), ("X-Ray Hip Joint", 500.0)
     ]
-    c.executemany("INSERT OR IGNORE INTO diagnostic_tests (test_name, price) VALUES (?, ?)", sample_tests)
+    c.executemany("INSERT OR IGNORE INTO diagnostic_tests (test_name, price) VALUES (?, ?)", galachipa_official_tests)
     conn.commit()
 
-# ডাটাবেজ থেকে সব টেস্টের নাম ও দামের ডিকশনারি তৈরি করা (এখানে ২০০টি টেস্ট থাকলেও অটোমেটিক চলে আসবে)
-c.execute("SELECT test_name, price FROM diagnostic_tests")
+# ডাটাবেজ থেকে এ টু জেড (A to Z) ক্রমানুসারে সব টেস্ট রিড করা
+c.execute("SELECT test_name, price FROM diagnostic_tests ORDER BY test_name ASC")
 test_prices = {row[0]: row[1] for row in c.fetchall()}
 
 st.title("📝 টেস্ট এবং বিলিং সেকশন")
-
-# এডমিনদের জন্য নতুন টেস্ট ডাটাবেজে যোগ করার একটি গোপন/আলাদা অপশন (Sidebar-এ)
-with st.sidebar.expander("➕ নতুন টেস্ট ও দাম যোগ করুন"):
-    new_test_name = st.text_input("টেস্টের নাম:")
-    new_test_price = st.number_input("টেস্টের মূল্য (টাকা):", min_value=0.0, step=50.0)
-    if st.button("ডাটাবেজে সেভ করুন"):
-        if new_test_name:
-            try:
-                c.execute("INSERT INTO diagnostic_tests (test_name, price) VALUES (?, ?)", (new_test_name.strip(), new_test_price))
-                conn.commit()
-                st.success(f"✅ {new_test_name} যোগ করা হয়েছে!")
-                st.rerun()
-            except:
-                st.error("⚠️ এই টেস্টটি অলরেডি ডাটাবেজে আছে।")
 
 # মূল পেশেন্ট ফরম
 st.subheader("পেশেন্ট ইনফরমেশন")
@@ -89,12 +100,21 @@ with col2:
 st.markdown("---")
 st.subheader("টেস্ট সিলেকশন")
 
-# ডাটাবেজে থাকা সব টেস্ট এখানে ড্রপডাউনে দেখাবে
-selected_tests = st.multiselect("টেস্ট সিলেক্ট করুন (Description):", list(test_prices.keys()))
+# ডাটাবেজের সব অফিশিয়াল টেস্ট ড্রপডাউনে দেখাবে
+selected_tests = st.multiselect("তালিকা থেকে টেস্ট সিলেক্ট করুন (Description):", list(test_prices.keys()))
+regular_fee = sum(test_prices[test] for test in selected_tests)
 
-# লাইভ টোটাল ফি হিসাব করা
-total_fee = sum(test_prices[test] for test in selected_tests)
-st.info(f"📋 লাইভ টোটাল ফি: {total_fee} টাকা")
+# 📌 ৪. কাস্টম টেস্ট ও প্রাইস যোগ করার রিয়েল-টাইম অপশন
+st.markdown("#### ➕ তালিকা বহির্ভূত কাস্টম টেস্ট যোগ করুন (ঐচ্ছিক)")
+col_c1, col_c2 = st.columns(2)
+with col_c1:
+    custom_test_name = st.text_input("কাস্টম টেস্টের নাম লিখুন:", key="custom_name")
+with col_c2:
+    custom_test_price = st.number_input("কাস্টম টেস্টের দাম (টাকা):", min_value=0.0, step=50.0, key="custom_price")
+
+# লাইভ ফাইনাল বিল ক্যালকুলেশন (অফিশিয়াল টেস্ট + কাস্টম টেস্টের প্রাইস)
+total_fee = regular_fee + custom_test_price
+st.info(f"📋 লাইভ মোট বিল (টোটাল ফি): {total_fee} টাকা")
 
 st.markdown("---")
 st.subheader("পেমেন্ট ও ডিসকাউন্ট")
@@ -115,17 +135,31 @@ st.markdown("---")
 submit_button = st.button("Save Bill and Go to Print (ডাটা সেভ করুন)")
 
 if submit_button:
-    if not name or not selected_tests:
-        st.error("⚠️ পেশেন্টের নাম এবং অন্তত একটি টেস্ট সিলেক্ট করা বাধ্যতামূলক!")
+    if not name or (not selected_tests and not custom_test_name.strip()):
+        st.error("⚠️ পেশেন্টের নাম এবং অন্তত একটি টেস্ট (তালিকা থেকে বা কাস্টম) দেওয়া বাধ্যতামূলক!")
     else:
         current_date = datetime.now().strftime("%Y-%m-%d")
-        tests_str = ", ".join(selected_tests)
         
+        # অফিশিয়াল এবং কাস্টম টেস্ট একসাথে স্ট্রিং আকারে যুক্ত করা
+        all_tests_list = list(selected_tests)
+        if custom_test_name.strip():
+            all_tests_list.append(f"{custom_test_name.strip()}")
+        tests_str = ", ".join(all_tests_list)
+        
+        # ডাটাবেজে ফাইনাল রেকর্ড সেভ করা
         c.execute("""
             INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (name, age, phone, doctor, tests_str, total_fee, discount_pct, advance_paid, due_amount, current_date))
         conn.commit()
+        
+        # কাস্টম টেস্টের দামটি সাময়িকভাবে ড্যাশবোর্ডের মিলের জন্য মূল টেস্ট মাস্টারেও ব্যাকআপ রাখা (ঐচ্ছিক)
+        if custom_test_name.strip():
+            try:
+                c.execute("INSERT OR IGNORE INTO diagnostic_tests (test_name, price) VALUES (?, ?)", (custom_test_name.strip(), custom_test_price))
+                conn.commit()
+            except:
+                pass
         
         st.session_state.last_invoice_id = c.lastrowid
         st.success("✅ সফলভাবে ডাটা সেভ হয়েছে! প্রিন্ট পেজে নিয়ে যাওয়া হচ্ছে...")
