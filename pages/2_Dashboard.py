@@ -1,1 +1,61 @@
+import streamlit as st
+import sqlite3
+import pandas as pd
+from datetime import datetime
 
+# ১. সিকিউরিটি চেক
+if "logged_in" not in st.session_state or not st.session_state.logged_in:
+    st.warning("🔒 অ্যাক্সেস রিফিউজড! দয়া করে আগে মেইন পেজ থেকে লগইন করুন।")
+    st.stop()
+
+st.title("📊 দৈনিক ও মাসিক ক্যাশ হিসাব-নিকাশ")
+
+conn = sqlite3.connect("rogmukti_clinic_fix.db")
+
+try:
+    df = pd.read_sql_query("SELECT * FROM billing_records", conn)
+    
+    if not df.empty:
+        df['billing_date'] = pd.to_datetime(df['billing_date'])
+        
+        option = st.radio("কোন হিসাবটি দেখতে চান?", ["আজকের/দৈনিক হিসাব", "মাসিক হিসাব"])
+        
+        if option == "আজকের/দৈনিক হিসাব":
+            user_date = st.date_input("তারিখ সিলেক্ট করুন:", datetime.now().date())
+            filtered_df = df[df['billing_date'].dt.date == user_date]
+        else:
+            months_bn = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"]
+            selected_month = st.selectbox("মাস সিলেক্ট করুন:", range(1, 13), format_func=lambda x: months_bn[x-1])
+            filtered_df = df[(df['billing_date'].dt.month == selected_month) & (df['billing_date'].dt.year == datetime.now().year)]
+        
+        st.markdown("---")
+        
+        if not filtered_df.empty:
+            st.success(f"📋 মোট {len(filtered_df)} টি বিলের তথ্য পাওয়া গেছে।")
+            
+            box1, box2, box3 = st.columns(3)
+            with box1:
+                st.metric("💰 মোট বিল (Total)", f"{filtered_df['total_amount'].sum():,.2f} ৳")
+            with box2:
+                st.metric("✅ মোট নগদ আদায়", f"{filtered_df['net_paid'].sum():,.2f} ৳")
+            with box3:
+                st.metric("🚨 মোট বাকি টাকা (Due)", f"{filtered_df['due_amount'].sum():,.2f} ৳", delta_color="inverse")
+                
+            st.subheader("📋 বিলের বিস্তারিত তালিকা")
+            display_df = filtered_df.copy()
+            display_df['billing_date'] = display_df['billing_date'].dt.strftime('%Y-%m-%d')
+            display_df = display_df.rename(columns={
+                'id': 'বিল নং', 'patient_name': 'রোগীর নাম', 'age': 'বয়স',
+                'phone': 'মোবাইল', 'selected_tests': 'টেস্টসমূহ',
+                'total_amount': 'মোট বিল', 'net_paid': 'ক্যাশ পেইড',
+                'due_amount': 'বাকি (Due)', 'billing_date': 'তারিখ'
+            })
+            st.dataframe(display_df[['বিল নং', 'তারিখ', 'রোগীর নাম', 'মোবাইল', 'টেস্টসমূহ', 'মোট বিল', 'ক্যাশ পেইড', 'বাকি (Due)']], use_container_width=True)
+        else:
+            st.warning("⚠️ এই তারিখে বা মাসে কোনো বিল তৈরি করা হয়নি।")
+    else:
+        st.info("ℹ️ ডাটাবেজে এখনো কোনো রোগীর বিলের ডাটা সেভ করা হয়নি।")
+except Exception as e:
+    st.error("❌ ডাটাবেজ লোড হচ্ছে না। প্রথমে ১ম পেজে গিয়ে একটি বিল সেভ করুন।")
+
+conn.close()
