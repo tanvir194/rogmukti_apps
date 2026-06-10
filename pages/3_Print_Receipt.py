@@ -8,24 +8,32 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 
 st.title("🖨️ মানি রিসিট ও প্রিন্ট সেকশন")
 
-# সেশন স্টেট থেকে সর্বশেষ সেভ হওয়া বিলের আইডি নেওয়া
-if "last_invoice_id" in st.session_state:
+# ২. ডাটাবেজ কানেকশন
+conn = sqlite3.connect("rogmukti_clinic_fix.db")
+c = conn.cursor()
+
+# ৩. মাস্টার টেস্ট ডিকশনারি তৈরি করা
+c.execute("SELECT test_name, price FROM diagnostic_tests")
+test_prices = {row[0].strip(): row[1] for row in c.fetchall()}
+
+# 🚨 জাদুকরী ট্রিকস: সেশন স্টেট থেকে আইডি না পেলে সরাসরি ডাটাবেজের সর্বশেষ সেভ হওয়া বিলের আইডি তুলে আনা
+invoice_id = None
+if "last_invoice_id" in st.session_state and st.session_state.last_invoice_id:
     invoice_id = st.session_state.last_invoice_id
-    
-    conn = sqlite3.connect("rogmukti_clinic_fix.db")
-    c = conn.cursor()
-    
-    # মাস্টার টেবিল থেকে সব টেস্টের লাইভ প্রাইস ডিকশনারি নিয়ে আসা
-    c.execute("SELECT test_name, price FROM diagnostic_tests")
-    test_prices = {row[0].strip(): row[1] for row in c.fetchall()}
-    
-    # বিলের তথ্য তুলে আনা
+else:
+    c.execute("SELECT MAX(id) FROM billing_records")
+    last_id_result = c.fetchone()
+    if last_id_result and last_id_result[0]:
+        invoice_id = last_id_result[0]
+
+# ৪. বিলের তথ্য ডাটাবেজ থেকে তুলে আনা
+if invoice_id:
     c.execute("SELECT * FROM billing_records WHERE id = ?", (invoice_id,))
     row = c.fetchone()
     conn.close()
     
     if row:
-        # 📌 ডাটাবেজের সঠিক কলাম ইনডেক্স (0=id, 1=name, 2=age, 3=phone, 4=doctor, 5=tests, 6=total, 7=discount, 8=paid, 9=due, 10=date)
+        # কলাম ইনডেক্সিং (সঠিকভাবে ডাটা ভাগ করা)
         name = row[1]
         age = row[2]
         phone = row[3]
@@ -38,6 +46,7 @@ if "last_invoice_id" in st.session_state:
         current_date = row[10]
         
         discount_amount = (total_fee * discount_pct) / 100.0
+        tests_list = selected_tests.split(", ")
 
         # প্রিন্ট মেকানিজম বাটন
         st.components.v1.html("""
@@ -66,14 +75,12 @@ if "last_invoice_id" in st.session_state:
         </style>
         """, unsafe_allow_html=True)
         
-        # 📌 টেস্টের নাম এবং ডাটাবেজ থেকে তার সঠিক দাম মেলানোর লজিক ফিক্সড
+        # টেস্ট এবং তার আসল দাম মেলানো
         table_rows = ""
-        # কাস্টম টেস্ট ও অফিশিয়াল টেস্টের মধ্যে প্যাঁচ এড়াতে কমা দিয়ে স্প্লিট করা হয়েছে
-        for t in selected_tests.split(","):
+        for t in tests_list:
             cleaned_test_name = t.strip()
             if cleaned_test_name:
                 price = test_prices.get(cleaned_test_name, 0.0)
-                # যদি কমা দিয়ে আলাদা করার কারণে ০ দেখায়, তবে ব্যাকআপ হিসেবে আংশিক মিল চেক করা
                 if price == 0.0:
                     for k, v in test_prices.items():
                         if cleaned_test_name in k or k in cleaned_test_name:
@@ -124,4 +131,5 @@ if "last_invoice_id" in st.session_state:
     else:
         st.error("কোনো বিলের তথ্য পাওয়া যায়নি।")
 else:
+    conn.close()
     st.info("ℹ️ কোনো বিল তৈরি করা হয়নি। প্রথমে 'Patient Entry' পেজ থেকে বিল সেভ করুন।")
