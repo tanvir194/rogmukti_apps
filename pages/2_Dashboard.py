@@ -3,7 +3,7 @@ import sqlite3
 import pandas as pd
 from datetime import datetime
 
-# ১. সিকিউরিটি চেক
+# সিকিউরিটি চেক
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
     st.warning("🔒 অ্যাক্সেস রিফিউজড! দয়া করে আগে মেইন পেজ থেকে লগইন করুন।")
     st.stop()
@@ -16,17 +16,28 @@ try:
     df = pd.read_sql_query("SELECT * FROM billing_records", conn)
     
     if not df.empty:
-        df['billing_date'] = pd.to_datetime(df['billing_date'])
+        df['billing_date'] = pd.to_datetime(df['billing_date'], errors='coerce')
+        df = df.dropna(subset=['billing_date'])
         
-        option = st.radio("কোন হিসাবটি দেখতে চান?", ["আজকের/দৈনিক হিসাব", "মাসিক হিসাব"])
+        option = st.radio("কোন হিসাবটি দেখতে চান?", ["আজকের/দৈনিক হিসাব", "মাসিক হিসাব"], horizontal=True)
         
         if option == "আজকের/দৈনিক হিসাব":
             user_date = st.date_input("তারিখ সিলেক্ট করুন:", datetime.now().date())
             filtered_df = df[df['billing_date'].dt.date == user_date]
         else:
-            months_bn = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"]
-            selected_month = st.selectbox("মাস সিলেক্ট করুন:", range(1, 13), format_func=lambda x: months_bn[x-1])
-            filtered_df = df[(df['billing_date'].dt.month == selected_month) & (df['billing_date'].dt.year == datetime.now().year)]
+            col_m1, col_m2 = st.columns(2)
+            with col_m1:
+                available_years = sorted(df['billing_date'].dt.year.unique())
+                if datetime.now().year not in available_years:
+                    available_years.append(datetime.now().year)
+                selected_year = st.selectbox("বছর সিলেক্ট করুন:", available_years, index=available_years.index(datetime.now().year))
+            
+            with col_m2:
+                months_bn = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"]
+                current_month = datetime.now().month
+                selected_month = st.selectbox("মাস সিলেক্ট করুন:", range(1, 13), index=current_month-1, format_func=lambda x: months_bn[x-1])
+            
+            filtered_df = df[(df['billing_date'].dt.month == selected_month) & (df['billing_date'].dt.year == selected_year)]
         
         st.markdown("---")
         
@@ -39,23 +50,30 @@ try:
             with box2:
                 st.metric("✅ মোট নগদ আদায়", f"{filtered_df['net_paid'].sum():,.2f} ৳")
             with box3:
-                st.metric("🚨 মোট বাকি টাকা (Due)", f"{filtered_df['due_amount'].sum():,.2f} ৳", delta_color="inverse")
+                st.metric("🚨 মোট বাকি টাকা (Due)", f"{filtered_df['due_amount'].sum():,.2f} ৳")
                 
             st.subheader("📋 বিলের বিস্তারিত তালিকা")
             display_df = filtered_df.copy()
             display_df['billing_date'] = display_df['billing_date'].dt.strftime('%Y-%m-%d')
+            display_df['selected_tests'] = display_df['selected_tests'].str.replace('|', ', ', regex=False)
+            
             display_df = display_df.rename(columns={
                 'id': 'বিল নং', 'patient_name': 'রোগীর নাম', 'age': 'বয়স',
                 'phone': 'মোবাইল', 'selected_tests': 'টেস্টসমূহ',
                 'total_amount': 'মোট বিল', 'net_paid': 'ক্যাশ পেইড',
                 'due_amount': 'বাকি (Due)', 'billing_date': 'তারিখ'
             })
-            st.dataframe(display_df[['বিল নং', 'তারিখ', 'রোগীর নাম', 'মোবাইল', 'টেস্টসমূহ', 'মোট বিল', 'ক্যাশ পেইড', 'বাকি (Due)']], use_container_width=True)
+            
+            st.dataframe(
+                display_df[['বিল নং', 'তারিখ', 'রোগীর নাম', 'মোবাইল', 'টেস্টসমূহ', 'মোট বিল', 'ক্যাশ পেইড', 'বাকি (Due)']], 
+                use_container_width=True,
+                hide_index=True
+            )
         else:
             st.warning("⚠️ এই তারিখে বা মাসে কোনো বিল তৈরি করা হয়নি।")
     else:
         st.info("ℹ️ ডাটাবেজে এখনো কোনো রোগীর বিলের ডাটা সেভ করা হয়নি।")
 except Exception as e:
-    st.error("❌ ডাটাবেজ লোড হচ্ছে না। প্রথমে ১ম পেজে গিয়ে একটি বিল সেভ করুন।")
+    st.error(f"❌ ডাটাবেজ লোড হতে সমস্যা হচ্ছে। এরর বিবরণ: {e}")
 
 conn.close()
