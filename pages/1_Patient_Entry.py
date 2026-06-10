@@ -38,9 +38,12 @@ CREATE TABLE IF NOT EXISTS diagnostic_tests (
 """)
 conn.commit()
 
-# 📌 ৩. অফিশিয়াল গলাচিপা লিস্ট ডাটাবেজে অটো-লোড করা (যদি আগে থেকে না থাকে)
+# 📌 ৩. এরর ফিক্সড করা ডাটা লোড লজিক (এখানে fetchone এর সমস্যাটি পুরোপুরি সমাধান করা হয়েছে)
 c.execute("SELECT COUNT(*) FROM diagnostic_tests")
-if c.fetchone() < 15:
+count_result = c.fetchone()
+test_count = count_result[0] if count_result else 0
+
+if test_count < 15:
     c.execute("DELETE FROM diagnostic_tests")
     galachipa_official_tests = [
         # HAEMATOLOGY
@@ -83,7 +86,7 @@ if c.fetchone() < 15:
 
 # ডাটাবেজ থেকে এ টু জেড (A to Z) ক্রমানুসারে সব টেস্ট রিড করা
 c.execute("SELECT test_name, price FROM diagnostic_tests ORDER BY test_name ASC")
-test_prices = {row[0]: row[1] for row in c.fetchall()}
+test_prices = {item[0]: item[1] for item in c.fetchall()}
 
 st.title("📝 টেস্ট এবং বিলিং সেকশন")
 
@@ -104,7 +107,7 @@ st.subheader("টেস্ট সিলেকশন")
 selected_tests = st.multiselect("তালিকা থেকে টেস্ট সিলেক্ট করুন (Description):", list(test_prices.keys()))
 regular_fee = sum(test_prices[test] for test in selected_tests)
 
-# 📌 ৪. কাস্টম টেস্ট ও প্রাইস যোগ করার রিয়েল-টাইম অপশন
+# 📌 কাস্টম টেস্ট ও প্রাইস যোগ করার রিয়েল-টাইম অপশন
 st.markdown("#### ➕ তালিকা বহির্ভূত কাস্টম টেস্ট যোগ করুন (ঐচ্ছিক)")
 col_c1, col_c2 = st.columns(2)
 with col_c1:
@@ -136,7 +139,7 @@ submit_button = st.button("Save Bill and Go to Print (ডাটা সেভ ক
 
 if submit_button:
     if not name or (not selected_tests and not custom_test_name.strip()):
-        st.error("⚠️ পেশেন্টের নাম এবং অন্তত একটি টেস্ট (তালিকা থেকে বা কাস্টম) দেওয়া বাধ্যতামূলক!")
+        st.error("⚠️ পেশেন্টের নাম এবং অন্তত একটি টেস্ট (তালিকা থেকে বা কাস্টম) দেওয়া বাধ্যতামুলক!")
     else:
         current_date = datetime.now().strftime("%Y-%m-%d")
         
@@ -153,7 +156,7 @@ if submit_button:
         """, (name, age, phone, doctor, tests_str, total_fee, discount_pct, advance_paid, due_amount, current_date))
         conn.commit()
         
-        # কাস্টম টেস্টের দামটি সাময়িকভাবে ড্যাশবোর্ডের মিলের জন্য মূল টেস্ট মাস্টারেও ব্যাকআপ রাখা (ঐচ্ছিক)
+        # কাস্টম টেস্টের দামটি সাময়িকভাবে ড্যাশবোর্ডের মিলের জন্য মূল টেস্ট মাস্টারেও ব্যাকআপ রাখা
         if custom_test_name.strip():
             try:
                 c.execute("INSERT OR IGNORE INTO diagnostic_tests (test_name, price) VALUES (?, ?)", (custom_test_name.strip(), custom_test_price))
