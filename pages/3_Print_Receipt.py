@@ -2,31 +2,31 @@ import streamlit as st
 import sqlite3
 import os
 
-# সিকিউরিটি বা লগইন চেক
+# Security or login check
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
-    st.warning("⚠️ আগে লগইন করুন।")
+    st.warning("⚠️ Please login first.")
     st.stop()
 
-st.title("🏥 মেডিকেল রিসিট প্রিন্ট")
-st.write("------------------- Invoice ID তথ্য -------------------")
+st.title("🏥 Medical Receipt Print")
+st.write("------------------- Invoice ID Info -------------------")
 
 invoice_id = None
 
-# কুয়েরি প্যারামিটার অথবা সেশন স্টেট থেকে ইনভয়েস আইডি রিড করা
+# Read invoice ID from query parameters or session state
 if "invoice_id" in st.query_params:
     invoice_id = st.query_params.get("invoice_id")
 elif "last_invoice_id" in st.session_state:
     invoice_id = st.session_state.last_invoice_id
 
 if not invoice_id:
-    st.info("💡 কোনো ইনভয়েস আইডি পাওয়া যায়নি। অনুগ্রহ করে 'Patient Entry' পেজ থেকে তথ্য সাবমিট করুন।")
+    st.info("💡 No Invoice ID found. Please submit data from 'Patient Entry' page.")
     st.stop()
 
-# ডিরেক্টরি পাথ ফিক্সড করা হলো
+# Fix Directory Path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
 
-# ডাটাবেজ কানেকশন
+# Database Connection
 conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
 
@@ -35,10 +35,10 @@ row = c.fetchone()
 conn.close()
 
 if not row:
-    st.error(f"❌ ID #{invoice_id} এর কোনো রেকর্ড পাওয়া যায়নি।")
+    st.error(f"❌ No record found for ID #{invoice_id}.")
     st.stop()
 
-# ডাটাবেজের কলাম ইনডেক্স সিরিয়াল অনুযায়ী ভেরিয়েবল অ্যাসাইন
+# Assign variables from database row index
 name = row[1]
 age = row[2]
 phone = row[3]
@@ -50,13 +50,13 @@ advance_paid = float(row[8])
 due_amount = float(row[9])
 current_date = row[10]
 
-# লজিক্যাল হিসাব পুনরায় করা
+# Calculate Discount Amount
 discount_amount = (total_amount * discount_pct) / 100.0
 
-# পাইপ '|' চিহ্ন দিয়ে আলাদা করে টেস্টের তালিকা তৈরি
+# Split selected tests by pipe '|' symbol
 tests_list = [item.strip() for item in selected_tests_data.split('|') if item.strip()]
 
-# টেস্টের নাম ও দাম আলাদা করে ডাইনামিক টেবিল রো (Row) তৈরি
+# Create Dynamic HTML Table Rows for Tests
 table_rows = ""
 for index, item in enumerate(tests_list, start=1):
     if ":" in item:
@@ -69,9 +69,9 @@ for index, item in enumerate(tests_list, start=1):
     except:
         t_price_val = 0.0
         
-    table_rows += f"<tr><td>{index}</td><td>{t_name}</td><td style='text-align: right;'>{t_price_val:.2f} ৳</td></tr>"
+    table_rows += f"<tr><td style='text-align: center;'>{index}</td><td>{t_name}</td><td style='text-align: right;'>{t_price_val:.2f} Tk</td></tr>"
 
-# ------------------- সম্পূর্ণ HTML, CSS এবং প্রিন্ট লজিক একসাথে -------------------
+# ------------------- Full HTML, CSS and Print Logic -------------------
 full_html_page = f"""
 <style>
 .receipt-box {{
@@ -98,7 +98,7 @@ full_html_page = f"""
 .info-table, .test-table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; color: black; }}
 .info-table td {{ padding: 5px 0; font-size: 14px; }}
 .test-table th, .test-table td {{ border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }}
-.test-table th {{ background-color: #f2f2f2; }}
+.test-table th {{ background-color: #f2f2f2; color: #1a365d; font-weight: bold; }}
 .total-section {{ text-align: right; font-size: 15px; line-height: 1.6; }}
 .total-section b {{ color: #1a365d; }}
 
@@ -128,35 +128,36 @@ full_html_page = f"""
 </style>
 
 <div class="receipt-box">
-    <!-- 🌟 নতুন আপডেট করা রসিদের হেডার সেকশন 🌟 -->
+    <!-- Receipts Official Header Section -->
     <div class="header">
         <h2>Rogmukti Diagnostic Centre</h2>
         <p style="font-size: 15px; font-weight: bold; margin-top: 3px;">Mollah stand, Auliapur, Patuakhali</p>
         <p style="font-size: 13px;">📞 Mobile: 01711867637</p>
     </div>
     
+    <!-- Patient Info Section in English -->
     <table class="info-table">
         <tr>
-            <td><b>ইনভয়েস আইডি:</b> #{invoice_id}</td>
-            <td style="text-align: right;"><b>তারিখ:</b> {current_date}</td>
+            <td><b>Invoice ID:</b> #{invoice_id}</td>
+            <td style="text-align: right;"><b>Date:</b> {current_date}</td>
         </tr>
         <tr>
-            <td><b>রোগীর নাম:</b> {name}</td>
-            <td style="text-align: right;"><b>বয়স:</b> {age}</td>
+            <td><b>Patient Name:</b> {name}</td>
+            <td style="text-align: right;"><b>Age:</b> {age} Y</td>
         </tr>
         <tr>
-            <td><b>মোবাইল:</b> {phone}</td>
-            <td style="text-align: right;"><b>ডাক্তার:</b> {doctor}</td>
+            <td><b>Mobile No:</b> {phone}</td>
+            <td style="text-align: right;"><b>Ref. By:</b> {doctor}</td>
         </tr>
     </table>
     
-    <h3 style="color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 5px; font-size: 15px; margin-top: 10px;">টেস্ট ও রেট বিবরণী</h3>
+    <h3 style="color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 5px; font-size: 15px; margin-top: 10px;">Test Description & Rate</h3>
     <table class="test-table">
         <thead>
             <tr>
-                <th style="width: 10%;">নং</th>
-                <th style="width: 65%;">টেস্টের নাম</th>
-                <th style="width: 25%; text-align: right;">মূল্য (টাকা)</th>
+                <th style="width: 10%; text-align: center;">SL</th>
+                <th style="width: 65%;">Test Name</th>
+                <th style="width: 25%; text-align: right;">Price</th>
             </tr>
         </thead>
         <tbody>
@@ -164,24 +165,25 @@ full_html_page = f"""
         </tbody>
     </table>
     
+    <!-- Cost Breakdowns in English -->
     <div class="total-section">
-        <p>মোট বিল (Total): {total_amount:.2f} ৳</p>
-        <p>ছাড় (Discount): {discount_amount:.2f} ৳ ({discount_pct}%)</p>
-        <p>градаণ পরিশোধ (Paid): <b>{advance_paid:.2f} ৳</b></p>
+        <p>Total Bill: {total_amount:.2f} Tk</p>
+        <p>Discount: {discount_amount:.2f} Tk ({discount_pct}%)</p>
+        <p>Advance Paid: <b>{advance_paid:.2f} Tk</b></p>
         <p style="font-size: 16px; border-top: 1px dashed #1a365d; padding-top: 5px; margin-top: 5px;">
-            <b>বাকি টাকা (Due Amount): <span style="color: red;">{due_amount:.2f} ৳</span></b>
+            <b>Due Amount: <span style="color: red;">{due_amount:.2f} Tk</span></b>
         </p>
     </div>
     
     <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #eee; padding-top: 10px;">
-        <p>আমাদের ওপর আস্থা রাখার জন্য ধন্যবাদ।</p>
+        <p>Thank you for trusting us with your care.</p>
     </div>
 </div>
 """
 
-# ------------------- ১. স্ট্রিমলিট প্রিন্ট বোতাম -------------------
-if st.button("🖨️ রিসিট প্রিন্ট করুন (Print Now)", type="primary", use_container_width=True):
+# ------------------- 1. Streamlit Print Button -------------------
+if st.button("🖨️ Print Money Receipt Now", type="primary", use_container_width=True):
     st.components.v1.html("<script>parent.window.print();</script>", height=0)
 
-# ------------------- ২. মূল মেমো রেন্ডার -------------------
+# ------------------- 2. Render Main Content -------------------
 st.html(full_html_page)
