@@ -18,8 +18,7 @@ if not st.session_state.admin_auth:
             st.rerun()
         else:
             st.error("❌ ভুল পাসওয়ার্ড!")
-    st.stop() # 🛑 সঠিক পাসওয়ার্ড না দিলে নিচের বাকি কোড রান হবে না
-    
+    st.stop() # 🛑 সঠিক পাসওয়ার্ড না দিলে নিচের বাকি কোড রান হবে না  
 import streamlit as st
 import sqlite3
 import pandas as pd
