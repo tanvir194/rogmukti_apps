@@ -20,7 +20,7 @@ if "last_invoice_id" in st.session_state:
     conn.close()
     
     if row:
-        # ডাটাবেজের সঠিক ইনডেক্স অনুযায়ী ডেটা অ্যাসাইন করা
+        # ডাটাবেজের কলামগুলো আলাদা করা
         name = row[1]
         age = row[2]
         phone = row[3]
@@ -55,13 +55,13 @@ if "last_invoice_id" in st.session_state:
         for t in tests_list:
             table_rows += f"<tr><td style='padding: 6px; border: 1px solid #ddd; color: black;'>{t}</td><td style='padding: 6px; border: 1px solid #ddd; text-align: right; color: black;'>- ৳</td></tr>"
         
-        # ৪. মানি রিসিট ডিজাইন এবং A4 এর অর্ধেকের (A5) সাইজ ফিক্স করার CSS
-        receipt_html = f"""
+        # ৪. প্রিন্ট করার সিএসএস এবং রিসিট বক্সের আলাদা ডিজাইন (যাতে কোড জটলা না পাকায়)
+        st.markdown("""
         <style>
-            @media print {{
-                body * {{ visibility: hidden; }}
-                #print-area, #print-area * {{ visibility: visible; }}
-                #print-area {{ 
+            @media print {
+                body * { visibility: hidden; }
+                #print-area, #print-area * { visibility: visible; }
+                #print-area { 
                     position: absolute; 
                     left: 0; 
                     top: 0; 
@@ -70,13 +70,13 @@ if "last_invoice_id" in st.session_state:
                     box-shadow: none;
                     margin: 0;
                     padding: 10px;
-                }}
-                @page {{
+                }
+                @page {
                     size: A5 portrait; 
                     margin: 0;
-                }}
-            }}
-            .receipt-box {{
+                }
+            }
+            .receipt-box {
                 border: 2px solid #1a365d; 
                 padding: 20px; 
                 border-radius: 10px; 
@@ -85,40 +85,43 @@ if "last_invoice_id" in st.session_state:
                 color: black; 
                 margin-top: 10px;
                 max-width: 550px; 
-            }}
+            }
         </style>
+        """, unsafe_allow_html=True)
         
+        # ৫. মানি রিসিট এর মূল এইচটিএমএল বডি
+        receipt_html = f"""
         <div id="print-area" class="receipt-box">
             <div style="text-align: center; background-color: #1a365d; color: white; padding: 10px; border-radius: 5px;">
-                <h2 style="margin: 0; font-size: 20px;">ROG MUKTI DIAGNOSTIC CENTRE</h2>
-                <p style="margin: 5px 0 0 0; font-size: 13px;">Mollah Stand, Auliapur, Patuakhali<br>Phone: 01711867637</p>
+                <h2 style="margin: 0; font-size: 20px; color: white;">ROG MUKTI DIAGNOSTIC CENTRE</h2>
+                <p style="margin: 5px 0 0 0; font-size: 13px; color: white;">Mollah Stand, Auliapur, Patuakhali<br>Phone: 01711867637</p>
             </div>
             
             <div style="margin-top: 15px; display: flex; justify-content: space-between; font-size: 14px; line-height: 1.6; color: black;">
                 <div>
-                    <p style="margin: 0;"><b>Bill No:</b> #{invoice_id}</p>
-                    <p style="margin: 0;"><b>Patient Name:</b> {name}</p>
-                    <p style="margin: 0;"><b>Phone Number:</b> {phone}</p>
+                    <p style="margin: 0; color: black;"><b>Bill No:</b> #{invoice_id}</p>
+                    <p style="margin: 0; color: black;"><b>Patient Name:</b> {name}</p>
+                    <p style="margin: 0; color: black;"><b>Phone Number:</b> {phone}</p>
                 </div>
                 <div style="text-align: right;">
-                    <p style="margin: 0;"><b>Date:</b> {current_date}</p>
-                    <p style="margin: 0;"><b>Age:</b> {age} Years</p>
-                    <p style="margin: 0;"><b>Refd By:</b> {doctor}</p>
+                    <p style="margin: 0; color: black;"><b>Date:</b> {current_date}</p>
+                    <p style="margin: 0; color: black;"><b>Age:</b> {age} Years</p>
+                    <p style="margin: 0; color: black;"><b>Refd By:</b> {doctor}</p>
                 </div>
             </div>
             
             <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px;">
                 <tr style="background-color: #3182ce; color: white; text-align: left;">
-                    <th style="padding: 6px; border: 1px solid #ddd;">Description (Test Name)</th>
-                    <th style="padding: 6px; text-align: right; border: 1px solid #ddd;">Amount</th>
+                    <th style="padding: 6px; border: 1px solid #ddd; color: white;">Description (Test Name)</th>
+                    <th style="padding: 6px; text-align: right; border: 1px solid #ddd; color: white;">Amount</th>
                 </tr>
                 {table_rows}
             </table>
             
             <div style="margin-top: 15px; text-align: right; font-size: 14px; line-height: 1.5; color: black;">
-                <p style="margin: 3px 0;"><b>Total Amount:</b> {total_fee} ৳</p>
-                <p style="margin: 3px 0;"><b>Discount ({discount_pct}%):</b> -{discount_amount} ৳</p>
-                <p style="margin: 3px 0;"><b>Advance Paid:</b> {advance_paid} ৳</p>
+                <p style="margin: 3px 0; color: black;"><b>Total Amount:</b> {total_fee} ৳</p>
+                <p style="margin: 3px 0; color: black;"><b>Discount ({discount_pct}%):</b> -{discount_amount} ৳</p>
+                <p style="margin: 3px 0; color: black;"><b>Advance Paid:</b> {advance_paid} ৳</p>
                 <p style="color: red; font-size: 16px; margin: 5px 0;"><b>Due (বাকি টাকা): {due_amount} ৳</b></p>
             </div>
         </div>
