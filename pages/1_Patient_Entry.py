@@ -47,7 +47,7 @@ if test_count < 15:
     c.execute("DELETE FROM diagnostic_tests")
     galachipa_official_tests = [
         # HAEMATOLOGY
-        ("(CBC) ESR", 600.0), ("TC.DC", 250.0), ("HB%", 250.0), ("ESR", 200.0),
+        ("(CBC)", 600.0), ("TC.DC", 250.0), ("HB%", 250.0), ("ESR", 200.0),
         ("Platelet Count", 300.0), ("MP", 200.0), ("BT/CT", 350.0), ("C/E Count", 250.0),
         # SEROLOGY
         ("Widal", 450.0), ("Aso Titre", 450.0), ("CRP", 450.0), ("RA/RF", 450.0),
