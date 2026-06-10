@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 from datetime import datetime
 
-# সিকিউরিটি চেক
+# Security check
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
     st.warning("🔒 অ্যাক্সেস রিফিউজড! দয়া করে আগে মেইন পেজ থেকে লগইন করুন।")
     st.stop()
@@ -10,7 +10,7 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
 
-# ১. ডাটাবেজ টেবিল তৈরি (রোগীর বিলের জন্য)
+# 1. Creating a database table (for patient bills)
 c.execute("""
 CREATE TABLE IF NOT EXISTS billing_records (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS billing_records (
 )
 """)
 
-# ২. ডাক্তারের নামের জন্য আলাদা ডাইনামিক টেবিল তৈরি
+#2. Create a separate dynamic table for doctor names
 c.execute("""
 CREATE TABLE IF NOT EXISTS doctors_list (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,14 +44,14 @@ CREATE TABLE IF NOT EXISTS custom_tests_list (
 """)
 conn.commit()
 
-# প্রথমবার টেবিল খালি থাকলে ডিফল্ট কিছু ডাক্তারের নাম সেট করে নেওয়া
+# Setting some default doctor names if the table is empty for the first time
 c.execute("SELECT COUNT(*) FROM doctors_list")
 if c.fetchone()[0] == 0:
     default_docs = [("ডা. সাইদুল ইসলাম",), ("ডা. আবদুর রহমান",)]
     c.executemany("INSERT INTO doctors_list (doc_name) VALUES (?)", default_docs)
     conn.commit()
 
-# প্রথমবার টেবিল খালি থাকলে আপনার ডিফল্ট সব টেস্টের নাম এই ডাইনামিক টেবিলে ঢুকিয়ে নেওয়া
+# If the table is empty for the first time, insert the names of all your default tests into this dynamic table.
 c.execute("SELECT COUNT(*) FROM custom_tests_list")
 if c.fetchone()[0] == 0:
     default_tests = [
@@ -68,7 +68,7 @@ if c.fetchone()[0] == 0:
     c.executemany("INSERT INTO custom_tests_list (test_name) VALUES (?)", default_tests)
     conn.commit()
 
-# 🌟 ডাটাবেজ থেকে এখন পর্যন্ত সেভ হওয়া সব টেস্টের নাম তুলে আনা (অটো-আপডেটেড লিস্ট)
+# 🌟 Retrieve the names of all tests saved so far from the database (auto-updated list)
 c.execute("SELECT test_name FROM custom_tests_list")
 available_tests = [row[0] for row in c.fetchall()]
 available_tests.sort()
@@ -83,7 +83,7 @@ with col1:
 with col2:
     age = st.number_input("বয়স (Age)", min_value=1, max_value=120, value=25)
     
-    # ডাটাবেজ থেকে সব ডাক্তারের নাম তুলে আনা
+    # Retrieving all doctor names from the database
     c.execute("SELECT doc_name FROM doctors_list")
     db_doctors = [row[0] for row in c.fetchall()]
     
@@ -98,7 +98,7 @@ with col2:
 st.markdown("---")
 st.subheader("টেস্ট সিলেকশন ও লাইভ রেট এন্ট্রি")
 
-# এখন ড্রপডাউনটি ডাটাবেজ থেকে লাইভ আপডেট হওয়া টেস্টের তালিকা দেখাবে
+# Now the dropdown will show the list of tests updated live from the database
 selected_tests = st.multiselect("তালিকা থেকে টেস্ট সিলেক্ট করুন:", available_tests)
 
 test_with_prices = []
@@ -111,7 +111,7 @@ if selected_tests:
         total_fee += price
         test_with_prices.append(f"{test}:{price}")
 
-# কাস্টম টেস্ট অপশন (তালিকার বাইরে কোনো নতুন টেস্টের নাম লিখলে)
+# Custom test option (enter a new test name outside the list)
 st.markdown("##### ➕ তালিকা বহির্ভূত কাস্টম টেস্ট (ঐচ্ছিক)")
 col_c1, col_c2 = st.columns(2)
 with col_c1:
@@ -168,7 +168,7 @@ if submit_button:
             except:
                 pass
         
-        # রোগীর মূল বিল রেকর্ড সেভ করা
+        # Saving the patient's original bill record
         c.execute("""
             INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
