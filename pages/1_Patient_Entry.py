@@ -10,7 +10,7 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
 
-# ডাটাবেজ টেবিল
+# ডাটাবেজ টেবিল তৈরি
 c.execute("""
 CREATE TABLE IF NOT EXISTS billing_records (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS billing_records (
 )
 """)
 
-# টেস্টের নামের তালিকা (শুধু নাম, দাম এখানে লাগবে না কারণ আপনি নিজেই টাইপ করবেন)
+# টেস্টের নামের তালিকা
 available_tests = [
     "(CBC), ESR", "TC.DC", "HB%", "ESR", "Platelet Count", "MP", "BT/CT", "C/E Count",
     "Widal", "Aso Titre", "CRP", "RA/RF", "HBs Ag (Screen Test)", "TPHA", "VDRL",
@@ -55,29 +55,23 @@ with col2:
 st.markdown("---")
 st.subheader("টেস্ট সিলেকশন ও লাইভ রেট এন্ট্রি")
 
-# ড্রপডাউন থেকে টেস্ট সিলেক্ট
 selected_tests = st.multiselect("তালিকা থেকে টেস্ট সিলেক্ট করুন:", available_tests)
 
-# 📌 💥 জাদুকরী লজিক: প্রতিটি সিলেক্ট করা টেস্টের জন্য স্ক্রিনে লাইভ প্রাইস ইনপুট বক্স তৈরি 💥
 test_with_prices = []
 total_fee = 0.0
 
 if selected_tests:
-    st.markdown("##### 💰 নির্বাচিত টেস্টগুলোর দাম এখানে হাত লিখে দিন:")
+    st.markdown("##### 💰 নির্বাচিত টেস্টগুলোর দাম এখানে হাতে লিখে দিন:")
     for test in selected_tests:
-        # স্ক্রিনে প্রতিটা টেস্টের পাশে দাম লেখার বক্স আসবে
         price = st.number_input(f"রেট দিন -> {test} (টাকা):", min_value=0.0, step=50.0, key=f"price_{test}")
         total_fee += price
-        if price > 0:
-            test_with_prices.append(f"{test}:{price}")
-        else:
-            test_with_prices.append(f"{test}:0")
+        test_with_prices.append(f"{test}:{price}")
 
-# কাস্টম টেস্ট অপশন (তালিকার বাইরে কিছু থাকলে)
+# কাস্টম টেস্ট অপশন
 st.markdown("##### ➕ তালিকা বহির্ভূত কাস্টম টেস্ট (ঐচ্ছিক)")
 col_c1, col_c2 = st.columns(2)
 with col_c1:
-    custom_name = st.text_input("কাস্টম টেস্টের নাম:")
+    custom_name = st.text_input("कस्टम টেস্টের নাম:")
 with col_c2:
     custom_price = st.number_input("কাস্টম টেস্টের দাম:", min_value=0.0, step=50.0)
 
@@ -110,7 +104,6 @@ if submit_button:
         st.error("⚠️ পেশেন্টের নাম এবং অন্তত একটি টেস্টের দাম দেওয়া বাধ্যতামূলক!")
     else:
         current_date = datetime.now().strftime("%Y-%m-%d")
-        # টেস্টের নাম ও দাম একসাথে জোড়া দিয়ে ডাটাবেজে পাঠানো হচ্ছে (যেমন: CBC:400, ESR:200)
         tests_data_str = "|".join(test_with_prices)
         
         c.execute("""
