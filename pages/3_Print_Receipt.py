@@ -6,7 +6,7 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
     st.warning("⚠️ আগে লগইন করুন।")
     st.stop()
 
-st.title("🏥 মেডিকেল রিসিট প্রিন্ট")
+st.title("🏥 ⁠মেডিকেল রিসিট প্রিন্ট")
 st.write("------------------- Invoice ID তথ্য -------------------")
 
 invoice_id = None
@@ -64,20 +64,13 @@ for index, item in enumerate(tests_list, start=1):
     except:
         t_price_val = 0.0
         
-    table_rows += f"""
-    <tr>
-        <td>{index}</td>
-        <td>{t_name}</td>
-        <td style="text-align: right;">{t_price_val:.2f} ৳</td>
-    </tr>
-    """
+    table_rows += f"<tr><td>{index}</td><td>{t_name}</td><td style='text-align: right;'>{t_price_val:.2f} ৳</td></tr>"
 
-# ------------------- 🧠 জাদুকরী গ্লোবাল সিএসএস (Global CSS) -------------------
-# এই সিএসএসটি স্ট্রিমলিটের সাইডবার, হেডার, ফুটার এবং সব বাটনকে প্রিন্টের সময় পুরোপুরি গায়েব করে দেবে
-st.markdown("""
+# ------------------- গ্লোবাল সিএসএস এবং এইচটিএমএল কন্টেন্ট -------------------
+# ইনডেন্টেশনের ত্রুটি এড়াতে সম্পূর্ণ কোডটি বামদিকের মার্জিন ঘেঁষে (Unindented) রাখা হয়েছে
+receipt_html = f"""
 <style>
-/* সাধারণ স্ক্রিন ভিউ স্টাইল (মেমোর চারপাশের বক্স) */
-.receipt-box {
+.receipt-box {{
     max-width: 550px;
     margin: 20px auto;
     padding: 25px;
@@ -87,40 +80,34 @@ st.markdown("""
     color: black;
     font-family: 'Arial', sans-serif;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}
-.header {
+}}
+.header {{
     text-align: center;
     background-color: #1a365d;
     color: white;
     padding: 15px;
     border-radius: 8px 8px 0 0;
     margin-bottom: 20px;
-}
-.header h2 { margin: 0; font-size: 22px; }
-.header p { margin: 5px 0 0 0; font-size: 14px; }
-.info-table, .test-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; color: black; }
-.info-table td { padding: 5px 0; font-size: 14px; }
-.test-table th, .test-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
-.test-table th { background-color: #f2f2f2; }
-.total-section { text-align: right; font-size: 15px; line-height: 1.6; }
-.total-section b { color: #1a365d; }
+}}
+.header h2 {{ margin: 0; font-size: 22px; }}
+.header p {{ margin: 5px 0 0 0; font-size: 14px; }}
+.info-table, .test-table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; color: black; }}
+.info-table td {{ padding: 5px 0; font-size: 14px; }}
+.test-table th, .test-table td {{ border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }}
+.test-table th {{ background-color: #f2f2f2; }}
+.total-section {{ text-align: right; font-size: 15px; line-height: 1.6; }}
+.total-section b {{ color: #1a365d; }}
 
-/* 🖨️ প্রিন্ট লেআউট কন্ট্রোল (সবচেয়ে গুরুত্বপূর্ণ অংশ) */
-@media print {
-    /* ১. স্ট্রিমলিটের অ্যাপের ভেতরের সবকিছু (সাইডবার, মেইন কন্টেইনার, বাটন, হেডার) লুকিয়ে ফেলা */
-    header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, div.stWrite {
+@media print {{
+    header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, div.stWrite {{
         display: none !important;
-    }
-    
-    /* ২. স্ট্রিমলিটের মূল কন্টেন্টের ভেতরের প্যাডিং ও ব্যাকগ্রাউন্ড ক্লিন করা */
-    .main .block-container {
+    }}
+    .main .block-container {{
         padding: 0 !important;
         margin: 0 !important;
         max-width: 100% !important;
-    }
-    
-    /* ৩. শুধুমাত্র মেমো বক্সটিকে প্রিন্ট স্ক্রিনে দৃশ্যমান এবং ফুল-উইডথ করা */
-    .receipt-box {
+    }}
+    .receipt-box {{
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
@@ -128,25 +115,14 @@ st.markdown("""
         width: 100% !important;
         max-width: 100% !important;
         display: block !important;
-    }
-    
-    @page {
+    }}
+    @page {{
         size: A4 portrait;
         margin: 15mm 10mm 10mm 10mm;
-    }
-}
+    }}
+}}
 </style>
-""", unsafe_allow_html=True)
 
-# ------------------- ১. স্ট্রিমলিট প্রিন্ট বাটন -------------------
-# এই বাটনে ক্লিক করলে সরাসরি ব্রাউজারের প্রিন্ট উইন্ডো ওপেন হবে
-if st.button("🖨️ রিসিট প্রিন্ট করুন (Print Now)", type="primary", use_container_width=True):
-    st.components.v1.html("<script>parent.window.print();</script>", height=0)
-
-
-# ------------------- ২. মূল মেমো কন্টেন্ট (HTML) -------------------
-# এটি সরাসরি স্ট্রিমলিট পেজে রেন্ডার হবে, কোনো আইফ্রেমের ঝামেলা ছাড়াই
-receipt_html = f"""
 <div class="receipt-box">
     <div class="header">
         <h2>রোগমুক্তি ক্লিনিক</h2>
@@ -197,4 +173,10 @@ receipt_html = f"""
 </div>
 """
 
-st.markdown(receipt_html, unsafe_allow_html=True)
+# ------------------- ১. স্ট্রিমলিট বোতাম -------------------
+if st.button("🖨️ রিসিট প্রিন্ট করুন (Print Now)", type="primary", use_container_width=True):
+    st.components.v1.html("<script>parent.window.print();</script>", height=0)
+
+# ------------------- ২. মূল মেমো রেন্ডার -------------------
+# st.markdown এর জায়গায় ডিরেক্ট st.html ব্যবহার করা হয়েছে, যা ব্রাউজারে কোড লিক হওয়া বন্ধ করবে
+st.html(receipt_html)
