@@ -7,7 +7,6 @@ import importlib.util
 sms_path = os.path.join(os.path.dirname(__file__), ".." if "__path__" in locals() else os.path.abspath(__file__), "..", "10_Send_SMS.py")
 spec = importlib.util.spec_from_file_location("Send_SMS", sms_path)
 sms_module = importlib.util.module_from_spec(spec)
-# spec.loader.exec_module(sms_module) # আপনার অরিজিনাল কোডের লাইন
 
 # Security or login check
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
@@ -28,17 +27,17 @@ st.markdown(
     [data-testid="stMainBlockContainer"]::before, .main::before {
         content: "" !important;
         position: absolute !important;
-        top: 55% !important; /* মেমোর ঠিক মাঝখানে রাখার জন্য */
+        top: 55% !important;
         left: 50% !important;
         transform: translate(-50%, -50%) !important;
-        width: 320px !important; /* জলছাপের পারফেক্ট সাইজ */
+        width: 320px !important;
         height: 320px !important;
-        /* রোগ মুক্তি ডায়াগনস্টিক সেন্টারের নির্দিষ্ট ও স্থায়ী লোগো (শিল্ড + প্লাস + হার্টবিট) */
+        /* রোগ মুক্তি ডায়াগনস্টিক সেন্টারের নির্দিষ্ট ও স্থায়ী লোগো */
         background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://w3.org"><rect x="42" y="15" width="16" height="70" fill="%23FF3366" rx="4"/><rect x="15" y="42" width="70" height="16" fill="%23FF3366" rx="4"/><path d="M 18 50 L 38 50 L 44 25 L 50 75 L 56 38 L 62 58 L 66 50 L 82 50" stroke="%23FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M 50 5 L 85 20 L 85 55 C 85 75 50 95 50 95 C 50 95 15 75 15 55 L 15 20 Z" stroke="%230066CC" stroke-width="4" stroke-linejoin="round" fill="none"/></svg>') !important;
         background-size: contain !important;
         background-repeat: no-repeat !important;
         background-position: center !important;
-        opacity: 0.05 !important; /* ৫% হালকা ঝাপসা রাখা হলো যেন ওপরের লেখা পরিষ্কার পড়া যায় */
+        opacity: 0.05 !important;
         pointer-events: none !important;
         z-index: 1000 !important;
     }
@@ -63,7 +62,6 @@ st.write("----------------- Invoice ID Info -----------------")
 
 invoice_id = None
 
-# Read invoice ID from query parameters or session state
 if "invoice_id" in st.query_params:
     invoice_id = st.query_params["invoice_id"]
 elif "last_invoice_id" in st.session_state:
@@ -73,14 +71,11 @@ if not invoice_id:
     st.info("ℹ️ No Invoice ID found. Please submit data from 'Patient Entry' page.")
     st.stop()
 
-# Fix Directory Path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
 
-# Database Connection
 conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
-
 c.execute("SELECT * FROM billing_records WHERE ID = ?", (invoice_id,))
 row = c.fetchone()
 conn.close()
@@ -89,7 +84,7 @@ if not row:
     st.error(f"❌ No record found for ID #{invoice_id}")
     st.stop()
 
-# Assign variables from database row index
+# ডাটাবেজ কলাম অ্যাসাইনমেন্ট
 name = row[1]
 age = row[2]
 phone = row[3]
@@ -101,21 +96,9 @@ advance_paid = float(row[8])
 due_amount = float(row[9])
 current_date = row[10]
 
-# এসএমএস এরর হ্যান্ডেল এবং অটো সেন্ডিং লজিক
-if f"sms_sent_{invoice_id}" not in st.session_state:
-    try:
-        # sms_module.send_patient_sms(patient_phone=phone, patient_name=name, invoice_amount=total_amount)
-        st.session_state[f"sms_sent_{invoice_id}"] = True
-    except Exception as e:
-        st.error(f"SMS পাঠানো ব্যর্থ: {e}")
-
-# Calculate Discount Amount
 discount_amount = (total_amount * discount_pct) / 100.0
-
-# Split selected tests by pipe '|' symbol
 tests_list = [item.strip() for item in selected_tests_data.split('|') if item.strip()]
 
-# Create Dynamic HTML Table Rows for Tests
 table_rows = ""
 for index, item in enumerate(tests_list, start=1):
     if ":" in item:
@@ -131,11 +114,10 @@ for index, item in enumerate(tests_list, start=1):
     </tr>
     """
 
-# 🖨️ প্রিন্ট বাটন
 if st.button("🖨️ Print Money Receipt Now", use_container_width=True, type="primary"):
     st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
 
-# মূল রিসিট কন্টেইনার এবং মেমো ডিজাইন (আপনার অরিজিনাল থিম অনুযায়ী)
+# 🚀 এখানে আমরা f-string মার্কআপটি সঠিকভাবে অ্যাপ্লাই করে দিলাম (f"" ব্যবহার করা হয়েছে)
 st.markdown(
     f"""
     <div style='border: 2px solid #1A3E6C; padding: 20px; border-radius: 8px; background-color: #ffffff; font-family: Arial, sans-serif;'>
@@ -203,4 +185,3 @@ st.markdown(
     </div>
     """,
     unsafe_allow_html=True
-)
