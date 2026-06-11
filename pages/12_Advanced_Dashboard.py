@@ -20,10 +20,10 @@ try:
     with sqlite3.connect(db_name) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = [row[0] for row in cursor.fetchall()]
+        tables = [row for row in cursor.fetchall()]
         for t in tables:
-            if 'bill' in t.lower() or 'patient' in t.lower() or 'record' in t.lower():
-                table_name = t
+            if 'bill' in t[0].lower() or 'patient' in t[0].lower() or 'record' in t[0].lower():
+                table_name = t[0]
                 break
 except:
     pass
@@ -57,13 +57,12 @@ try:
 except:
     pass
 
-# ৪. এপিআই স্লো হওয়ার কারণে অ্যাপ যেন আটকে না যায়, তাই তাপমাত্রা ক্যাশ (Cache) করা হলো
-@st.cache_data(ttl=1800) # একবার লোড হলে ৩০ মিনিট পর্যন্ত এই ডেটা মেমোরিতে থাকবে, অ্যাপ স্লো হবে না
+# ৪. তাপমাত্রা ক্যাশ (Cache) করা হলো যাতে অ্যাপ স্লো না হয়
+@st.cache_data(ttl=1800)
 def get_live_temperature():
     try:
-        # সঠিক ওপেন-মেটিও এপিআই ইউআরএল
         url = "https://open-meteo.com"
-        response = urllib.request.urlopen(url, timeout=5) # টাইমআউট ৫ সেকেন্ড করা হলো
+        response = urllib.request.urlopen(url, timeout=5)
         data = json.loads(response.read().decode())
         temp = data['current_weather']['temperature']
         return f"{temp} °C"
@@ -72,13 +71,12 @@ def get_live_temperature():
 
 live_temp = get_live_temperature()
 
-# ৫. সাইডবার ডিজাইন (আপনার আগের কোড অনুযায়ী)
+# ৫. সাইডবার ডিজাইন
 st.sidebar.markdown("## Rog Mukti Diagnostic")
 st.sidebar.markdown(f"📅 **তারিখ:** {datetime.datetime.now().strftime('%d %B, %Y')}")
 st.sidebar.markdown(f"🌡️ **আজকের তাপমাত্রা:** {live_temp}")
 st.sidebar.markdown("---")
 
-# ৬. কাউন্টার ১: Today's Quick Summary
 try:
     st.sidebar.markdown("### 📝 আজকের লাইভ হিসাব")
     st.sidebar.markdown(f"• **মোট রোগী:** {total_patients} জন")
@@ -86,3 +84,43 @@ try:
     st.sidebar.markdown(f"• **মোট বাকি (Due):** {total_due} ৳")
 except:
     pass
+
+# ৬. মূল ড্যাশবোর্ড হেডার ডিজাইন
+st.markdown("# 📊 রিয়েল-টাইম অ্যাডভান্সড ড্যাশবোর্ড ও ল্যাব মনিটর")
+st.markdown("এই পেজটি আপনার ডায়াগনস্টিক সেন্টারের লাইভ প্যাথলজি অপারেশন এবং আজকের কাজের অগ্রগতি ট্র্যাক করছে।")
+st.markdown("---")
+
+# ৭. গ্রিড লেআউট তৈরি (বাম এবং ডান কলাম)
+col1, col2 = st.columns(2)
+
+with col1:
+    # ল্যাব টু-ডু ও পেন্ডিং টেস্ট ট্র্যাকার কার্ড
+    st.info("### 📝 ল্যাব টু-ডু ও পেন্ডিং টেস্ট ট্র্যাকার")
+    st.write("আজকে কাউন্টারে এন্ট্রি হওয়া রিসিট সমূহের লাইভ অবস্থা।")
+    
+    # এখানে আপনার পেন্ডিং টেস্টের ডেটা দেখানোর কোড বসবে
+    # সাময়িকভাবে একটি ডামি মেসেজ বা প্রগ্রেস বার দেওয়া হলো
+    if total_patients > 0:
+        st.success(f"আজকের মোট {total_patients} টি টেস্টের কাজ প্রক্রিয়াধীন রয়েছে।")
+    else:
+        st.warning("আজকে এখনো কোনো টেস্ট কাউন্টারে এন্ট্রি হয়নি।")
+
+with col2:
+    # ইমার্জেন্সি রিয়্যাক্ট ও নোটিফিকেশন কার্ড
+    st.error("### 🚨 ইমার্জেন্সি রিয়্যাক্ট ও নোটিফিকেশন")
+    st.write("জরুরি বার্তার বিষয়:")
+    emergency_msg = st.text_input("এখানে টাইপ করুন...", placeholder="জরুরি কোনো নোটিশ থাকলে লিখুন")
+    if st.button("🚨 লাইভ জরুরি এলার্ট জারি করুন"):
+        if emergency_msg:
+            st.toast(f"এলার্ট জারি হয়েছে: {emergency_msg}")
+        else:
+            st.toast("অনুগ্রহ করে আগে বার্তাটি লিখুন।")
+            
+    st.markdown("---")
+    
+    # কুইক ল্যাব ডিরেক্টরি কার্ড
+    st.success("### 📞 কুইক ল্যাব ডিরেক্টরি")
+    with st.expander("📞 জরুরি ফোন নম্বর সমূহ দেখতে এখানে ক্লিক করুন"):
+        st.write("• প্যাথলজি ল্যাব ইন-চার্জ: +৮৮০১XXXXXXXXX")
+        st.write("• রিলিজ ডেস্ক: +৮৮০১XXXXXXXXX")
+        st.write("• আইটি সাপোর্ট টিম: +৮৮০১XXXXXXXXX")
