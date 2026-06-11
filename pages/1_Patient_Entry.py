@@ -1,14 +1,6 @@
 import sys
-import os
-import streamlit as st
-import sqlite3
-from datetime import datetime
-
-# ১. মেইন ফোল্ডারের পাথ সঠিকভাবে যুক্ত করা
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(".")
 from sidebar_monitor import show_live_sidebar
-
-# ২. সিকিউরিটি চেকের আগেই সাইডবার ফাংশন কল করা (যাতে লগইন না থাকলেও ডাটা দেখায়)
 show_live_sidebar()
 
 # ৩. সিকিউরিটি চেক (নিরাপত্তা ব্যবস্থা)
