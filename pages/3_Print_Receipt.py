@@ -19,7 +19,6 @@ st.title("🖨️ Medical Receipt Print")
 st.markdown(
     """
     <style>
-    /* ১. স্ক্রিন এবং প্রিন্ট উভয় জায়গাতেই জলছাপ বসানোর মেইন লজিক */
     [data-testid="stMainBlockContainer"], .main {
         position: relative !important;
     }
@@ -32,7 +31,6 @@ st.markdown(
         transform: translate(-50%, -50%) !important;
         width: 320px !important;
         height: 320px !important;
-        /* রোগ মুক্তি ডায়াগনস্টিক সেন্টারের নির্দিষ্ট ও স্থায়ী লোগো */
         background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://w3.org"><rect x="42" y="15" width="16" height="70" fill="%23FF3366" rx="4"/><rect x="15" y="42" width="70" height="16" fill="%23FF3366" rx="4"/><path d="M 18 50 L 38 50 L 44 25 L 50 75 L 56 38 L 62 58 L 66 50 L 82 50" stroke="%23FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M 50 5 L 85 20 L 85 55 C 85 75 50 95 50 95 C 50 95 15 75 15 55 L 15 20 Z" stroke="%230066CC" stroke-width="4" stroke-linejoin="round" fill="none"/></svg>') !important;
         background-size: contain !important;
         background-repeat: no-repeat !important;
@@ -42,7 +40,6 @@ st.markdown(
         z-index: 1000 !important;
     }
 
-    /* 🖨️ প্রিন্ট করার সময় ব্রাউজার যেন বাধ্যতামূলক জলছাপটি প্রিন্টারে পাঠায় */
     @media print {
         [data-testid="stSidebar"], button, header, [data-testid="stHeader"] {
             display: none !important;
@@ -108,49 +105,48 @@ for index, item in enumerate(tests_list, start=1):
     
     table_rows += f"""
     <tr>
-        <td style='border: 1px solid #ddd; padding: 8px; text-align: center;'>{index}</td>
-        <td style='border: 1px solid #ddd; padding: 8px;'>{t_name}</td>
-        <td style='border: 1px solid #ddd; padding: 8px; text-align: right;'>{t_price} Tk</td>
+        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{index}</td>
+        <td style="border: 1px solid #ddd; padding: 8px;">{t_name}</td>
+        <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">{t_price} Tk</td>
     </tr>
     """
 
 if st.button("🖨️ Print Money Receipt Now", use_container_width=True, type="primary"):
     st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
 
-# 🚀 এখানে আমরা f-string মার্কআপটি সঠিকভাবে অ্যাপ্লাই করে দিলাম (f"" ব্যবহার করা হয়েছে)
-st.markdown(
-    f"""
-    <div style='border: 2px solid #1A3E6C; padding: 20px; border-radius: 8px; background-color: #ffffff; font-family: Arial, sans-serif;'>
-        <div style='background-color: #1A3E6C; padding: 15px; border-radius: 6px; text-align: center; color: white;'>
-            <h2 style='margin: 0; color: white; letter-spacing: 1px;'>ROGMUKTI DIAGNOSTIC CENTRE</h2>
-            <p style='margin: 5px 0 0 0; font-size: 13px;'>Mollah stand, Auliapur, Patuakhali</p>
-            <p style='margin: 2px 0 0 0; font-size: 12px;'>📞 Mobile: 01711867637</p>
+# ব্র্যাকেটের সংঘাত এড়াতে HTML ব্লকে ডাবল ব্র্যাকেট বা স্ট্রাকচার ফিক্স করা হয়েছে
+receipt_html = f"""
+    <div style="border: 2px solid #1A3E6C; padding: 20px; border-radius: 8px; background-color: #ffffff; font-family: Arial, sans-serif;">
+        <div style="background-color: #1A3E6C; padding: 15px; border-radius: 6px; text-align: center; color: white;">
+            <h2 style="margin: 0; color: white; letter-spacing: 1px;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
+            <p style="margin: 5px 0 0 0; font-size: 13px;">Mollah stand, Auliapur, Patuakhali</p>
+            <p style="margin: 2px 0 0 0; font-size: 12px;">📞 Mobile: 01711867637</p>
         </div>
         
         <br>
-        <table style='width: 100%; font-size: 14px; line-height: 1.6;'>
+        <table style="width: 100%; font-size: 14px; line-height: 1.6;">
             <tr>
                 <td><b>Invoice ID:</b> #{invoice_id}</td>
-                <td style='text-align: right;'><b>Date:</b> {current_date[:10]}</td>
+                <td style="text-align: right;"><b>Date:</b> {current_date[:10]}</td>
             </tr>
             <tr>
                 <td><b>Patient Name:</b> {name}</td>
-                <td style='text-align: right;'><b>Age:</b> {age} Y</td>
+                <td style="text-align: right;"><b>Age:</b> {age} Y</td>
             </tr>
             <tr>
                 <td><b>Mobile No:</b> {phone}</td>
-                <td style='text-align: right;'><b>Ref. By:</b> {doctor}</td>
+                <td style="text-align: right;"><b>Ref. By:</b> {doctor}</td>
             </tr>
         </table>
         
         <br>
         <p><b>Test Description & Rate</b></p>
-        <table style='width: 100%; border-collapse: collapse; font-size: 14px;'>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
             <thead>
-                <tr style='background-color: #f2f2f2;'>
-                    <th style='border: 1px solid #ddd; padding: 8px; width: 10%;'>SL</th>
-                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Test Name</th>
-                    <th style='border: 1px solid #ddd; padding: 8px; text-align: right; width: 25%;'>Price</th>
+                <tr style="background-color: #f2f2f2;">
+                    <th style="border: 1px solid #ddd; padding: 8px; width: 10%;">SL</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Test Name</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: right; width: 25%;">Price</th>
                 </tr>
             </thead>
             <tbody>
@@ -159,29 +155,30 @@ st.markdown(
         </table>
         
         <br>
-        <table style='width: 100%; font-size: 14px; line-height: 1.6;'>
+        <table style="width: 100%; font-size: 14px; line-height: 1.6;">
             <tr>
-                <td style='width: 60%;'></td>
-                <td style='text-align: right;'><b>Total Bill:</b> {total_amount:.2f} Tk</td>
+                <td style="width: 60%;"></td>
+                <td style="text-align: right;"><b>Total Bill:</b> {total_amount:.2f} Tk</td>
             </tr>
             <tr>
                 <td></td>
-                <td style='text-align: right;'><b>Discount:</b> {discount_amount:.2f} Tk ({discount_pct}%)</td>
+                <td style="text-align: right;"><b>Discount:</b> {discount_amount:.2f} Tk ({discount_pct}%)</td>
             </tr>
             <tr>
                 <td></td>
-                <td style='text-align: right;'><b>Advance Paid:</b> {advance_paid:.2f} Tk</td>
+                <td style="text-align: right;"><b>Advance Paid:</b> {advance_paid:.2f} Tk</td>
             </tr>
             <tr>
                 <td></td>
-                <td style='text-align: right; border-top: 1px dashed #1A3E6C; padding-top: 5px;'>
-                    <span style='color: red; font-weight: bold; font-size: 16px;'>Due Amount: {due_amount:.2f} Tk</span>
+                <td style="text-align: right; border-top: 1px dashed #1A3E6C; padding-top: 5px;">
+                    <span style="color: red; font-weight: bold; font-size: 16px;">Due Amount: {due_amount:.2f} Tk</span>
                 </td>
             </tr>
         </table>
         
         <br><br>
-        <p style='text-align: center; font-size: 13px; color: gray; font-style: italic;'>Thank you for trusting us with your care.</p>
+        <p style="text-align: center; font-size: 13px; color: gray; font-style: italic;">Thank you for trusting us with your care.</p>
     </div>
-    """,
-    unsafe_allow_html=True
+"""
+
+st.markdown(receipt_html, unsafe_allow_html=True)
