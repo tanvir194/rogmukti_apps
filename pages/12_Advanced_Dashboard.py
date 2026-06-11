@@ -62,7 +62,7 @@ except:
 def get_live_temperature():
     try:
         # ওপেন-মেটিও ফ্রি ওয়েদার এপিআই (ঢাকা/গালাচিপা অঞ্চলের সম্ভাব্য স্থানাঙ্ক অনুযায়ী)
-        url = "https://open-meteo.com"
+        url = "https://open-meteo.com..."
         response = urllib.request.urlopen(url, timeout=3)
         data = json.loads(response.read().decode())
         temp = data['current_weather']['temperature']
