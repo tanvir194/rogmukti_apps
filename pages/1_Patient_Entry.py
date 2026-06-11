@@ -1,3 +1,7 @@
+import sys
+sys.path.append(".")
+from sidebar_monitor import show_live_sidebar
+show_live_sidebar()
 
 import streamlit as st
 import sqlite3
