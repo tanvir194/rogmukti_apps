@@ -44,8 +44,7 @@ try:
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-    tables = [t[0] for t in cursor.fetchall()]
-    # বিল বা পেশেন্ট সম্পর্কিত টেবিল খোঁজা
+    tables = [row[0] for row in cursor.fetchall()]
     for t in tables:
         if 'bill' in t.lower() or 'patient' in t.lower() or 'record' in t.lower():
             table_name = t
@@ -91,17 +90,17 @@ with tab2:
     
     conn = sqlite3.connect(db_name)
     try:
-        # স্বয়ংক্রিয়ভাবে খুঁজে পাওয়া টেবিল থেকে ডাটা রিড করা
         df_bills = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
-        # কলামের নাম যাই হোক, প্রথম কলামটিকে বিল নম্বর হিসেবে ধরা হবে
-        bill_col = df_bills.columns[0] 
+        # প্রথম কলামটিকে বিল নম্বরের কলাম হিসেবে ধরে নেওয়া হলো
+        bill_col = df_bills.columns[0]
         df_bills = df_bills.sort_values(by=bill_col, ascending=False)
     except:
         df_bills = pd.DataFrame()
     conn.close()
 
     if not df_bills.empty:
-        col_del1, col_del2 = st.columns()
+        # কলামের এরর দূর করতে এখানে সঠিক অর্ডারে ২ দেওয়া হয়েছে
+        col_del1, col_del2 = st.columns(2, gap="large")
         with col_del1:
             with st.form("delete_bill_form"):
                 bill_to_delete = st.selectbox("ডিলিট করার জন্য বিল/রিসিট নম্বর সিলেক্ট করুন:", [""] + list(df_bills[bill_col].astype(str)))
@@ -112,7 +111,6 @@ with tab2:
                     if confirm_delete:
                         conn = sqlite3.connect(db_name)
                         cursor = conn.cursor()
-                        # সঠিক টেবিল থেকে ডিলিট লজিক
                         cursor.execute(f"DELETE FROM {table_name} WHERE {bill_col} = ?", (int(bill_to_delete),))
                         conn.commit()
                         conn.close()
