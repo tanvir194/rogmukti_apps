@@ -2,7 +2,34 @@ import streamlit as st
 
 # 1. Setting the page configuration
 st.set_page_config(page_title="Rog Mukti Diagnostic", layout="wide")
+import streamlit as st
 
+# 1. Setting the page configuration
+st.set_page_config(page_title="Rog Mukti Diagnostic", layout="wide")
+
+# ---> এখানে নিচের CSS কোডটুকু পেস্ট করে দিন <---
+st.markdown(
+    """
+    <style>
+    /* সাইডবারের অপশনগুলোর লেখার কালার পরিবর্তন */
+    [data-testid="stSidebarNavLink"] span {
+        color: #1E88E5 !important; /* আপনার পছন্দমতো কালার কোড দিন */
+        font-weight: bold; /* লেখা মোটা করার জন্য */
+    }
+    
+    /* মাউস হোভার (Hover) করলে যে কালার দেখাবে */
+    [data-testid="stSidebarNavLink"]:hover span {
+        color: #D81B60 !important; 
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# 2. Creating session state (login tracking)
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+    
 # 2. Creating session state (login tracking)
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
