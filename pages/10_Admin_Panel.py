@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import sqlite3
 import os
 
@@ -28,7 +29,7 @@ def init_db():
     ''')
     # শুরুতে কিছু ডিফল্ট টেস্ট যোগ করা (যদি টেবিল খালি থাকে)
     cursor.execute("SELECT COUNT(*) FROM test_prices")
-    if cursor.fetchone()[0] == 0:
+    if cursor.fetchone() == 0:
         default_tests = [("CBC", 400), ("Lipid Profile", 1000), ("Blood Sugar", 150), ("Urine RE", 250)]
         cursor.executemany("INSERT INTO test_prices VALUES (?, ?)", default_tests)
     conn.commit()
@@ -59,7 +60,7 @@ with col1:
 
 with col2:
     st.header("📋 লাইভ ডাটাবেজ রেট চার্ট")
-    # ডাটাবেজ থেকে রিড করে টেবিলে দেখানো
+    # ডাটাবেজ থেকে রিড করে téবিলে দেখানো
     conn = sqlite3.connect(db_name)
     df = pd.read_sql_query("SELECT test_name AS 'টেস্টের নাম', price AS 'মূল্য (BDT)' FROM test_prices", conn)
     conn.close()
