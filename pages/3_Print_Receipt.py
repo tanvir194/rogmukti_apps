@@ -1,3 +1,9 @@
+import sys
+import os
+sys.path.append(os.path.dirname(__file__))
+from sidebar_monitor import show_live_sidebar
+show_live_sidebar()
+
 import streamlit as st
 import sqlite3
 import os
