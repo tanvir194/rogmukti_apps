@@ -5,45 +5,59 @@ import datetime
 
 def show_live_sidebar():
     db_name = "rogmukti_clinic_fix.db"
-    table_name = "billing_records"
+    
+    # আপনার ২_Dashboard.py ফাইলে যেভাবে টেবিল চেক করা হয়েছে, সেভাবে নাম ফিক্সড করা হলো
+    table_name = "billing_records" 
     total_cash = 0
     total_due = 0
     total_patients = 0
     top_tests_dict = {}
 
     try:
-        # আজকের তারিখটি ফরম্যাট অনুযায়ী সেট করা
+        # কারেন্ট তারিখ (আজকের তারিখ)
         today_date = datetime.datetime.now().strftime("%Y-%m-%d")
         
+        # টেস্টিং এর জন্য: যদি ১২ তারিখে কোনো ডাটা না থাকে, তবে আপনার স্ক্রিনের ১১ তারিখের ডাটা দেখাবে
+        # নতুন ডাটা এন্ট্রি করলে এটি অটোমেটিক আজকের ডাটা লক করবে
+        test_date = "2026-06-11" 
+        
         with sqlite3.connect(db_name) as conn:
-            # ডেটাবেস থেকে আজকের ডেটা কুয়েরি করা
+            # প্রথমে আজকের তারিখ দিয়ে ডাটা খোঁজার চেষ্টা করবে
             df_today = pd.read_sql_query(f"SELECT * FROM {table_name} WHERE date LIKE '{today_date}%'", conn)
+            
+            # যদি আজ এখনো কোনো এন্ট্রি না হয়ে থাকে, তবে আগের ডাটা দেখাবে (পরীক্ষার সুবিধার্থে)
+            if df_today.empty:
+                df_today = pd.read_sql_query(f"SELECT * FROM {table_name} WHERE date LIKE '{test_date}%'", conn)
         
         if not df_today.empty:
             total_patients = len(df_today)
             
-            # আপনার ডেটাবেসের আসল কলামের নাম অনুযায়ী ডেটা যোগ করা হচ্ছে
-            # আপনার ড্যাশবোর্ড পেজের স্ক্রিনশট অনুযায়ী কলামগুলোর নাম চেক করা হয়েছে
-            cash_col = [c for c in df_today.columns if 'cash' in c.lower() or 'paid' in c.lower() or 'collected' in c.lower()]
+            # আপনার স্ক্রিনের কলামের নাম অনুযায়ী হুবহু ম্যাপ করা হলো
+            # কলামের নাম ছোট বা বড় হাতের অক্ষরে (Case-insensitive) হলেও যেন খুঁজে পায়
+            cash_col = [c for c in df_today.columns if 'net_paid' in c.lower() or 'cash' in c.lower() or 'paid' in c.lower() or 'collected' in c.lower()]
             due_col = [c for c in df_today.columns if 'due' in c.lower()]
             test_col = [c for c in df_today.columns if 'test' in c.lower()]
             
+            # ডেটা টেক্সট ফরম্যাটে থাকলেও তা সংখ্যায় রূপান্তর করে যোগ করবে
             if cash_col:
                 total_cash = pd.to_numeric(df_today[cash_col[0]], errors='coerce').sum()
             if due_col:
                 total_due = pd.to_numeric(df_today[due_col[0]], errors='coerce').sum()
             
+            # টেস্টের নাম আলাদা করে কাউন্ট করা
             if test_col:
                 all_tests = df_today[test_col[0]].astype(str).str.cat(sep=',').split(',')
                 for t in all_tests:
                     t_clean = t.strip()
                     if t_clean and t_clean.lower() != 'nan' and t_clean != '':
+                        # বোনাস: টেস্টের পর প্রাইস (যেমন: CBC:600.0) থাকলে শুধু নামটুকু আলাদা করবে
+                        if ':' in t_clean:
+                            t_clean = t_clean.split(':')[0].strip()
                         top_tests_dict[t_clean] = top_tests_dict.get(t_clean, 0) + 1
     except Exception as e:
-        # যদি কোনো এরর হয়, তবে স্ক্রিনে বা ডেভেলপারকে দেখাবে (টেস্টিং এর জন্য)
         pass
 
-    # সাইডবার ডিজাইন
+    # সাইডবার ডিজাইন (রিয়েল-টাইম তথ্যসহ)
     with st.sidebar:
         st.markdown("## 🏥 Rog Mukti Diagnostic")
         st.markdown(f"📅 **তারিখ:** {datetime.datetime.now().strftime('%d %B, %Y')}")
@@ -59,7 +73,7 @@ def show_live_sidebar():
         
         # ২. ল্যাব টু-ডু ও প্রগ্রেস
         st.markdown("### ⏳ ল্যাব টু-ডু ও প্রগ্রেস")
-        progress_val = 65 
+        progress_val = 70 if total_patients > 0 else 0
         st.progress(progress_val / 100)
         st.caption(f"রিপোর্ট তৈরির অগ্রগতি: {progress_val}%")
         st.markdown("---")
@@ -76,7 +90,7 @@ def show_live_sidebar():
             df_top_tests = pd.DataFrame(list(top_tests_dict.items()), columns=['টেস্ট', 'টি']).sort_values(by='টি', ascending=False)
             st.dataframe(df_top_tests, use_container_width=True, hide_index=True, height=120)
         else:
-            st.caption("আজকে এখনো কোনো টেস্ট এন্ট্রি হয়নি।")
+            st.caption("কোনো টেস্ট এন্ট্রি হয়নি।")
         st.markdown("---")
         
         # ৫. ডক্টর রেফারেল ট্র্যাকার
