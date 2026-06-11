@@ -1,6 +1,14 @@
 import streamlit as st
 import sqlite3
 import os
+import importlib.util
+import os
+
+# মেসেজ পাঠানোর ফাইলটি লোড করার সঠিক নিয়ম
+sms_path = os.path.join(os.path.dirname(__path__[0] if '__path__' in locals() else os.path.abspath(__file__)), "10_Send_SMS.py")
+spec = importlib.util.spec_from_file_location("Send_SMS", sms_path)
+sms_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(sms_module)
 
 # Security or login check
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
