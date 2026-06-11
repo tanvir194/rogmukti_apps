@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 
 # 🔑 1. Admin Security Lock Code (At the very beginning)
-ADMIN_PASSWORD = "rogmukti_admin"
+ADMIN_PASSWORD = "12345"
 
 if "admin_auth" not in st.session_state:
     st.session_state.admin_auth = False
