@@ -5,41 +5,50 @@ import datetime
 
 def show_live_sidebar():
     db_name = "rogmukti_clinic_fix.db"
-    table_name = "billing_records" 
     total_cash = 0
     total_due = 0
     total_patients = 0
     top_tests_dict = {}
 
     try:
-        # আজকের তারিখ নেওয়া হলো
+        # কারেন্ট এবং ব্যাকআপ তারিখ সেট করা
         today_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        test_date = "2026-06-11"
         
         with sqlite3.connect(db_name) as conn:
-            # ১. ডাইনামিকালি চেক করা হচ্ছে টেবিলে কী কী কলাম আছে
+            # ১. ডেটাবেসের ভেতরের আসল টেবিলের নাম অটো-খুঁজে বের করা
             cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+            all_tables = [row[0] for row in cursor.fetchall() if not row[0].startswith('sqlite_')]
+            
+            # বিল সংক্রান্ত প্রথম যে টেবিলটি পাবে সেটিকেই সিলেক্ট করবে
+            table_name = all_tables[0] if all_tables else "billing_records"
+            for t in all_tables:
+                if 'bill' in t.lower() or 'record' in t.lower() or 'patient' in t.lower():
+                    table_name = t
+                    break
+            
+            # ২. ওই টেবিলের ভেতরের তারিখ কলামের নাম খুঁজে বের করা
             cursor.execute(f"PRAGMA table_info({table_name})")
             columns = [row[1] for row in cursor.fetchall()]
-            
-            # তারিখের সঠিক কলাম (date বা billing_date) খুঁজে বের করা
-            date_col = 'date'
+            date_col = columns[0]
             for c in columns:
                 if 'date' in c.lower():
                     date_col = c
                     break
             
-            # ২. সঠিক কলামের নাম দিয়ে ডেটা কুয়েরি করা
+            # ৩. ডেটাবেস থেকে ডেটা রিড করা
             df_today = pd.read_sql_query(f"SELECT * FROM {table_name} WHERE {date_col} LIKE '{today_date}%'", conn)
             
-            # যদি আজ ১২ তারিখে কোনো এন্ট্রি না থাকে, তবে পরীক্ষার জন্য ১১ তারিখের ডেটা লোড করবে
+            # আজ এন্ট্রি না থাকলে টেস্ট ডেটের ডেটা লোড করবে
             if df_today.empty:
-                df_today = pd.read_sql_query(f"SELECT * FROM {table_name} WHERE {date_col} LIKE '2026-06-11%'", conn)
+                df_today = pd.read_sql_query(f"SELECT * FROM {table_name} WHERE {date_col} LIKE '{test_date}%'", conn)
         
         if not df_today.empty:
             total_patients = len(df_today)
             
-            # আপনার ডাটাবেসের আসল কলাম (net_paid, due_amount, selected_tests) অটো-ডিটেক্ট করা
-            cash_col = [c for c in df_today.columns if 'net_paid' in c.lower() or 'cash' in c.lower() or 'paid' in c.lower()]
+            # ৪. কলামের নাম অটো-ডিটেক্ট করে যোগ করা (Billed, Paid, Due)
+            cash_col = [c for c in df_today.columns if 'cash' in c.lower() or 'paid' in c.lower() or 'collected' in c.lower()]
             due_col = [c for c in df_today.columns if 'due' in c.lower()]
             test_col = [c for c in df_today.columns if 'test' in c.lower()]
             
@@ -53,6 +62,8 @@ def show_live_sidebar():
                 for t in all_tests:
                     t_clean = t.strip()
                     if t_clean and t_clean.lower() != 'nan' and t_clean != '':
+                        if ':' in t_clean:
+                            t_clean = t_clean.split(':')[0].strip()
                         top_tests_dict[t_clean] = top_tests_dict.get(t_clean, 0) + 1
     except Exception as e:
         pass
@@ -67,8 +78,8 @@ def show_live_sidebar():
         # ১. আজকের লাইভ হিসাব
         st.markdown("### 📝 আজকের লাইভ হিসাব")
         st.success(f"👥 **মোট রোগী:** {total_patients} জন")
-        st.info(f"💰 **মোট কালেকশন:** {int(total_cash)} ৳")
-        st.error(f"⚠️ **মোট বাকি (Due):** {int(total_due)} ৳")
+        st.info(f"💰 **মোট কালেকশন:** {int(total_cash if not pd.isna(total_cash) else 0)} ৳")
+        st.error(f"⚠️ **মোট বাকি (Due):** {int(total_due if not pd.isna(total_due) else 0)} ৳")
         st.markdown("---")
         
         # ২. ল্যাব টু-ডু ও প্রগ্রেস
