@@ -1,3 +1,13 @@
 [client]
-showSidebarNavigation = false
+showSidebarNavigation = true
 
+[theme]
+# সাইডবার এবং অ্যাপের লেখার প্রধান কালার (এখানে সুন্দর নীল কালার দেওয়া হয়েছে)
+textColor = "#0066CC"
+
+# আপনার অ্যাপের ব্যাকগ্রাউন্ড এবং সাইডবার ব্যাকগ্রাউন্ড কালার
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+
+# বোতাম বা সক্রিয় লিংকের কালার
+primaryColor = "#FF3366"
