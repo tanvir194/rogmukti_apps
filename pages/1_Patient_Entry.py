@@ -1,6 +1,7 @@
 import sys
 import os
-sys.path.append(os.path.dirname(__file__))
+# মেইন ফোল্ডারের পাথ সঠিকভাবে যুক্ত করা হলো
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sidebar_monitor import show_live_sidebar
 show_live_sidebar()
 import streamlit as st
