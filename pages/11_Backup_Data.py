@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import io
+import os
 
 # ১. পেজ কনফিগারেশন ও সাইডবার অটো-ওপেন
 st.set_page_config(page_title="Data Backup & Download", layout="wide", initial_sidebar_state="expanded")
@@ -23,10 +24,13 @@ st.title("📥 Rog Mukti Data Backup Panel")
 st.write("আপনার মোবাইল বা কম্পিউটারের লোকাল স্টোরেজে ডাটা সুরক্ষিত রাখতে এখান থেকে ফাইল ডাউনলোড করুন।")
 st.markdown("---")
 
-# ৩. ডাটাবেজ থেকে লাইভ ডাটা রিড করা
+# ৩. প্রজেক্টের ভেতরের যেকোনো .db ফাইল অটোমেটিক খুঁজে বের করার লজিক
+db_files = [f for f in os.listdir('.') if f.endswith('.db')]
+db_name = db_files[0] if db_files else "database.db"
+
 try:
-    # আপনার প্রজেক্টের ডাটাবেজ ফাইলের নাম যদি অন্য হয় (যেমন: database.db), তবে নিচে 'rogmukti.db' পরিবর্তন করে তা লিখুন
-    conn = sqlite3.connect("rogmukti.db") 
+    # লাইভ ডাটাবেজ কানেকশন
+    conn = sqlite3.connect(db_name) 
     
     # billing_records টেবিলের সব ডাটা এক্সেল করার জন্য তুলে আনা
     query = "SELECT * FROM billing_records"
@@ -35,7 +39,7 @@ try:
     
     st.success(f"📊 সফলভাবে ডাটাবেজ কানেক্ট হয়েছে! মোট {len(df)} টি রোগীর এন্ট্রি পাওয়া গেছে।")
     
-    # ৪. ডাটাবেজকে Excel ফাইলে কনভার্ট করার ম্যাজিক লজিক
+    # ৪. ডাটাবেজকে Excel ফাইলে কনভার্ট করার প্রসেস
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Billing Records')
@@ -60,5 +64,4 @@ try:
 
 except Exception as e:
     st.error("🚫 ডাটাবেজ ফাইল বা টেবিলটি এই মুহূর্তে খুঁজে পাওয়া যাচ্ছে না।")
-    st.info("💡 ড্যাশবোর্ডের এররের মতোই, 'Patient Entry & Billing' পেজে গিয়ে অন্তত ১টি নতুন রোগীর বিল সেভ করলেই এই ব্যাকআপ পেজটি সচল হয়ে যাবে।")
-  
+    st.info("💡 'Patient Entry & Billing' পেজে গিয়ে অন্তত ১টি নতুন রোগীর বিল সেভ করলেই ব্যাকএন্ডে ফাইল তৈরি হবে এবং এই ব্যাকআপ পেজটি সাথে সাথে সচল হয়ে যাবে।"
