@@ -57,9 +57,16 @@ discount_pct = float(row[7])
 advance_paid = float(row[8])
 due_amount = float(row[9])
 current_date = row[10]
-# রুগীর মোবাইলে অটোমেটিক মেসেজ চলে যাবে
-sms_module.send_patient_sms(patient_phone=phone, patient_name=name, invoice_amount=total_amount)
-
+    # মেসেজটি ইতিমধ্যে পাঠানো হয়েছে কিনা তা চেক করা হচ্ছে
+    if f"sms_sent_{invoice_id}" not in st.session_state:
+        try:
+            # রুগীর মোবাইলে মেসেজ পাঠানো হচ্ছে
+            sms_module.send_patient_sms(patient_phone=phone, patient_name=name, invoice_amount=total_amount)
+            # সেশন স্টেটে সংরক্ষণ করা হচ্ছে যাতে পেজ রিফ্রেশ হলে দ্বিতীয়বার মেসেজ না যায়
+            st.session_state[f"sms_sent_{invoice_id}"] = True
+        except Exception as e:
+            st.error(f"SMS পাঠাতে ব্যর্থ: {e}")
+            
 # Calculate Discount Amount
 discount_amount = (total_amount * discount_pct) / 100.0
 
