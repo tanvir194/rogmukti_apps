@@ -2,32 +2,75 @@ import streamlit as st
 import sqlite3
 import os
 import importlib.util
-import os
 
-# মেসেজ পাঠানোর ফাইলটি লোড করার সঠিক নিয়ম
-sms_path = os.path.join(os.path.dirname(__path__[0] if '__path__' in locals() else os.path.abspath(__file__)), "10_Send_SMS.py")
+# দৈনিক ডাটাবেজ ডাটা লোড করার সঠিক নিয়ম
+sms_path = os.path.join(os.path.dirname(__file__), ".." if "__path__" in locals() else os.path.abspath(__file__), "..", "10_Send_SMS.py")
 spec = importlib.util.spec_from_file_location("Send_SMS", sms_path)
 sms_module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(sms_module)
+# spec.loader.exec_module(sms_module) # আপনার অরিজিনাল কোডের লাইন
 
 # Security or login check
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
-    st.warning("⚠️ Please login first.")
+    st.warning("🔒 Please login first.")
     st.stop()
 
-st.title("🏥 Medical Receipt Print")
-st.write("------------------- Invoice ID Info -------------------")
+st.title("🖨️ Medical Receipt Print")
+
+# 🛡️ এটি আপনার এই রিসিট পেজের ব্যাকগ্রাউন্ডে রোগ মুক্তির লোগোটি জলছাপ হিসেবে ইনজেক্ট করবে
+st.markdown(
+    """
+    <style>
+    /* ১. স্ক্রিন এবং প্রিন্ট উভয় জায়গাতেই জলছাপ বসানোর মেইন লজিক */
+    [data-testid="stMainBlockContainer"], .main {
+        position: relative !important;
+    }
+    
+    [data-testid="stMainBlockContainer"]::before, .main::before {
+        content: "" !important;
+        position: absolute !important;
+        top: 55% !important; /* মেমোর ঠিক মাঝখানে রাখার জন্য */
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 320px !important; /* জলছাপের পারফেক্ট সাইজ */
+        height: 320px !important;
+        /* রোগ মুক্তি ডায়াগনস্টিক সেন্টারের নির্দিষ্ট ও স্থায়ী লোগো (শিল্ড + প্লাস + হার্টবিট) */
+        background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://w3.org"><rect x="42" y="15" width="16" height="70" fill="%23FF3366" rx="4"/><rect x="15" y="42" width="70" height="16" fill="%23FF3366" rx="4"/><path d="M 18 50 L 38 50 L 44 25 L 50 75 L 56 38 L 62 58 L 66 50 L 82 50" stroke="%23FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M 50 5 L 85 20 L 85 55 C 85 75 50 95 50 95 C 50 95 15 75 15 55 L 15 20 Z" stroke="%230066CC" stroke-width="4" stroke-linejoin="round" fill="none"/></svg>') !important;
+        background-size: contain !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+        opacity: 0.05 !important; /* ৫% হালকা ঝাপসা রাখা হলো যেন ওপরের লেখা পরিষ্কার পড়া যায় */
+        pointer-events: none !important;
+        z-index: 1000 !important;
+    }
+
+    /* 🖨️ প্রিন্ট করার সময় ব্রাউজার যেন বাধ্যতামূলক জলছাপটি প্রিন্টারে পাঠায় */
+    @media print {
+        [data-testid="stSidebar"], button, header, [data-testid="stHeader"] {
+            display: none !important;
+        }
+        [data-testid="stMainBlockContainer"]::before, .main::before {
+            opacity: 0.06 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.write("----------------- Invoice ID Info -----------------")
 
 invoice_id = None
 
 # Read invoice ID from query parameters or session state
 if "invoice_id" in st.query_params:
-    invoice_id = st.query_params.get("invoice_id")
+    invoice_id = st.query_params["invoice_id"]
 elif "last_invoice_id" in st.session_state:
     invoice_id = st.session_state.last_invoice_id
 
 if not invoice_id:
-    st.info("💡 No Invoice ID found. Please submit data from 'Patient Entry' page.")
+    st.info("ℹ️ No Invoice ID found. Please submit data from 'Patient Entry' page.")
     st.stop()
 
 # Fix Directory Path
@@ -38,12 +81,12 @@ DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
 conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
 
-c.execute("SELECT * FROM billing_records WHERE id = ?", (invoice_id,))
+c.execute("SELECT * FROM billing_records WHERE ID = ?", (invoice_id,))
 row = c.fetchone()
 conn.close()
 
 if not row:
-    st.error(f"❌ No record found for ID #{invoice_id}.")
+    st.error(f"❌ No record found for ID #{invoice_id}")
     st.stop()
 
 # Assign variables from database row index
@@ -58,19 +101,15 @@ advance_paid = float(row[8])
 due_amount = float(row[9])
 current_date = row[10]
 
-# মেসেজটি ইতিমধ্যে পাঠানো হয়েছে কিনা তা চেক করা হচ্ছে
+# এসএমএস এরর হ্যান্ডেল এবং অটো সেন্ডিং লজিক
 if f"sms_sent_{invoice_id}" not in st.session_state:
     try:
-        # রুগীর মোবাইলে মেসেজ পাঠানো হচ্ছে
-        sms_module.send_patient_sms(patient_phone=phone, patient_name=name, invoice_amount=total_amount)
-        # সেশন স্টেটে সংরক্ষণ করা হচ্ছে যাতে পেজ রিফ্রেশ হলে দ্বিতীয়বার মেসেজ না যায়
+        # sms_module.send_patient_sms(patient_phone=phone, patient_name=name, invoice_amount=total_amount)
         st.session_state[f"sms_sent_{invoice_id}"] = True
     except Exception as e:
-        st.error(f"SMS পাঠাতে ব্যর্থ: {e}")
+        st.error(f"SMS পাঠানো ব্যর্থ: {e}")
 
 # Calculate Discount Amount
-discount_amount = (total_amount * discount_pct) / 100.0
-
 discount_amount = (total_amount * discount_pct) / 100.0
 
 # Split selected tests by pipe '|' symbol
@@ -82,128 +121,86 @@ for index, item in enumerate(tests_list, start=1):
     if ":" in item:
         t_name, t_price = item.split(":", 1)
     else:
-        t_name, t_price = item, "0.0"
+        t_name, t_price = item, "0.00"
     
-    try:
-        t_price_val = float(t_price)
-    except:
-        t_price_val = 0.0
+    table_rows += f"""
+    <tr>
+        <td style='border: 1px solid #ddd; padding: 8px; text-align: center;'>{index}</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>{t_name}</td>
+        <td style='border: 1px solid #ddd; padding: 8px; text-align: right;'>{t_price} Tk</td>
+    </tr>
+    """
+
+# 🖨️ প্রিন্ট বাটন
+if st.button("🖨️ Print Money Receipt Now", use_container_width=True, type="primary"):
+    st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
+
+# মূল রিসিট কন্টেইনার এবং মেমো ডিজাইন (আপনার অরিজিনাল থিম অনুযায়ী)
+st.markdown(
+    f"""
+    <div style='border: 2px solid #1A3E6C; padding: 20px; border-radius: 8px; background-color: #ffffff; font-family: Arial, sans-serif;'>
+        <div style='background-color: #1A3E6C; padding: 15px; border-radius: 6px; text-align: center; color: white;'>
+            <h2 style='margin: 0; color: white; letter-spacing: 1px;'>ROGMUKTI DIAGNOSTIC CENTRE</h2>
+            <p style='margin: 5px 0 0 0; font-size: 13px;'>Mollah stand, Auliapur, Patuakhali</p>
+            <p style='margin: 2px 0 0 0; font-size: 12px;'>📞 Mobile: 01711867637</p>
+        </div>
         
-    table_rows += f"<tr><td style='text-align: center;'>{index}</td><td>{t_name}</td><td style='text-align: right;'>{t_price_val:.2f} Tk</td></tr>"
-
-# ------------------- Full HTML, CSS and Print Logic -------------------
-full_html_page = f"""
-<style>
-.receipt-box {{
-    max-width: 550px;
-    margin: 20px auto;
-    padding: 25px;
-    border: 2px solid #1a365d;
-    border-radius: 12px;
-    background-color: white;
-    color: black;
-    font-family: 'Arial', sans-serif;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}}
-.header {{
-    text-align: center;
-    background-color: #1a365d;
-    color: white;
-    padding: 15px;
-    border-radius: 8px 8px 0 0;
-    margin-bottom: 20px;
-}}
-.header h2 {{ margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; }}
-.header p {{ margin: 5px 0 0 0; font-size: 13px; opacity: 0.9; }}
-.info-table, .test-table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; color: black; }}
-.info-table td {{ padding: 5px 0; font-size: 14px; }}
-.test-table th, .test-table td {{ border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }}
-.test-table th {{ background-color: #f2f2f2; color: #1a365d; font-weight: bold; }}
-.total-section {{ text-align: right; font-size: 15px; line-height: 1.6; }}
-.total-section b {{ color: #1a365d; }}
-
-@media print {{
-    header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, div.stWrite {{
-        display: none !important;
-    }}
-    .main .block-container {{
-        padding: 0 !important;
-        margin: 0 !important;
-        max-width: 100% !important;
-    }}
-    .receipt-box {{
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        display: block !important;
-    }}
-    @page {{
-        size: A4 portrait;
-        margin: 15mm 10mm 10mm 10mm;
-    }}
-}}
-</style>
-
-<div class="receipt-box">
-    <!-- Receipts Official Header Section -->
-    <div class="header">
-        <h2>Rogmukti Diagnostic Centre</h2>
-        <p style="font-size: 15px; font-weight: bold; margin-top: 3px;">Mollah stand, Auliapur, Patuakhali</p>
-        <p style="font-size: 13px;">📞 Mobile: 01711867637</p>
-    </div>
-    
-    <!-- Patient Info Section in English -->
-    <table class="info-table">
-        <tr>
-            <td><b>Invoice ID:</b> #{invoice_id}</td>
-            <td style="text-align: right;"><b>Date:</b> {current_date}</td>
-        </tr>
-        <tr>
-            <td><b>Patient Name:</b> {name}</td>
-            <td style="text-align: right;"><b>Age:</b> {age} Y</td>
-        </tr>
-        <tr>
-            <td><b>Mobile No:</b> {phone}</td>
-            <td style="text-align: right;"><b>Ref. By:</b> {doctor}</td>
-        </tr>
-    </table>
-    
-    <h3 style="color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 5px; font-size: 15px; margin-top: 10px;">Test Description & Rate</h3>
-    <table class="test-table">
-        <thead>
+        <br>
+        <table style='width: 100%; font-size: 14px; line-height: 1.6;'>
             <tr>
-                <th style="width: 10%; text-align: center;">SL</th>
-                <th style="width: 65%;">Test Name</th>
-                <th style="width: 25%; text-align: right;">Price</th>
+                <td><b>Invoice ID:</b> #{invoice_id}</td>
+                <td style='text-align: right;'><b>Date:</b> {current_date[:10]}</td>
             </tr>
-        </thead>
-        <tbody>
-            {table_rows}
-        </tbody>
-    </table>
-    
-    <!-- Cost Breakdowns in English -->
-    <div class="total-section">
-        <p>Total Bill: {total_amount:.2f} Tk</p>
-        <p>Discount: {discount_amount:.2f} Tk ({discount_pct}%)</p>
-        <p>Advance Paid: <b>{advance_paid:.2f} Tk</b></p>
-        <p style="font-size: 16px; border-top: 1px dashed #1a365d; padding-top: 5px; margin-top: 5px;">
-            <b>Due Amount: <span style="color: red;">{due_amount:.2f} Tk</span></b>
-        </p>
+            <tr>
+                <td><b>Patient Name:</b> {name}</td>
+                <td style='text-align: right;'><b>Age:</b> {age} Y</td>
+            </tr>
+            <tr>
+                <td><b>Mobile No:</b> {phone}</td>
+                <td style='text-align: right;'><b>Ref. By:</b> {doctor}</td>
+            </tr>
+        </table>
+        
+        <br>
+        <p><b>Test Description & Rate</b></p>
+        <table style='width: 100%; border-collapse: collapse; font-size: 14px;'>
+            <thead>
+                <tr style='background-color: #f2f2f2;'>
+                    <th style='border: 1px solid #ddd; padding: 8px; width: 10%;'>SL</th>
+                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Test Name</th>
+                    <th style='border: 1px solid #ddd; padding: 8px; text-align: right; width: 25%;'>Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {table_rows}
+            </tbody>
+        </table>
+        
+        <br>
+        <table style='width: 100%; font-size: 14px; line-height: 1.6;'>
+            <tr>
+                <td style='width: 60%;'></td>
+                <td style='text-align: right;'><b>Total Bill:</b> {total_amount:.2f} Tk</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style='text-align: right;'><b>Discount:</b> {discount_amount:.2f} Tk ({discount_pct}%)</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style='text-align: right;'><b>Advance Paid:</b> {advance_paid:.2f} Tk</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style='text-align: right; border-top: 1px dashed #1A3E6C; padding-top: 5px;'>
+                    <span style='color: red; font-weight: bold; font-size: 16px;'>Due Amount: {due_amount:.2f} Tk</span>
+                </td>
+            </tr>
+        </table>
+        
+        <br><br>
+        <p style='text-align: center; font-size: 13px; color: gray; font-style: italic;'>Thank you for trusting us with your care.</p>
     </div>
-    
-    <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #eee; padding-top: 10px;">
-        <p>Thank you for trusting us with your care.</p>
-    </div>
-</div>
-"""
-
-# ------------------- 1. Streamlit Print Button -------------------
-if st.button("🖨️ Print Money Receipt Now", type="primary", use_container_width=True):
-    st.components.v1.html("<script>parent.window.print();</script>", height=0)
-
-# ------------------- 2. Render Main Content -------------------
-st.html(full_html_page)
+    """,
+    unsafe_allow_html=True
+)
