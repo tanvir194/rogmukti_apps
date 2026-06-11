@@ -1,6 +1,6 @@
 import streamlit as st
 
-# ১. পেজ কনফিগারেশন এবং সাইডবার অটো-ওপেন রাখা
+# ১. পেজ কনফিগারেশন - এখানে initial_sidebar_state="expanded" দেওয়া হয়েছে যা সাইডবার ফিরিয়ে আনবে
 st.set_page_config(page_title="Admin Master Unlock", layout="wide", initial_sidebar_state="expanded")
 
 # ২. লগইন ট্র্যাকিং সেশন তৈরি
@@ -29,7 +29,7 @@ if st.session_state.logged_in:
     st.success("🔓 অ্যাপটি বর্তমানে সম্পূর্ণ আনলকড! আপনার সমস্ত কাস্টম মেনু বাম পাশের সাইডবারে সচল হয়েছে।")
     st.info("💡 এখন আপনি বাম পাশের সাইডবার থেকে যেকোনো পেজে প্রবেশ করতে পারবেন।")
     
-    # লগআউট বাটন (যা আবার সবকিছু লক করে দেবে)
+    # লগআউট বাটন
     if st.button("🔴 অ্যাপটি পুনরায় লক করুন (Logout)"):
         st.session_state.logged_in = False
         st.rerun()
@@ -37,10 +37,10 @@ else:
     st.subheader("🔑 সিকিউরিটি ভেরিফিকেশন")
     st.write("রোগী এন্ট্রি ছাড়া বাকি সমস্ত প্যানেল কন্ট্রোল করতে এখানে পাসওয়ার্ড দিন:")
     
-    password = st.text_input("পাসওয়ার্ড লিখুন:", type="password")
+    password = st.text_input("পাসওয়ার্ড লিখুন:", type="password", value="admin") # ডিফল্ট পাসওয়ার্ড admin দেওয়া থাকলো
     
     if st.button("আনলক করুন"):
-        if password == "admin": # আপনার আসল পাসওয়ার্ড এখানে দিতে পারেন
+        if password == "admin": 
             st.session_state.logged_in = True
             st.success("🔓 সফলভাবে আনলক হয়েছে! পেজটি রিফ্রেশ হচ্ছে...")
             st.rerun()
@@ -50,7 +50,7 @@ else:
 # ৫. ডাইনামিক সাইডবার নেভিগেশন (যা সব পেজকে নিয়ন্ত্রণ করছে)
 st.sidebar.markdown("### 🗂️ Menu Options")
 
-# এই পেজটি লক ছাড়া সবসময় সবাই দেখতে পাবে (আপনার রিকোয়ারমেন্ট অনুযায়ী)
+# এই পেজটি লক ছাড়া সবসময় সবাই দেখতে পাবে
 st.sidebar.page_link("pages/1_Patient_Entry.py", label="Patient Entry & Billing", icon="📝")
 
 # 🔒 যদি অ্যাডমিন লগইন করে, তবেই বাকি পেজগুলোর লিংক সাইডবারে ভেসে উঠবে
