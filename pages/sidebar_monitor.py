@@ -5,8 +5,6 @@ import datetime
 
 def show_live_sidebar():
     db_name = "rogmukti_clinic_fix.db"
-    
-    # আপনার ২_Dashboard.py ফাইলে যেভাবে টেবিল চেক করা হয়েছে, সেভাবে নাম ফিক্সড করা হলো
     table_name = "billing_records" 
     total_cash = 0
     total_due = 0
@@ -14,50 +12,52 @@ def show_live_sidebar():
     top_tests_dict = {}
 
     try:
-        # কারেন্ট তারিখ (আজকের তারিখ)
+        # আজকের তারিখ নেওয়া হলো
         today_date = datetime.datetime.now().strftime("%Y-%m-%d")
         
-        # টেস্টিং এর জন্য: যদি ১২ তারিখে কোনো ডাটা না থাকে, তবে আপনার স্ক্রিনের ১১ তারিখের ডাটা দেখাবে
-        # নতুন ডাটা এন্ট্রি করলে এটি অটোমেটিক আজকের ডাটা লক করবে
-        test_date = "2026-06-11" 
-        
         with sqlite3.connect(db_name) as conn:
-            # প্রথমে আজকের তারিখ দিয়ে ডাটা খোঁজার চেষ্টা করবে
-            df_today = pd.read_sql_query(f"SELECT * FROM {table_name} WHERE date LIKE '{today_date}%'", conn)
+            # ১. ডাইনামিকালি চেক করা হচ্ছে টেবিলে কী কী কলাম আছে
+            cursor = conn.cursor()
+            cursor.execute(f"PRAGMA table_info({table_name})")
+            columns = [row[1] for row in cursor.fetchall()]
             
-            # যদি আজ এখনো কোনো এন্ট্রি না হয়ে থাকে, তবে আগের ডাটা দেখাবে (পরীক্ষার সুবিধার্থে)
+            # তারিখের সঠিক কলাম (date বা billing_date) খুঁজে বের করা
+            date_col = 'date'
+            for c in columns:
+                if 'date' in c.lower():
+                    date_col = c
+                    break
+            
+            # ২. সঠিক কলামের নাম দিয়ে ডেটা কুয়েরি করা
+            df_today = pd.read_sql_query(f"SELECT * FROM {table_name} WHERE {date_col} LIKE '{today_date}%'", conn)
+            
+            # যদি আজ ১২ তারিখে কোনো এন্ট্রি না থাকে, তবে পরীক্ষার জন্য ১১ তারিখের ডেটা লোড করবে
             if df_today.empty:
-                df_today = pd.read_sql_query(f"SELECT * FROM {table_name} WHERE date LIKE '{test_date}%'", conn)
+                df_today = pd.read_sql_query(f"SELECT * FROM {table_name} WHERE {date_col} LIKE '2026-06-11%'", conn)
         
         if not df_today.empty:
             total_patients = len(df_today)
             
-            # আপনার স্ক্রিনের কলামের নাম অনুযায়ী হুবহু ম্যাপ করা হলো
-            # কলামের নাম ছোট বা বড় হাতের অক্ষরে (Case-insensitive) হলেও যেন খুঁজে পায়
-            cash_col = [c for c in df_today.columns if 'net_paid' in c.lower() or 'cash' in c.lower() or 'paid' in c.lower() or 'collected' in c.lower()]
+            # আপনার ডাটাবেসের আসল কলাম (net_paid, due_amount, selected_tests) অটো-ডিটেক্ট করা
+            cash_col = [c for c in df_today.columns if 'net_paid' in c.lower() or 'cash' in c.lower() or 'paid' in c.lower()]
             due_col = [c for c in df_today.columns if 'due' in c.lower()]
             test_col = [c for c in df_today.columns if 'test' in c.lower()]
             
-            # ডেটা টেক্সট ফরম্যাটে থাকলেও তা সংখ্যায় রূপান্তর করে যোগ করবে
             if cash_col:
                 total_cash = pd.to_numeric(df_today[cash_col[0]], errors='coerce').sum()
             if due_col:
                 total_due = pd.to_numeric(df_today[due_col[0]], errors='coerce').sum()
             
-            # টেস্টের নাম আলাদা করে কাউন্ট করা
             if test_col:
                 all_tests = df_today[test_col[0]].astype(str).str.cat(sep=',').split(',')
                 for t in all_tests:
                     t_clean = t.strip()
                     if t_clean and t_clean.lower() != 'nan' and t_clean != '':
-                        # বোনাস: টেস্টের পর প্রাইস (যেমন: CBC:600.0) থাকলে শুধু নামটুকু আলাদা করবে
-                        if ':' in t_clean:
-                            t_clean = t_clean.split(':')[0].strip()
                         top_tests_dict[t_clean] = top_tests_dict.get(t_clean, 0) + 1
     except Exception as e:
         pass
 
-    # সাইডবার ডিজাইন (রিয়েল-টাইম তথ্যসহ)
+    # সাইডবার ডিজাইন
     with st.sidebar:
         st.markdown("## 🏥 Rog Mukti Diagnostic")
         st.markdown(f"📅 **তারিখ:** {datetime.datetime.now().strftime('%d %B, %Y')}")
@@ -67,21 +67,21 @@ def show_live_sidebar():
         # ১. আজকের লাইভ হিসাব
         st.markdown("### 📝 আজকের লাইভ হিসাব")
         st.success(f"👥 **মোট রোগী:** {total_patients} জন")
-        st.info(f"💰 **মোট কালেকশন:** {int(total_cash if not pd.isna(total_cash) else 0)} ৳")
-        st.error(f"⚠️ **মোট বাকি (Due):** {int(total_due if not pd.isna(total_due) else 0)} ৳")
+        st.info(f"💰 **মোট কালেকশন:** {int(total_cash)} ৳")
+        st.error(f"⚠️ **মোট বাকি (Due):** {int(total_due)} ৳")
         st.markdown("---")
         
         # ২. ল্যাব টু-ডু ও প্রগ্রেস
         st.markdown("### ⏳ ল্যাব টু-ডু ও প্রগ্রেস")
-        progress_val = 70 if total_patients > 0 else 0
+        progress_val = 75 if total_patients > 0 else 0
         st.progress(progress_val / 100)
         st.caption(f"রিপোর্ট তৈরির অগ্রগতি: {progress_val}%")
         st.markdown("---")
         
         # ৩. ক্রিটিক্যাল ল্যাব অ্যালার্ট
         st.markdown("### ⚠️ ক্রিটিক্যাল ল্যাব অ্যালার্ট")
-        st.error("🚨 **ID: P-2041** - Hb: 5.2 (কম)")
-        st.error("🚨 **ID: P-2055** - Sugar: 24.1 (বেশি)")
+        st.error("🚨 **ID: P-2041** - Hb: 5.2")
+        st.error("🚨 **ID: P-2055** - Sugar: 24.1")
         st.markdown("---")
         
         # ৪. আজকের সেরা টেস্ট সমূহ
@@ -93,7 +93,7 @@ def show_live_sidebar():
             st.caption("কোনো টেস্ট এন্ট্রি হয়নি।")
         st.markdown("---")
         
-        # ৫. ডক্টর রেফারেল ট্র্যাকার
+        # ৫. ডক্টর রেফারেল
         st.markdown("### 🩺 ডক্টর রেফারেল")
         ref_data = pd.DataFrame({
             'ডাক্তার': ['ডাঃ আরিফুর', 'ডাঃ নুসরাত', 'ডাঃ হাসান'],
@@ -102,7 +102,7 @@ def show_live_sidebar():
         st.table(ref_data)
         st.markdown("---")
         
-        # ৬. ঘণ্টাভিত্তিক কালেকশন ছোট চার্ট
+        # ৬. কালেকশন চার্ট
         st.markdown("### 📊 কালেকশন ট্রেন্ড")
         chart_data = pd.DataFrame({
             '৳': [total_cash * 0.2, total_cash * 0.5, total_cash]
