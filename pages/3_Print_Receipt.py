@@ -57,6 +57,8 @@ discount_pct = float(row[7])
 advance_paid = float(row[8])
 due_amount = float(row[9])
 current_date = row[10]
+# রুগীর মোবাইলে অটোমেটিক মেসেজ চলে যাবে
+sms_module.send_patient_sms(patient_phone=phone, patient_name=name, invoice_amount=total_amount)
 
 # Calculate Discount Amount
 discount_amount = (total_amount * discount_pct) / 100.0
