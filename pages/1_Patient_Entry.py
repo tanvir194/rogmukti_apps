@@ -1,18 +1,24 @@
 import sys
 import os
-# মেইন ফোল্ডারের পাথ সঠিকভাবে যুক্ত করা হলো
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from sidebar_monitor import show_live_sidebar
-show_live_sidebar()
 import streamlit as st
 import sqlite3
 from datetime import datetime
 
-# Security check
+# ১. মেইন ফোল্ডারের পাথ সঠিকভাবে যুক্ত করা
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from sidebar_monitor import show_live_sidebar
+
+# ২. সিকিউরিটি চেকের আগেই সাইডবার ফাংশন কল করা (যাতে লগইন না থাকলেও ডাটা দেখায়)
+show_live_sidebar()
+
+# ৩. সিকিউরিটি চেক (নিরাপত্তা ব্যবস্থা)
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
-    st.warning("🔒 অ্যাক্সেস রিফিউজড! দয়া করে আগে মেইন পেজ থেকে লগইন করুন।")
+    st.warning("অ্যাক্সেস রিফিউজড! দয়া করে আগে মেইন পেজ থেকে লগইন করুন।")
     st.stop()
 
+# ৪. ডাটাবেস কানেকশন (নিরাপত্তা পাস হলে এটি চলবে)
+conn = sqlite3.connect("rogmukti_clinic_fix.db")
+c = conn.cursor()
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
 
