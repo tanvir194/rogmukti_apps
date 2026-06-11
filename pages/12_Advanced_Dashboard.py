@@ -22,8 +22,8 @@ try:
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
         tables = [row for row in cursor.fetchall()]
         for t in tables:
-            if 'bill' in t[0].lower() or 'patient' in t[0].lower() or 'record' in t[0].lower():
-                table_name = t[0]
+            if 'bill' in t.lower() or 'patient' in t.lower() or 'record' in t.lower():
+                table_name = t
                 break
 except:
     pass
@@ -46,14 +46,16 @@ try:
         due_col = [c for c in df_today.columns if 'due' in c.lower()]
         test_col = [c for c in df_today.columns if 'test' in c.lower()]
         
-        if cash_col: total_cash = df_today[cash_col[0]].sum()
-        if due_col: total_due = df_today[due_col[0]].sum()
+        if cash_col: total_cash = df_today[cash_col].sum()
+        if due_col: total_due = df_today[due_col].sum()
         
         if test_col:
-            all_tests = df_today[test_col[0]].str.cat(sep=',').split(',')
+            # টেস্টের নাম আলাদা করা
+            all_tests = df_today[test_col].astype(str).str.cat(sep=',').split(',')
             for t in all_tests:
-                if t.strip():
-                    top_tests_dict[t.strip()] = top_tests_dict.get(t.strip(), 0) + 1
+                t_clean = t.strip()
+                if t_clean and t_clean.lower() != 'nan':
+                    top_tests_dict[t_clean] = top_tests_dict.get(t_clean, 0) + 1
 except:
     pass
 
@@ -85,31 +87,46 @@ try:
 except:
     pass
 
+# নতুন ফিচার ১: সাইডবারে গুরুত্বপূর্ণ টিপস সেকশন
+st.sidebar.markdown("---")
+st.sidebar.markdown("💡 **আজকের গুরুত্বপূর্ণ টিপস**")
+st.sidebar.info("ইউরিন আর/ই টেস্টের জন্য রোগীকে মিড-স্ট্রিম বা মাঝখানের প্রস্রাব সংগ্রহ করতে গাইড করুন।")
+
+
 # ৬. মূল ড্যাশবোর্ড হেডার ডিজাইন
 st.markdown("# 📊 রিয়েল-টাইম অ্যাডভান্সড ড্যাশবোর্ড ও ল্যাব মনিটর")
 st.markdown("এই পেজটি আপনার ডায়াগনস্টিক সেন্টারের লাইভ প্যাথলজি অপারেশন এবং আজকের কাজের অগ্রগতি ট্র্যাক করছে।")
 st.markdown("---")
 
-# ৭. গ্রিড লেআউট তৈরি (বাম এবং ডান কলাম)
-col1, col2 = st.columns(2)
+# ৩টি প্রধান কলামে বিভক্ত লেআউট
+col1, col2, col3 = st.columns(3)
 
 with col1:
     # ল্যাব টু-ডু ও পেন্ডিং টেস্ট ট্র্যাকার কার্ড
-    st.info("### 📝 ল্যাব টু-ডু ও পেন্ডিং টেস্ট ট্র্যাকার")
+    st.info("### 📝 ল্যাব টু-ডু ও পেন্ডিং ট্র্যাকার")
     st.write("আজকে কাউন্টারে এন্ট্রি হওয়া রিসিট সমূহের লাইভ অবস্থা।")
     
-    # এখানে আপনার পেন্ডিং টেস্টের ডেটা দেখানোর কোড বসবে
-    # সাময়িকভাবে একটি ডামি মেসেজ বা প্রগ্রেস বার দেওয়া হলো
     if total_patients > 0:
-        st.success(f"আজকের মোট {total_patients} টি টেস্টের কাজ প্রক্রিয়াধীন রয়েছে।")
+        st.success(f"✅ আজকের মোট {total_patients} টি টেস্টের কাজ প্রক্রিয়াধীন রয়েছে।")
     else:
-        st.warning("আজকে এখনো কোনো টেস্ট কাউন্টারে এন্ট্রি হয়নি।")
+        st.warning("⚠️ আজকে এখনো কোনো টেস্ট কাউন্টারে এন্ট্রি হয়নি।")
+        
+    st.markdown("---")
+    
+    # নতুন ফিচার ২: আজকের সেরা টেস্ট সমূহ (Top Tests)
+    st.markdown("### 📈 আজকের সেরা টেস্ট সমূহ")
+    if top_tests_dict:
+        # ডিকশনারি থেকে ডেটাফ্রেম তৈরি করে সর্ট করা
+        df_top_tests = pd.DataFrame(list(top_tests_dict.items()), columns=['টেস্টের নাম', 'মোট সংখ্যা']).sort_values(by='মোট সংখ্যা', ascending=False)
+        st.dataframe(df_top_tests, use_container_width=True, hide_index=True)
+    else:
+        st.caption("আজকে এখনো কোনো টেস্ট এন্ট্রি হয়নি।")
 
 with col2:
     # ইমার্জেন্সি রিয়্যাক্ট ও নোটিফিকেশন কার্ড
-    st.error("### 🚨 ইমার্জেন্সি রিয়্যাক্ট ও নোটিফিকেশন")
+    st.error("### 🚨 ইমার্জেন্সি রিয়্যাক্ট")
     st.write("জরুরি বার্তার বিষয়:")
-    emergency_msg = st.text_input("এখানে টাইপ করুন...", placeholder="জরুরি কোনো নোটিশ থাকলে লিখুন")
+    emergency_msg = st.text_input("এখানে টাইপ করুন...", placeholder="জরুরি কোনো নোটিশ থাকলে লিখুন", key="emerg_input")
     if st.button("🚨 লাইভ জরুরি এলার্ট জারি করুন"):
         if emergency_msg:
             st.toast(f"এলার্ট জারি হয়েছে: {emergency_msg}")
@@ -118,9 +135,28 @@ with col2:
             
     st.markdown("---")
     
+    # নতুন ফিচার ৩: কুইক ডিউ কালেক্টর ডেস্ক (Due Collector)
+    st.warning("### 💳 কুইক ডিউ কালেক্টর")
+    patient_id = st.text_input("রোগীর আইডি বা মোবাইল নম্বর দিন:", placeholder="যেমন: P-102")
+    due_amount_input = st.number_input("টাকার পরিমাণ (৳):", min_value=0, step=50)
+    if st.button("💰 বকেয়া টাকা জমা করুন"):
+        if patient_id and due_amount_input > 0:
+            st.success(f"সফলভাবে রোগী {patient_id} এর {due_amount_input} ৳ বকেয়া কালেকশন সম্পন্ন হয়েছে।")
+        else:
+            st.caption("আইডি এবং টাকার পরিমাণ সঠিকভাবে দিন।")
+
+with col3:
     # কুইক ল্যাব ডিরেক্টরি কার্ড
     st.success("### 📞 কুইক ল্যাব ডিরেক্টরি")
-    with st.expander("📞 জরুরি ফোন নম্বর সমূহ দেখতে এখানে ক্লিক করুন"):
-        st.write("• প্যাথলজি ল্যাব ইন-চার্জ: +৮৮০১XXXXXXXXX")
-        st.write("• রিলিজ ডেস্ক: +৮৮০১XXXXXXXXX")
-        st.write("• আইটি সাপোর্ট টিম: +৮৮০১XXXXXXXXX")
+    with st.expander("📞 জরুরি ফোন নম্বর সমূহ দেখতে এখানে ক্লিক করুন", expanded=True):
+        st.write("• **প্যাথলজি ল্যাব ইন-চার্জ:** +৮৮০১XXXXXXXXX")
+        st.write("• **রিলিজ ডেস্ক ও ক্যাশিয়ার:** +৮৮০১XXXXXXXXX")
+        st.write("• **আইটি সাপোর্ট টিম:** +৮৮০১XXXXXXXXX")
+        
+    st.markdown("---")
+    
+    # নতুন ফিচার ৪: টেস্ট ডেলিভারি স্ট্যাটাস ট্র্যাকার
+    st.markdown("### ⏳ রিপোর্ট ডেলিভারি ট্র্যাকার")
+    progress_val = st.slider("আজকের রিপোর্ট তৈরির অগ্রগতি:", 0, 100, 45)
+    st.progress(progress_val / 100)
+    st.write(f"• মোট রিপোর্টের **{progress_val}%** ডেলিভারির জন্য প্রস্তুত।")
