@@ -2,6 +2,7 @@ import streamlit as st
 import sqlite3
 import os
 import importlib.util
+import pandas as pd
 
 # দৈনিক ডাটাবেজ ডাটা লোড করার সঠিক নিয়ম
 sms_path = os.path.join(os.path.dirname(__file__), ".." if "__path__" in locals() else os.path.abspath(__file__), "..", "10_Send_SMS.py")
@@ -114,8 +115,9 @@ for index, item in enumerate(tests_list, start=1):
 if st.button("🖨️ Print Money Receipt Now", use_container_width=True, type="primary"):
     st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
 
-# ব্র্যাকেটের সংঘাত এড়াতে HTML ব্লকে ডাবল ব্র্যাকেট বা স্ট্রাকচার ফিক্স করা হয়েছে
-receipt_html = f"""
+# এইচটিএমএল সরাসরি রেন্ডার করা হলো
+st.markdown(
+    f"""
     <div style="border: 2px solid #1A3E6C; padding: 20px; border-radius: 8px; background-color: #ffffff; font-family: Arial, sans-serif;">
         <div style="background-color: #1A3E6C; padding: 15px; border-radius: 6px; text-align: center; color: white;">
             <h2 style="margin: 0; color: white; letter-spacing: 1px;">ROGMUKTI DIAGNOSTIC CENTRE</h2>
@@ -179,6 +181,5 @@ receipt_html = f"""
         <br><br>
         <p style="text-align: center; font-size: 13px; color: gray; font-style: italic;">Thank you for trusting us with your care.</p>
     </div>
-"""
-
-st.markdown(receipt_html, unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
