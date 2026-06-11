@@ -1,6 +1,5 @@
 from sidebar_monitor import show_live_sidebar
 show_live_sidebar()
-
 import streamlit as st
 import sqlite3
 from datetime import datetime
