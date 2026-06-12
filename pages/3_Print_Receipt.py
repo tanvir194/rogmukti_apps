@@ -24,7 +24,7 @@ st.markdown("""
         border-radius: 8px !important;
         padding: 10px !important;
     }
-    .stButton button, .stDownloadButton button {
+    .stButton button {
         background-color: #0284c7 !important;
         color: white !important;
         border-radius: 8px !important;
@@ -33,83 +33,91 @@ st.markdown("""
         width: 100%;
     }
     
-    /* 📄 রিসিট প্রিভিউ ডিজাইন */
+    /* 📄 রিসিট প্রিভিউ ডিজাইন (স্ক্রিনে যেমন দেখাবে) */
     .receipt-container {
         background-color: #ffffff !important;
         color: #000000 !important;
         border-radius: 12px;
-        padding: 35px;
-        max-width: 700px;
+        padding: 30px;
+        max-width: 650px;
         margin: 0 auto;
         font-family: 'Segoe UI', Arial, sans-serif;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        border: 1px solid #cbd5e1;
     }
     .receipt-header {
         text-align: center;
-        border-bottom: 3px solid #1e3a8a;
+        border-bottom: 2px solid #1e3a8a;
         padding-bottom: 12px;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
     }
     .receipt-title {
         color: #1e3a8a !important;
-        font-size: 28px;
+        font-size: 24px;
         font-weight: bold;
         margin: 0;
-        letter-spacing: 0.5px;
     }
     .receipt-table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 20px;
+        margin-top: 15px;
     }
     .receipt-table th {
-        background-color: #f8fafc;
-        color: #1e3a8a;
-        border-top: 1px solid #cbd5e1;
-        border-bottom: 2px solid #1e3a8a;
-        padding: 10px;
+        background-color: #f1f5f9 !important;
+        color: #1e3a8a !important;
+        border-bottom: 2px solid #cbd5e1 !important;
+        padding: 8px;
         text-align: left;
-        font-weight: bold;
     }
     .receipt-table td {
-        border-bottom: 1px solid #e2e8f0;
-        padding: 10px;
-        color: #334155;
+        border-bottom: 1px solid #e2e8f0 !important;
+        padding: 8px;
+        color: #334155 !important;
     }
     .summary-text {
         text-align: right;
-        font-size: 15px;
-        margin-top: 6px;
-        color: #1e293b;
+        font-size: 14px;
+        margin-top: 4px;
+        color: #1e293b !important;
     }
     
-    /* 🖨️ A4 পেপার প্রিন্টিং ফিক্স */
+    /* 🖨️ প্রিন্ট করার সময় এই ডিজাইনটি চালু হবে (A4 Premium Fix) */
     @media print {
-        header, [data-testid="stSidebar"], .stButton, .stNumberInput, div.block-container button, .stDownloadButton {
+        /* অ্যাপের অন্যান্য সব বাটন ও ইনপুট বক্স লুকিয়ে ফেলবে */
+        header, [data-testid="stSidebar"], .stButton, .stNumberInput, div.block-container button {
             display: none !important;
             visibility: hidden !important;
         }
-        body {
+        body, .stApp {
             background-color: #ffffff !important;
             color: #000000 !important;
         }
-        .stApp {
-            background-color: #ffffff !important;
-        }
+        /* রিসিটটি যাতে ভাঙা না আসে, কাগজের মাপে সুন্দর বর্ডারসহ বসবে */
         .receipt-container {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            max-width: 100%;
+            position: absolute !important;
+            left: 5% !important;
+            top: 0 !important;
+            width: 90% !important;
+            max-width: 100% !important;
             box-shadow: none !important;
-            padding: 0 !important;
+            padding: 20px !important;
             margin: 0 !important;
-            border: none !important;
+            border: 1px solid #000000 !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+        .receipt-table th {
+            background-color: #f1f5f9 !important;
+            -webkit-print-color-adjust: exact; /* ব্যাকগ্রাউন্ড কালার প্রিন্ট করার জন্য */
+            print-color-adjust: exact;
+            border-bottom: 2px solid #000000 !important;
+        }
+        .receipt-table td {
+            border-bottom: 1px solid #cbd5e1 !important;
         }
         @page {
             size: A4;
-            margin: 20mm;
+            margin: 15mm;
         }
     }
     </style>
@@ -117,64 +125,49 @@ st.markdown("""
 
 st.title("🖨️ English Money Receipt")
 
+# ডাটাবেজ কানেকশন
+conn = sqlite3.connect("rogmukti_clinic_fix.db")
+c = conn.cursor()
+
+default_invoice = st.session_state.get('last_invoice_id', 0)
+
+col_search1, col_search2 = st.columns(2)
+with col_search1:
+    invoice_id = st.number_input("Enter Bill No / Invoice ID to Print:", min_value=0, value=int(default_invoice), step=1)
+
 # ডাটাবেজ থেকে ডাটা কুয়েরি করা
-record = None
-invoice_id = 0
-
-try:
-    conn = sqlite3.connect("rogmukti_clinic_fix.db")
-    c = conn.cursor()
-
-    default_invoice = st.session_state.get('last_invoice_id', 0)
-
-    col_search1, col_search2 = st.columns(2)
-    with col_search1:
-        invoice_id = st.number_input("Enter Bill No / Invoice ID to Print:", min_value=0, value=int(default_invoice), step=1)
-
-    c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
-    record = c.fetchone()
-    conn.close()
-except Exception as e:
-    st.error(f"Database Error: {e}")
+c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
+record = c.fetchone()
 
 if record:
-    # ডাটাবেজের সঠিক ইনডেক্সগুলো এখানে পুনরায় ঠিক করা হলো
     p_id = record[0]
     p_name = record[1]
     p_age = record[2]
     p_phone = record[3]
     p_doctor = record[4]
-    p_tests_str = record[5]
+    p_tests_str = record[5]      # "Aso Titre(450.0), CBC(600.0), CRP(450.0)"
     total_bill = record[6]
     discount_tk = record[7]     
     advance_paid = record[8]
     due_amount = record[9]
     billing_date = record[10]
 
-    # ফাইল ডাউনলোডের জন্য প্রিমিয়াম CSS স্টাইল
-    embedded_css = """
-    <style>
-    .receipt-container { background-color: #ffffff !important; color: #000000 !important; border-radius: 12px; padding: 35px; max-width: 650px; margin: 20px auto; font-family: 'Segoe UI', Arial, sans-serif; border: 1px solid #cbd5e1; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    .receipt-header { text-align: center; border-bottom: 3px solid #1e3a8a; padding-bottom: 15px; margin-bottom: 25px; }
-    .receipt-title { color: #1e3a8a !important; font-size: 26px; font-weight: bold; margin: 0; }
-    .receipt-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    .receipt-table th { background-color: #f8fafc; color: #1e3a8a; border-top: 1px solid #cbd5e1; border-bottom: 2px solid #1e3a8a; padding: 10px; text-align: left; font-weight: bold; }
-    .receipt-table td { border-bottom: 1px solid #e2e8f0; padding: 10px; color: #334155; }
-    .summary-text { text-align: right; font-size: 15px; margin-top: 6px; color: #1e293b; }
-    </style>
-    """
+    st.write("")
+    if st.button("🖨️ Print Money Receipt Now"):
+        st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
+    st.write("")
 
-    # HTML রিসিট জেনারেট করা (সংশোধিত মোবাইল নম্বর: 01711867637)
+# --- HTML স্ট্রিং এর শুরুতে বাড়তি স্পেস (Indentation) রাখা যাবে না ---
     receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
-<div style="font-size:14px; color:#475569; margin-top:6px;">Mollah stand, Auliapur, Patuakhali</div>
-<div style="font-size:14px; color:#475569; font-weight: bold; margin-top:2px;">Mobile: 01711867637</div>
+<div style="font-size:13px; color:#475569; margin-top:4px;">Mollah stand, Auliapur, Patuakhali</div>
+<div style="font-size:13px; color:#475569; font-weight: bold;">Mobile: 01711867637</div>
 </div>
-<table style="width:100%; font-size:15px; margin-bottom:20px; color:#1e293b; line-height: 1.6;">
+<table style="width:100%; font-size:14px; margin-bottom:15px; color:#1e293b;">
 <tr>
-<td style="width:50%;"><b>Invoice ID:</b> #{p_id}</td>
-<td style="text-align:right; width:50%;"><b>Date:</b> {billing_date}</td>
+<td><b>Invoice ID:</b> #{p_id}</td>
+<td style="text-align:right;"><b>Date:</b> {billing_date}</td>
 </tr>
 <tr>
 <td><b>Patient Name:</b> {p_name}</td>
@@ -185,17 +178,18 @@ if record:
 <td style="text-align:right;"><b>Ref. By:</b> {p_doctor}</td>
 </tr>
 </table>
-<div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:6px; font-size:16px;">Test Description & Rate</div>
+<div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:4px; font-size:15px;">Test Description & Rate</div>
 <table class="receipt-table">
 <thead>
 <tr>
-<th style="width:12%; text-align:center;">SL</th>
-<th style="width:63%;">Test Name</th>
+<th style="width:10%; text-align:center;">SL</th>
+<th style="width:65%;">Test Name</th>
 <th style="width:25%; text-align:right;">Price</th>
 </tr>
 </thead>
 <tbody>"""
 
+    # টেক্সট স্প্লিটিং লজিক (আপনার অরিজিনাল কোডের শক্তিশালী মেথড)
     if p_tests_str:
         tests_list = p_tests_str.split(",")
     else:
@@ -208,7 +202,6 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
-            # এখানে ইনডেক্সিং এবং স্প্লিটিং ফিক্স করা হলো
             t_name = test_item.split("(")[0].strip()
             t_price = test_item.split("(")[1].replace(")", "").strip()
             try:
@@ -226,46 +219,19 @@ if record:
 </tr>"""
         serial_no += 1
 
-    try:
-        total_bill_val = float(total_bill)
-        discount_tk_val = float(discount_tk)
-        advance_paid_val = float(advance_paid)
-        due_amount_val = float(due_amount)
-    except:
-        total_bill_val, discount_tk_val, advance_paid_val, due_amount_val = 0.0, 0.0, 0.0, 0.0
-
     receipt_html += f"""</tbody>
 </table>
-<div style="margin-top:25px; border-top:1px dashed #cbd5e1; padding-top:12px;">
-<div class="summary-text"><b>Total Bill:</b> {total_bill_val:.2f} Tk</div>
-<div class="summary-text"><b>Discount:</b> {discount_tk_val:.2f} Tk</div>
-<div class="summary-text"><b>Advance Paid:</b> {advance_paid_val:.2f} Tk</div>
-<div class="summary-text" style="font-size:18px; color:#ef4444; margin-top:8px;"><b>Due Amount:</b> {due_amount_val:.2f} Tk</div>
+<div style="margin-top:20px; border-top:1px dashed #cbd5e1; padding-top:10px;">
+<div class="summary-text"><b>Total Bill:</b> {total_bill:.2f} Tk</div>
+<div class="summary-text"><b>Discount:</b> {discount_tk:.2f} Tk</div>
+<div class="summary-text"><b>Advance Paid:</b> {advance_paid:.2f} Tk</div>
+<div class="summary-text" style="font-size:16px; color:#ef4444; margin-top:6px;"><b>Due Amount:</b> {due_amount:.2f} Tk</div>
 </div>
-<div style="text-align:center; margin-top:45px; font-size:14px; color:#64748b; font-style:italic;">
+<div style="text-align:center; margin-top:35px; font-size:13px; color:#64748b; font-style:italic;">
 Thank you for trusting us with your care.
 </div>
 </div>"""
-
-    downloadable_html = embedded_css + receipt_html
-
-    # 🖨️ বাটন লেআউট
-    col_btn1, col_btn2 = st.columns(2)
     
-    with col_btn1:
-        if st.button("🖨️ Print Receipt (For PC)"):
-            st.markdown("<script>setTimeout(function() { window.print(); }, 200);</script>", unsafe_allow_html=True)
-            
-    with col_btn2:
-        st.download_button(
-            label="💾 Save Receipt (For Mobile)",
-            data=downloadable_html,
-            file_name=f"Invoice_{p_id}.html",
-            mime="text/html"
-        )
-
-    st.write("")
-    # স্ক্রিনে প্রিভিউ দেখানো
     st.markdown(receipt_html, unsafe_allow_html=True)
 
 else:
@@ -273,3 +239,5 @@ else:
         st.error(f"🚨 দুঃখিত, #{invoice_id} নম্বরের কোনো বিল ডাটাবেজে খুঁজে পাওয়া যায়নি!")
     else:
         st.info("ℹ️ বিল প্রিন্ট করার জন্য উপরে সঠিক Invoice ID নম্বরটি ইনপুট দিন।")
+
+conn.close()
