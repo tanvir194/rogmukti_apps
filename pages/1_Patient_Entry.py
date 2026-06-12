@@ -17,7 +17,7 @@ if 'logged_in' not in st.session_state or not st.session_state.logged_in:
     st.warning("অনধিকার প্রবেশাধিকার! দয়া করে ড্যাশবোর্ড থেকে লগইন করুন।")
     st.stop()
 
-# ৪. আধুনিক ডার্ক মোড কাস্টম CSS
+# ৪. আধুনিক ডার্ক মোড ও গ্লোয়িং মেট্রিকেক্স কালার কাস্টম CSS
 st.markdown("""
     <style>
     .stApp {
@@ -112,31 +112,36 @@ conn.commit()
 
 # ডিফল্ট ডাক্তার ডেটা ইনসার্ট লজিক
 c.execute("SELECT COUNT(*) FROM doctors_list")
-if c.fetchone()[0] == 0:
+if c.fetchone() == 0:
     default_docs = [("ডা. সাইদুল ইসলাম",), ("ডা. আসাদুর রহমান",)]
     c.executemany("INSERT INTO doctors_list (doc_name) VALUES (?)", default_docs)
     conn.commit()
 
-# ডিফল্ট টেস্ট ডেটা ইনসার্ট লজিক (আপনার আসল সম্পূর্ণ টেস্টের নামগুলো এখানে ফিরিয়ে আনা হলো)
-c.execute("SELECT COUNT(*) FROM custom_tests_list")
-if c.fetchone()[0] == 0:
-    default_tests = [
-        ("CBC",), ("ESR",), ("TC.DC",), ("HB%",), ("Platelet Count",), ("MP",), ("BT/CT",), ("C/E Count",),
-        ("Widal",), ("Aso Titre",), ("CRP",), ("RA/RF",), ("HBs Ag (Screen Test)",), ("TPHA",), ("VDRL",),
-        ("Group & Rh Factor",), ("Mantoux-Test (M.T)",), ("Triple Antigen",), ("W.Fever",), ("HIV",), ("HCV",),
-        ("Random Blood Sugar (RBS)",), ("Fasting Blood Sugar (FBS)",), ("2hr. After Breakfast",),
-        ("Blood Urea",), ("Cholesterol",), ("TG (Triglycerides)",), ("S.GPT (ALT)",), ("S.GOT (AST)",),
-        ("Bilirubin Total",), ("Lipid Profile",), ("Serum Creatinine",), ("Uric Acid",),
-        ("Urine Pregnancy Test (PT)",), ("Urine R/E",), ("Stool R/E",),
-        ("USG Whole Abdomen",), ("USG Upper Abdomen",), ("USG Lower Abdomen",), ("USG KUB",), ("USG Pregnancy Profile",),
-        ("X-Ray Chest",), ("X-Ray PNS",), ("X-Ray Cervical Spine",), ("X-Ray L/S Spine",), ("X-Ray Knee B/V",)
-    ]
-    c.executemany("INSERT INTO custom_tests_list (test_name) VALUES (?)", default_tests)
-    conn.commit()
+# ডাটাবেজ থেকে টেস্টের তালিকা লোড করা (এরর ও ফাঁকা লিস্ট ফিক্সিং সিস্টেম)
+try:
+    c.execute("SELECT test_name FROM custom_tests_list")
+    available_tests = [str(row[0]) for row in c.fetchall() if row]
+except:
+    available_tests = []
 
-# ডাটাবেজ থেকে টেস্টের তালিকা লোড করা
-c.execute("SELECT test_name FROM custom_tests_list")
-available_tests = [row[0] for row in c.fetchall()] # Tuple থেকে টেক্সট কনভার্সন একদম ১০০% ফিক্সড
+# ল্যাবরেটরির সব আসল টেস্টের নাম ব্যাকআপ তালিকা (যাতে একটি টেস্টও বাদ না পড়ে)
+default_laboratory_tests = [
+    "CBC", "ESR", "TC.DC", "HB%", "Platelet Count", "MP", "BT/CT", "C/E Count",
+    "Widal", "Aso Titre", "CRP", "RA/RF", "HBs Ag (Screen Test)", "TPHA", "VDRL",
+    "Group & Rh Factor", "Mantoux-Test (M.T)", "Triple Antigen", "W.Fever", "HIV", "HCV",
+    "Random Blood Sugar (RBS)", "Fasting Blood Sugar (FBS)", "2hr. After Breakfast",
+    "Blood Urea", "Cholesterol", "TG (Triglycerides)", "S.GPT (ALT)", "S.GOT (AST)",
+    "Bilirubin Total", "Lipid Profile", "Serum Creatinine", "Uric Acid",
+    "Urine Pregnancy Test (PT)", "Urine R/E", "Stool R/E",
+    "USG Whole Abdomen", "USG Upper Abdomen", "USG Lower Abdomen", "USG KUB", "USG Pregnancy Profile",
+    "X-Ray Chest", "X-Ray PNS", "X-Ray Cervical Spine", "X-Ray L/S Spine", "X-Ray Knee B/V"
+]
+
+# ডাটাবেজের রিপোর্টের সাথে ব্যাকআপ তালিকা মার্জ করা
+for t_name in default_laboratory_tests:
+    if t_name not in available_tests:
+        available_tests.append(t_name)
+
 available_tests.sort()
 
 # মূল ইউজার ইন্টারফেস
@@ -152,7 +157,7 @@ with col2:
 
 # ডাটাবেজ থেকে ডাক্তারদের লিস্ট লোড
 c.execute("SELECT doc_name FROM doctors_list")
-db_doctors = [row[0] for row in c.fetchall()] # Tuple থেকে টেক্সট কনভার্সন ফিক্সড
+db_doctors = [str(row[0]) for row in c.fetchall() if row]
 
 doctor_options = db_doctors + ["অন্যান্য"]
 selected_doctor_setup = st.selectbox("ডাক্তার সিলেক্ট করুন (Refd By)", doctor_options)
@@ -165,7 +170,7 @@ else:
 st.markdown("---")
 st.subheader("টেস্ট সিলেকশন ও লাইভ রেট এন্ট্রি")
 
-# মাল্টিসিলেক্ট ড্রপডাউন (টেস্ট লিস্ট খালি দেখানোর সমস্যাটি সমাধান করা হয়েছে)
+# মাল্টিসিলেক্ট ড্রপডাউন (সব টেস্ট নাম শো করবে)
 selected_tests = st.multiselect("তালিকা থেকে টেস্ট সিলেক্ট করুন:", available_tests)
 
 test_with_prices = []
@@ -217,7 +222,7 @@ due_amount = net_payable - advance_paid
 
 with col4:
     st.metric("ডিসকাউন্ট প্রণয় (টাকা)", f"{discount_amount} ৳")
-    st.metric("মোট باقی টাকা (Due)", f"{due_amount} ৳")
+    st.metric("মোট বাকি টাকা (Due)", f"{due_amount} ৳")
 
 st.markdown("---")
 submit_button = st.button("Save Bill and Go to Print (বিল সেভ করুন)")
@@ -245,7 +250,7 @@ if submit_button:
             except:
                 pass
                 
-        # ডাটাবেজে সেভ করার ফাইনাল কোড
+        # ডাটাবেজে রেকর্ড সেভ করার চূড়ান্ত কুয়েরি
         try:
             c.execute("""
             INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
@@ -256,7 +261,7 @@ if submit_button:
             st.session_state.last_invoice_id = c.lastrowid
             st.success("🎉 বিল সফলভাবে সংরক্ষিত হয়েছে! প্রিন্ট পেজে নেওয়া হচ্ছে...")
             
-            # 🛠️ প্রিন্ট পেজের এরর সমাধান (st.switch_page ব্যবহার করা হয়েছে)
+            # প্রিন্ট পেজে রিডাইরেক্ট (Error Fixed)
             st.switch_page("pages/3_Print_Receipt.py")
         except Exception as e:
             st.error(f"ডাটাবেজ এরর: {e}")
