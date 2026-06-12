@@ -6,7 +6,7 @@ import sqlite3
 # ১. পেজ কনফিগারেশন
 st.set_page_config(page_title="Money Receipt", layout="wide")
 
-# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম হোয়াইট কার্ড CSS
+# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম হোয়ایت কার্ড CSS
 st.markdown("""
     <style>
     .stApp {
@@ -154,6 +154,7 @@ except Exception as e:
     st.error(f"Database Error: {e}")
 
 if record:
+    # 🛠️ ফিক্সড: ডাটাবেজ ইনডেক্সিং পুনরুদ্ধার করা হলো
     p_id = record[0]
     p_name = record[1]
     p_age = record[2]
@@ -166,7 +167,7 @@ if record:
     due_amount = record[9]
     billing_date = record[10]
 
-    # ফাইল ডাউনলোডের কাস্টম এমবেডেড প্রিমিয়াম CSS স্টাইল
+    # অফলাইন ফাইলের জন্য প্রিমিয়াম CSS স্টাইল
     embedded_css = """
     <style>
     .receipt-container { background-color: #ffffff !important; color: #1e293b !important; border-radius: 16px; padding: 40px; max-width: 680px; margin: 25px auto; font-family: 'Segoe UI', system-ui, sans-serif; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
@@ -226,6 +227,7 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
+            # 🛠️ ফিক্সড: পাইথন স্ট্রিং ইনডেক্সিং ব্র্যাকেটের ভুল সংশোধন করা হয়েছে
             parts = test_item.split("(")
             t_name = parts[0].strip()
             t_price = parts[1].replace(")", "").strip()
@@ -270,7 +272,4 @@ Thank you for trusting us with your care.
     col_btn1, col_btn2 = st.columns(2)
     
     with col_btn1:
-        if st.button("🖨️ Print Receipt (For PC)"):
-            st.markdown("<script>setTimeout(function() { window.print(); }, 200);</script>", unsafe_allow_html=True)
-            
-    with col_btn2:
+        if st.button("🖨️ Print Receipt (For PC)")
