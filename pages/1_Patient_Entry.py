@@ -94,8 +94,8 @@ st.markdown("---")
 st.subheader("💳 পেমেন্ট ও ডিসকাউন্ট")
 col3, col4 = st.columns(2)
 with col3:
-    discount_amount = st.number_input("ডিসকাউন্ট (টাকা)", min_value=0.0, value=0.0, step=10.0)
-    advance_paid = st.number_input("অগ্রিম পরিশোধ (Advance Paid)", min_value=0.0, value=0.0)
+    discount_amount = st.number_input("ডিসকাউন্ট (টাকা)", min_value=, value=, step=)
+    advance_paid = st.number_input("অগ্রিম পরিশোধ (Advance Paid)", min_value=, value=)
 
 net_payable = total_fee - discount_amount
 due_amount = net_payable - advance_paid
@@ -105,7 +105,7 @@ with col4:
     st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True) # অ্যালাইনমেন্ট ঠিক করার ফাঁকা জায়গা
     st.success(f"💰 **ডিসকাউন্ট প্রদত্ত:** {discount_amount} ৳")
     
-    if due_amount > 0:
+    if due_amount > :
         st.error(f"⚠️ **মোট বাকি টাকা (Due):** {due_amount} ৳")
     else:
         st.info(f"✅ **কোনো বাকি নেই (Paid):** {due_amount} ৳")
