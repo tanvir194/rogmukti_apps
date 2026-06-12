@@ -6,7 +6,7 @@ import sqlite3
 # ১. পেজ কনফিগারেশন
 st.set_page_config(page_title="Money Receipt", layout="wide")
 
-# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম হোয়ایتカード CSS
+# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম হোয়াইট কার্ড CSS
 st.markdown("""
     <style>
     .stApp {
@@ -147,6 +147,19 @@ if record:
     due_amount = record[9]
     billing_date = record[10]
 
+    # ফাইল ডাউনলোডের জন্য আলাদা করে ভেতরের CSS স্টাইল তৈরি করা হলো
+    embedded_css = """
+    <style>
+    .receipt-container { background-color: #ffffff !important; color: #000000 !important; border-radius: 12px; padding: 30px; max-width: 650px; margin: 20px auto; font-family: 'Segoe UI', Arial, sans-serif; border: 1px solid #cbd5e1; }
+    .receipt-header { text-align: center; border-bottom: 2px solid #1e3a8a; padding-bottom: 12px; margin-bottom: 20px; }
+    .receipt-title { color: #1e3a8a !important; font-size: 24px; font-weight: bold; margin: 0; }
+    .receipt-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    .receipt-table th { background-color: #f1f5f9; color: #1e3a8a; border-bottom: 2px solid #cbd5e1; padding: 8px; text-align: left; }
+    .receipt-table td { border-bottom: 1px solid #e2e8f0; padding: 8px; color: #334155; }
+    .summary-text { text-align: right; font-size: 14px; margin-top: 4px; color: #1e293b; }
+    </style>
+    """
+
     # HTML রিসিট জেনারেট করা
     receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
@@ -229,7 +242,10 @@ Thank you for trusting us with your care.
 </div>
 </div>"""
 
-    # 🖨️ কম্পিউটার এবং মোবাইলের জন্য পাশাপাশি দুটি বাটন
+    # মোবাইলে ডাউনলোডের ফাইলে স্টাইলসহ পাঠানোর জন্য দুটিকে একত্র করা হলো
+    downloadable_html = embedded_css + receipt_html
+
+    # 🖨️ বাটন দুটি লেআউট করা হলো
     col_btn1, col_btn2 = st.columns(2)
     
     with col_btn1:
@@ -239,7 +255,7 @@ Thank you for trusting us with your care.
     with col_btn2:
         st.download_button(
             label="💾 Save Receipt (For Mobile)",
-            data=receipt_html,
+            data=downloadable_html,
             file_name=f"Invoice_{p_id}.html",
             mime="text/html"
         )
