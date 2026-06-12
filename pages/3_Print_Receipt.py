@@ -115,13 +115,33 @@ submit_button = st.button("Save Bill and Go to Print (বিল সেভ কর
 
 if submit_button:
     if not name or not test_with_prices:
-        st.error("⚠️ পেশেন্টের নাম এবং অন্তত একটি টেস্টের নাম দেওয়া বাধ্যতামূলক!")
-    elif selected_doctor_setup == "অন্যান্য" and not doctor.strip():
-        st.error("⚠️ দয়া করে নতুন ডাক্তারের নাম বা ডিগ্রি এখানে লিখুন!")
-    else:
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        tests_data_str = "|".join(test_with_prices)
-        
+            # 🛠️ ডাটাবেজের কলাম স্বয়ংক্রিয়ভাবে খুঁজে বের করার বুলেটপ্রুফ লজিক
+        try:
+            c.execute("PRAGMA table_info(billing_records)")
+            db_columns = [col[1] for col in c.fetchall() if col[1].lower() != 'id']
+            
+            # ১০টি ভ্যালুর তালিকা
+            insert_values = (
+                name, age, phone, 
+                doctor.strip() if hasattr(doctor, 'strip') else doctor, 
+                tests_data_str, int(total_fee), int(discount_amount), 
+                int(advance_paid), int(due_amount), current_date
+            )
+            
+            # যদি কলাম সংখ্যা মিলে যায় তবে ডাইনামিক ইনসার্ট হবে
+            if len(db_columns) == len(insert_values):
+                col_names = ", ".join(db_columns)
+                placeholders = ", ".join(["?"] * len(insert_values))
+                c.execute(f"INSERT INTO billing_records ({col_names}) VALUES ({placeholders})", insert_values)
+            else:
+                # কলাম সংখ্যা না মিললে সরাসরি সব কলামে ইনসার্ট করার চেষ্টা করবে
+                placeholders = ", ".join(["?"] * len(insert_values))
+                c.execute(f"INSERT INTO billing_records VALUES (NULL, {placeholders})", insert_values)
+                
+            conn.commit()
+        except Exception as db_err:
+            st.error(f"ডাটাবেজ সেভ করতে সমস্যা হয়েছে: {db_err}")
+            st.stop()
         # 🩺 ক্যাটাগরি লজিক ১: নতুন ডাক্তার অটো-সেভ
         if selected_doctor_setup == "অন্যান্য" and doctor.strip():
             try:
