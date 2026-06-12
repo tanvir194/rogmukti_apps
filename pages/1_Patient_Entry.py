@@ -5,7 +5,7 @@ import sqlite3
 import datetime
 from datetime import datetime
 
-# # ১. গ্লোবাল পাথ সেটআপ ও সাইডবার লোড (আপনার আসল কোড অনুযায়ী)
+# ১. গ্লোবাল পাথ সেটআপ ও সাইডবার লোড
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from sidebar_monitor import show_live_sidebar
 
@@ -17,7 +17,7 @@ if 'logged_in' not in st.session_state or not st.session_state.logged_in:
     st.warning("অনধিকার প্রবেশাধিকার! দয়া করে ড্যাশবোর্ড থেকে লগইন করুন।")
     st.stop()
 
-# ৪. পেজ কনফিগারেশন ও ডার্ক মোড কাস্টম CSS
+# ৪. ১ম স্ক্রিনশটের হুবহু ডার্ক মোড ও আধুনিক কাস্টম CSS
 st.markdown("""
     <style>
     /* অ্যাপের মূল ব্যাকগ্রাউন্ড ও টেক্সট কালার */
@@ -75,7 +75,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ৫. ডাটাবেজ কানেকশন (আপনার আসল ডাটাবেজ)
+# ৫. ডাটাবেজ কানেকশন
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
 
@@ -110,16 +110,16 @@ conn.commit()
 
 # ডিফল্ট ডাক্তার ডেটা ইনসার্ট লজিক
 c.execute("SELECT COUNT(*) FROM doctors_list")
-if c.fetchone()[0] == 0:
+if c.fetchone() == 0:
     default_docs = [("ডা. সাইদুল ইসলাম",), ("ডা. আসাদুর রহমান",)]
     c.executemany("INSERT INTO doctors_list (doc_name) VALUES (?)", default_docs)
     conn.commit()
 
-# ডিফল্ট টেস্ট ডেটা ইনসার্ট লজিক (আপনার আসল বিশাল টেস্ট লিস্ট)
+# ডিফল্ট টেস্ট ডেটা ইনসার্ট লজিক (আপনার স্ক্রিনশটের টেস্ট লিস্ট)
 c.execute("SELECT COUNT(*) FROM custom_tests_list")
-if c.fetchone()[0] == 0:
+if c.fetchone() == 0:
     default_tests = [
-        ("CBC",), ("ESR",), ("TC.DC",), ("HB%",), ("ESR",), ("Platelet Count",), ("MP",), ("BT/CT",), ("C/E Count",),
+        ("CBC",), ("ESR",), ("TC.DC",), ("HB%",), ("Platelet Count",), ("MP",), ("BT/CT",), ("C/E Count",),
         ("Widal",), ("Aso Titre",), ("CRP",), ("RA/RF",), ("HBs Ag (Screen Test)",), ("TPHA",), ("VDRL",),
         ("Group & Rh Factor",), ("Mantoux-Test (M.T)",), ("Triple Antigen",), ("W.Fever",), ("HIV",), ("HCV",),
         ("Random Blood Sugar (RBS)",), ("Fasting Blood Sugar (FBS)",), ("2hr. After Breakfast",),
@@ -134,7 +134,7 @@ if c.fetchone()[0] == 0:
 
 # ডাটাবেজ থেকে টেস্টের তালিকা লোড করা
 c.execute("SELECT test_name FROM custom_tests_list")
-available_tests = [row[0] for row in c.fetchall()]
+available_tests = [row for row in c.fetchall()]
 available_tests.sort()
 
 # মূল ইউজার ইন্টারফেস
@@ -150,7 +150,7 @@ with col2:
 
 # ডাটাবেজ থেকে ডাক্তারদের লিস্ট লোড
 c.execute("SELECT doc_name FROM doctors_list")
-db_doctors = [row[0] for row in c.fetchall()]
+db_doctors = [row for row in c.fetchall()]
 
 doctor_options = db_doctors + ["অন্যান্য"]
 selected_doctor_setup = st.selectbox("ডাক্তার সিলেক্ট করুন (Refd By)", doctor_options)
@@ -163,7 +163,7 @@ else:
 st.markdown("---")
 st.subheader("টেস্ট সিলেকশন ও লাইভ রেট এন্ট্রি")
 
-# মাল্টিসিলেক্ট ড্রপডাউন (আপনার ডাইনামিক বড় টেস্ট লিস্ট)
+# মাল্টিসিলেক্ট ড্রপডাউন
 selected_tests = st.multiselect("তালিকা থেকে টেস্ট সিলেক্ট করুন:", available_tests)
 
 test_with_prices = []
@@ -172,7 +172,16 @@ total_fee = 0.0
 if selected_tests:
     st.markdown("##### 📌 নির্বাচিত টেস্টসমূহের দাম এখানে দেখে নিন:")
     for test in selected_tests:
-        price = st.number_input(f"ফি (৳) -- {test}:", min_value=0.0, step=50.0, key=f"price_{test}")
+        # value=None এবং placeholder ব্যবহারের ফলে ০.০০ কেটে বসাতে হবে না, সরাসরি টাইপ করা যাবে
+        price_input = st.number_input(
+            f"ফি (৳) -- {test}:", 
+            min_value=0.0, 
+            step=50.0, 
+            value=None, 
+            placeholder="ফি লিখুন...", 
+            key=f"price_{test}"
+        )
+        price = price_input if price_input is not None else 0.0
         total_fee += price
         test_with_prices.append(f"{test}({price})")
 
@@ -181,7 +190,8 @@ col_c1, col_c2 = st.columns(2)
 with col_c1:
     custom_name = st.text_input("কাস্টম টেস্টের নাম:")
 with col_c2:
-    custom_price = st.number_input("কাস্টম টেস্টের মূল্য:", min_value=0.0, step=50.0)
+    custom_price_input = st.number_input("কাস্টম টেস্টের মূল্য:", min_value=0.0, step=50.0, value=None, placeholder="মূল্য লিখুন...")
+    custom_price = custom_price_input if custom_price_input is not None else 0.0
 
 if custom_name.strip():
     total_fee += custom_price
@@ -194,9 +204,12 @@ st.subheader("পেমেন্ট ও ডিসকাউন্ট")
 col3, col4 = st.columns(2)
 
 with col3:
-    # 🛠️ আপনার সংশোধিত ডিসকাউন্ট বক্স (শতাংশ বাদ দিয়ে সরাসরি মোট ডিসকাউন্ট টাকা ইনপুট)
-    discount_amount = st.number_input("মোট ডিসকাউন্ট (Discount Amount ৳)", min_value=0.0, value=0.0, step=10.0)
-    advance_paid = st.number_input("অগ্রিম পরিশোধ (Advance Paid)", min_value=0.0, value=0.0)
+    # 🛠️ পার্সেন্টেজ বাদ দিয়ে সরাসরি মোট ডিসকাউন্ট টাকা ইনপুট (বক্স খালি থাকবে)
+    discount_amount_input = st.number_input("মোট ডিসকাউন্ট (Discount Amount ৳)", min_value=0.0, value=None, step=10.0, placeholder="ডিসকাউন্ট লিখুন...")
+    discount_amount = discount_amount_input if discount_amount_input is not None else 0.0
+    
+    advance_paid_input = st.number_input("অগ্রিম পরিশোধ (Advance Paid)", min_value=0.0, value=None, placeholder="অগ্রিম টাকা লিখুন...")
+    advance_paid = advance_paid_input if advance_paid_input is not None else 0.0
 
 # সরাসরি টাকা মাইনাস করার নতুন গাণিতিক সূত্র
 net_payable = total_fee - discount_amount
@@ -211,7 +224,7 @@ submit_button = st.button("Save Bill and Go to Print (বিল সেভ কর
 
 if submit_button:
     if not name or not test_with_prices:
-        st.error("🚨 পেশেন্টের নাম এবং অন্তত একটি টেস্টের নাম দেওয়া বাধ্যতামূলক!")
+        st.error("🚨 পেশেন্টের নাম এবং অন্তত একটি টেস্টের নাম দেওয়া বাধ্যতা মূলক!")
     elif selected_doctor_setup == "অন্যান্য" and not doctor.strip():
         st.error("🚨 নতুন ডাক্তারের নাম টেক্সট বক্সে লিখুন!")
     else:
@@ -232,7 +245,7 @@ if submit_button:
             except:
                 pass
                 
-        # ফাইনাল বিল রেকর্ড ডাটাবেজে সেভ করার কুয়েরি (১০০% আপনার আসল স্ট্রাকচার অনুযায়ী)
+        # ডাটাবেজে রেকর্ড ইনসার্ট (discount_percent কলামে সরাসরি মোট ডিসকাউন্ট টাকা সেভ হবে)
         try:
             c.execute("""
             INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
