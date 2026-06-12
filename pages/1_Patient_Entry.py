@@ -69,7 +69,7 @@ st.markdown("---")
 st.markdown("##### ➕ তালিকা বহির্ভূত কাস্টম টেস্ট (ঐচ্ছিক)")
 col_c1, col_c2 = st.columns(2)
 with col_c1:
-    custom_name = st.text_input("কাস্টম টেস্টের নাম:")
+    custom_name = st.text_input("कাস্টম টেস্টের নাম:")
 with col_c2:
     custom_price = st.number_input("কাস্টম টেস্টের দাম:", min_value=0, value=0, step=50)
 
@@ -77,7 +77,7 @@ if custom_name.strip():
     total_fee += int(custom_price)
     test_with_prices.append(f"{custom_name.strip()}:{int(custom_price)}")
 
-# 📊 লাইভ মোট বিল - মডার্ন নীল কার্ড ডিজাইন (দশমিক ছাড়া)
+# 📊 লাইভ মোট বিল - মডার্ন নীল কার্ড ডিজাইন
 st.markdown(
     f"""
     <div style="background-color: #e8f4f8; padding: 15px; border-left: 5px solid #29b6f6; border-radius: 5px; margin-top: 15px; margin-bottom: 15px;">
@@ -100,7 +100,7 @@ with col3:
 net_payable = total_fee - int(discount_amount)
 due_amount = net_payable - int(advance_paid)
 
-# 🎨 ডিসকাউন্ট ও বাকি টাকা - সুন্দর ব্যানার ডিজাইন (দশমিক ছাড়া)
+# 🎨 ডিসকাউন্ট ও বাকি টাকা - সুন্দর ব্যানার ডিজাইন
 with col4:
     st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True) 
     st.success(f"💰 **ডিসকাউন্ট প্রদত্ত:** {int(discount_amount)} ৳")
@@ -115,14 +115,16 @@ submit_button = st.button("Save Bill and Go to Print (বিল সেভ কর
 
 if submit_button:
     if not name or not test_with_prices:
-        st.error("⚠️ পেশেন্টের নাম এবং অন্তত একটি টেস্টের নাম দেওয়া বাধ্যতামূলক!")
+        st.error("⚠️ পেশেন্টের নাম এবং অন্তত একটি টেস্টের নাম দেওয়া বাধ্যতামুলক!")
+    elif selected_doctor_setup == "Choose option":
+        st.error("⚠️ দয়া করে একটি ডাক্তার অপশন সিলেক্ট করুন!")
     elif selected_doctor_setup == "অন্যান্য" and not doctor.strip():
         st.error("⚠️ দয়া করে নতুন ডাক্তারের নাম বা ডিগ্রি এখানে লিখুন!")
     else:
         current_date = datetime.now().strftime("%Y-%m-%d")
         tests_data_str = "|".join(test_with_prices)
         
-        # 🩺 ক্যাটাগরি লজিক ১: নতুন ডাক্তার অটো-সেভ
+        # ডাক্তার অটো-সেভ
         if selected_doctor_setup == "অন্যান্য" and doctor.strip():
             try:
                 c.execute("INSERT OR IGNORE INTO doctors_list (doc_name) VALUES (?)", (doctor.strip(),))
@@ -130,7 +132,7 @@ if submit_button:
             except:
                 pass
                 
-        # 🩺 ক্যাটাগরি লজিক ২: নতুন কাস্টম টেস্ট অটো-সেভ
+        # কাস্টম টেস্ট অটো-সেভ
         if custom_name.strip():
             try:
                 c.execute("INSERT OR IGNORE INTO custom_tests_list (test_name) VALUES (?)", (custom_name.strip(),))
@@ -138,27 +140,18 @@ if submit_button:
             except:
                 pass
                 
-        # 🛠️ ডাটাবেজে রেকর্ড সেভ করার ১টি একক নিরাপদ ও স্ট্যান্ডার্ড লজিক
-        try:
-            c.execute("""
-                INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (name, age, phone, doctor.strip() if hasattr(doctor, 'strip') else doctor, tests_data_str, int(total_fee), int(discount_amount), int(advance_paid), int(due_amount), current_date))
-            conn.commit()
-            
-            st.session_state.last_invoice_id = c.lastrowid
-            st.success("🎉 সফলভাবে ডাটা সেভ হয়েছে! প্রিন্ট পেজে নিয়ে যাওয়া হচ্ছে...")
-            st.switch_page("pages/3_Print_Receipt.py")
-        except sqlite3.OperationalError:
-            # যদি কলাম নিয়ে কোনো জটিলতা থাকে, তবে এটি ব্যাকআপ হিসেবে টেবিলের স্ট্রাকচার না দেখেই ফোর্স ইনসার্ট করবে
-            try:
-                c.execute("INSERT INTO billing_records VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-                          (name, age, phone, doctor.strip() if hasattr(doctor, 'strip') else doctor, tests_data_str, int(total_fee), int(discount_amount), int(advance_paid), int(due_amount), current_date))
-                conn.commit()
-                st.session_state.last_invoice_id = c.lastrowid
-                st.success("🎉 সফলভাবে ডাটা সেভ হয়েছে! প্রিন্ট পেজে নিয়ে যাওয়া হচ্ছে...")
-                st.switch_page("pages/3_Print_Receipt.py")
-            except Exception as e:
-                st.error(f"❌ ডাটাবেজ এরর: {e}")
+        # 🛠️ সরাসরি কলাম উল্লেখ করে সিকিউরড ডেটাবেজ সেভিং লজিক
+        c.execute("""
+            INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (name, age, phone, doctor.strip() if hasattr(doctor, 'strip') else doctor, tests_data_str, int(total_fee), int(discount_amount), int(advance_paid), int(due_amount), current_date))
+        conn.commit()
+        
+        # ইনভয়েস আইডি সেভ ও রিডাইরেক্ট লজিক
+        st.session_state.last_invoice_id = c.lastrowid
+        st.success("🎉 সফলভাবে ডাটা সেভ হয়েছে! প্রিন্ট পেজে নিয়ে যাওয়া হচ্ছে...")
+        
+        # পেজ পরিবর্তনের জন্য ডাইনামিক কল
+        st.switch_page("pages/3_Print_Receipt.py")
 
 conn.close()
