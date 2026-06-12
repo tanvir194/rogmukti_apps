@@ -8,7 +8,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ২. প্রথম স্ক্রিনশটের মতো হুবহু প্রিমিয়াম ডার্ক থিম ও স্টাইল কাস্টম CSS
+# ২. ১ম স্ক্রিনশটের সাথে মিলিয়ে ফিক্সড কাস্টম CSS
 st.markdown("""
     <style>
     /* অ্যাপের মূল ব্যাকগ্রাউন্ড ও টেক্সট */
@@ -17,10 +17,20 @@ st.markdown("""
         color: #e2e8f0 !important;
     }
     
-    /* বাম পাশের সাইডবার বা মেনুর ডার্ক স্টাইল */
+    /* ইনপুট বক্সের উপরের লেবেল বা লেখার কালার সাদা করা */
+    .stApp label {
+        color: #38bdf8 !important;
+        font-weight: 500 !important;
+        font-size: 0.95rem !important;
+    }
+    
+    /* বাম পাশের সাইডবার বা মেনুর ডার্ক স্টাইল এবং লেখার কালার ফিক্স */
     [data-testid="stSidebar"] {
         background-color: #0f172a !important;
         border-right: 1px solid #1e293b;
+    }
+    [data-testid="stSidebar"] * {
+        color: #e2e8f0 !important;
     }
     
     /* সাইডবারের ভেতরের কাস্টম কার্ড (আজকের লাইভ হিসাব ও অ্যালার্ট) */
@@ -42,30 +52,30 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
     
-    /* কার্ডের ভেতরের শিরোনাম স্টাইল */
+    /* কার্ডের ভেতরের প্রধান শিরোনাম স্টাইল */
     .card-header {
         color: #38bdf8;
-        font-size: 1.2rem;
+        font-size: 1.25rem;
         font-weight: 600;
         margin-bottom: 18px;
         border-bottom: 1px solid #1e293b;
         padding-bottom: 8px;
     }
     
-    /* সকল ইনপুট বক্স, ড্রপডাউন এবং সংখ্যার ঘরের আধুনিক ডিজাইন */
+    /* সকল ইনপুট বক্স, ড্রপডাউন এবং সংখ্যার ঘরের আধুনিক ডার্ক ডিজাইন */
     .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"], .stDateInput input {
-        background-color: #131e31 !important;
+        background-color: #18263c !important;
         color: #ffffff !important;
-        border: 1px solid #1e293b !important;
+        border: 1px solid #2d3f5d !important;
         border-radius: 8px !important;
         padding: 10px !important;
-        height: 42px !important;
+        height: 44px !important;
     }
     
-    /* ইনপুট বক্সে ক্লিক করলে গ্লোয়িং নীল বর্ডার ইফেক্ট */
+    /* ইনপুট বক্সে ক্লিক করলে ১ম ছবির মতো গ্লোয়িং নীল বর্ডার ইফেক্ট */
     .stTextInput input:focus, .stNumberInput input:focus {
-        border-color: #38bdf8 !important;
-        box-shadow: 0 0 10px rgba(56, 189, 248, 0.3) !important;
+        border-color: #0284c7 !important;
+        box-shadow: 0 0 10px rgba(2, 132, 199, 0.4) !important;
     }
     
     /* নিচের "Save Bill & Print" বাটনের স্টাইল */
@@ -80,7 +90,7 @@ st.markdown("""
     }
     .stButton button:hover {
         background-color: #0369a1 !important;
-        box-shadow: 0 0 15px rgba(2, 132, 199, 0.5) !important;
+        box-shadow: 0 0 15px rgba(2, 132, 199, 0.6) !important;
     }
     
     /* ফন্ট স্টাইল */
@@ -89,6 +99,11 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
+# হেডার ও লোগো
+st.markdown("## 🏥 TEST & BILLING HUB")
+st.caption("টেস্ট এবং বিলিং ধাপ")
+st.write("---")
 
 # ==========================================
 # বাম পাশের সাইডবার কনটেন্ট (Sidebar)
@@ -112,11 +127,9 @@ with st.sidebar:
 # ==========================================
 # মূল পেজের কন্টেন্ট (Main Page)
 # ==========================================
-st.title("📝 টেস্ট এবং বিলিং সেকশন")
-st.write("---")
 
 # সেকশন ১: পেশেন্ট ইনফরমেশন
-st.markdown('<div class="custom-card"><div class="card-header">👤 পেশেন্ট ইনফরমেশন</div>', unsafe_allow_html=True)
+st.markdown('<div class="custom-card"><div class="card-header">👤 পেশেন্ট ইনফরমেশন (Patient Information)</div>', unsafe_allow_html=True)
 col1, col2, col3 = st.columns(3)
 with col1:
     patient_name = st.text_input("পেশেন্টের নাম (Name of the PT) *", placeholder="রোগীর নাম লিখুন")
@@ -125,7 +138,6 @@ with col2:
 with col3:
     phone = st.text_input("মোবাইল নাম্বার (Phone)", placeholder="০১XXXXXXXXX")
 
-# ডাক্তারের নাম সিলেক্ট করার অপশন (নিচের লাইনে বা সমান্তরালে রাখতে পারেন)
 doctor = st.selectbox("ডাক্তার সিলেক্ট করুন (Refd By)", ["ডা. সাইদুল ইসলাম", "অন্যান্য ডাক্তার"])
 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -154,7 +166,6 @@ with col_p1:
     advance_paid = st.number_input("অগ্রিম পরিশোধ (Advance Paid)", min_value=0.0, value=0.0)
 
 with col_p2:
-    # হিসাব নিকাশের লাইভ ডেমো (আপনার ডাটাবেজ লজিকের সাথে পরে কানেক্ট হবে)
     discount_tk = 0.0
     due_tk = custom_test_price - advance_paid
     
@@ -163,8 +174,8 @@ with col_p2:
 st.markdown('</div>', unsafe_allow_html=True)
 
 
-# সেকশন ৪: সাবমিট বাটন
+# সেকশন ৪: অ্যাকশন বাটন
 col_b1, col_b2 = st.columns([4, 1])
 with col_b2:
-    if st.button("Save Bill and Go to Print (ডাটা সেভ করুন) 🖨️"):
+    if st.button("Save Bill & Print 🖨️"):
         st.success("বিল ডাটাবেজে সফলভাবে সংরক্ষিত হয়েছে!")
