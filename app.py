@@ -4,7 +4,7 @@ import os
 # ১. পেজ কনফিগারেশন
 st.set_page_config(page_title="Rog Mukti Diagnostic", layout="wide")
 
-# ২. কাস্টম সিএসএস (লগইন পেজ এবং ডার্ক থিম সুন্দর করার জন্য)
+# ২. কাস্টম সিএসএস (ডার্ক থিম স্টাইল)
 st.markdown("""
     <style>
     .stApp {
@@ -21,9 +21,6 @@ st.markdown("""
         border: 1px solid #2d3f5d !important;
         border-radius: 8px !important;
         padding: 10px !important;
-    }
-    [data-testid="stSidebarNavItems"] {
-        padding-top: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -45,7 +42,7 @@ def login_page():
         else:
             st.error("Incorrect password! Please try again.")
 
-# ৫. মাল্টি-পেজ নেভিগেশন ও সাইডবার লজিক
+# ৫. মাল্টি-পেজ নেভিগেশন লজিক
 if not st.session_state.logged_in:
     login_screen = st.Page(login_page, title="Admin Login", icon="🔒")
     pg = st.navigation([login_screen], position="hidden")
@@ -56,25 +53,23 @@ else:
         if os.path.exists(file_path):
             return st.Page(file_path, title=title, icon=icon)
         else:
-            # যদি ফাইলটি খুঁজে না পাওয়া যায়, তবে এটি ক্র্যাশ না করে একটি ডেমো পেজ তৈরি করবে
             def fallback_view():
                 st.warning(f"🚨 ফাইলটি পাওয়া যায়নি: {file_path}")
-                st.info("দয়া করে GitHub-এ ফাইলের নাম এবং নম্বরটি চেক করুন।")
             return st.Page(fallback_view, title=title, icon=icon)
 
-    # আপনার স্ক্রিনশটের সব কটি পেজ নিরাপদভাবে লোড করা হচ্ছে
+    # আপনার স্ক্রিনশটের সব কটি পেজ
     patient_entry = create_safe_page("pages/1_Patient_Entry.py", "Patient Entry & Billing", "📝")
     dashboard = create_safe_page("pages/2_Dashboard.py", "Daily Dashboard", "📊")
     print_receipt = create_safe_page("pages/3_Print_Receipt.py", "Money Receipt & Print", "🖨️")
     due_collection = create_safe_page("pages/4_Due_Collection.py", "Due Collection", "💰")
     doctor_cv = create_safe_page("pages/5_Doctor_CV.py", "Doctor CV", "📄")
     doctor_referral = create_safe_page("pages/6_Doctor_Referral.py", "Doctor Referral", "🤝")
+    pathology_report = create_safe_page("pages/7_Pathology_Report.py", "Pathology Report", "🔬")
     
-    # এরর দেওয়া ফাইলটিকে ৮ এবং ৯ উভয় নম্বরেই চেক করবে যেন ক্র্যাশ না করে
+    # ফাইল নম্বর ৮ বা ৯ যেটিই হোক অটোমেটিক ট্র্যাক করবে
     admin_unlock_path = "pages/9_Admin_Unlock.py" if os.path.exists("pages/9_Admin_Unlock.py") else "pages/8_Admin_Unlock.py"
     admin_unlock = create_safe_page(admin_unlock_path, "Admin Unlock", "🔓")
     
-    pathology_report = create_safe_page("pages/7_Pathology_Report.py", "Pathology Report", "🔬")
     english_receipt = create_safe_page("pages/9_English_Receipt.py", "English Receipt", "🧾")
     admin_panel = create_safe_page("pages/10_Admin_Panel.py", "Admin Panel", "⚙️")
     send_sms = create_safe_page("pages/10_Send_SMS.py", "Send SMS", "💬")
@@ -82,15 +77,15 @@ else:
     advanced_dashboard = create_safe_page("pages/12_Advanced_Dashboard.py", "Advanced Dashboard", "📈")
     logo_receipt_print = create_safe_page("pages/13_Logo_Receipt_Print.py", "Logo & Receipt Setup", "🖼️")
     
-    # ক্যাটাগরি অনুযায়ী মেনু সাজানো
+    # মেনু নেভিগেশন
     pg = st.navigation({
         "প্রধান কার্যক্রম (Main)": [patient_entry, print_receipt, due_collection, english_receipt, logo_receipt_print],
-        "অ্যানালিটিক্স ও রেকর্ড": [dashboard, advanced_dashboard, pathology_report],
+        "অ্যানালিტიკ্স ও রেকর্ড": [dashboard, advanced_dashboard, pathology_report],
         "যোগাযোগ ও ডাক্তার": [doctor_cv, doctor_referral, send_sms],
         "অ্যাডমিন সেকশন": [admin_unlock, admin_panel, backup_data]
     })
     
-    # সাইডবারের নিচের লাইভ হিসাব
+    # সাইডবার প্যানেল
     with st.sidebar:
         st.markdown("---")
         st.subheader("🏢 Rog Mukti Diagnostic")
