@@ -6,7 +6,7 @@ import sqlite3
 # ১. পেজ কনফিগারেশন
 st.set_page_config(page_title="Money Receipt", layout="wide")
 
-# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম হোয়ایت কার্ড CSS
+# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম হোয়ایتカード CSS
 st.markdown("""
     <style>
     .stApp {
@@ -24,7 +24,7 @@ st.markdown("""
         border-radius: 8px !important;
         padding: 10px !important;
     }
-    .stButton button {
+    .stButton button, .stDownloadButton button {
         background-color: #0284c7 !important;
         color: white !important;
         border-radius: 8px !important;
@@ -82,7 +82,7 @@ st.markdown("""
     
     /* 🖨️ A4 পেপার প্রিন্টিং ফিক্স */
     @media print {
-        header, [data-testid="stSidebar"], .stButton, .stNumberInput, div.block-container button {
+        header, [data-testid="stSidebar"], .stButton, .stNumberInput, div.block-container button, .stDownloadButton {
             display: none !important;
             visibility: hidden !important;
         }
@@ -147,8 +147,8 @@ if record:
     due_amount = record[9]
     billing_date = record[10]
 
-    # HTML রিসিট জেনারেট করা (এটি বাটনের আগেই তৈরি করে রাখা হচ্ছে যাতে ডাউনলোডে ব্যবহার করা যায়)
-    receipt_html = f"""<div class="receipt-container" id="printable-receipt">
+    # HTML রিসিট জেনারেট করা
+    receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
 <div style="font-size:13px; color:#475569; margin-top:4px;">Mollah stand, Auliapur, Patuakhali</div>
@@ -229,33 +229,22 @@ Thank you for trusting us with your care.
 </div>
 </div>"""
 
-    st.write("")
-    # 🖨️ কাস্টম বাটন (স্মার্ট ডিভাইস ডিটেকশন লজিক সহ)
-    if st.button("🖨️ Print / Save Money Receipt"):
-        # জাভাস্ক্রিপ্ট কোড যা মোবাইল ও পিসি আলাদা করে একশনে যাবে
-        st.markdown(f"""
-            <script>
-                setTimeout(function() {{
-                    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                    if (isMobile) {{
-                        // মোবাইলের জন্য ফাইল ডাউনলোড স্ক্রিপ্ট
-                        var element = document.createElement('a');
-                        var htmlContent = `{receipt_html}`;
-                        element.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
-                        element.setAttribute('download', 'Invoice_{p_id}.html');
-                        element.style.display = 'none';
-                        document.body.appendChild(element);
-                        element.click();
-                        document.body.removeChild(element);
-                    }} else {{
-                        // কম্পিউটারের জন্য সরাসরি প্রিন্ট অপশন
-                        window.print();
-                    }}
-                }}, 300);
-            </script>
-        """, unsafe_allow_html=True)
-    st.write("")
+    # 🖨️ কম্পিউটার এবং মোবাইলের জন্য পাশাপাশি দুটি বাটন
+    col_btn1, col_btn2 = st.columns(2)
+    
+    with col_btn1:
+        if st.button("🖨️ Print Receipt (For PC)"):
+            st.markdown("<script>setTimeout(function() { window.print(); }, 200);</script>", unsafe_allow_html=True)
+            
+    with col_btn2:
+        st.download_button(
+            label="💾 Save Receipt (For Mobile)",
+            data=receipt_html,
+            file_name=f"Invoice_{p_id}.html",
+            mime="text/html"
+        )
 
+    st.write("")
     # স্ক্রিনে রিসিট দেখানো
     st.markdown(receipt_html, unsafe_allow_html=True)
 
