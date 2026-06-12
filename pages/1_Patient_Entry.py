@@ -1,4 +1,5 @@
 import streamlit as st
+import sqlite3
 import sys
 sys.path.append(".")
 from sidebar_monitor import show_live_sidebar
