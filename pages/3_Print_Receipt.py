@@ -129,45 +129,40 @@ if record:
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-    receipt_html = f"""
-    <div class="receipt-container">
-        <div class="receipt-header">
-            <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
-            <div style="font-size:13px; color:#475569; margin-top:4px;">Mollah stand, Auliapur, Patuakhali</div>
-            <div style="font-size:13px; color:#475569;">Mobile: 01711867627</div>
-        </div>
-        
-        <table style="width:100%; font-size:14px; margin-bottom:15px; color:#1e293b;">
-            <tr>
-                <td><b>Invoice ID:</b> #{p_id}</td>
-                <td style="text-align:right;"><b>Date:</b> {billing_date}</td>
-            </tr>
-            <tr>
-                <td><b>Patient Name:</b> {p_name}</td>
-                <td style="text-align:right;"><b>Age:</b> {p_age} Y</td>
-            </tr>
-            <tr>
-                <td><b>Mobile No:</b> {p_phone}</td>
-                <td style="text-align:right;"><b>Ref. By:</b> {p_doctor}</td>
-            </tr>
-        </table>
-        
-        <div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:4px; font-size:15px;">Test Description & Rate</div>
-        
-        <table class="receipt-table">
-            <thead>
-                <tr>
-                    <th style="width:10%; text-align:center;">SL</th>
-                    <th style="width:65%;">Test Name</th>
-                    <th style="width:25%; text-align:right;">Price</th>
-                </tr>
-            </thead>
-            <tbody>
-    """
+# --- এখানে HTML স্ট্রিং বাম পাশে (Zero Indentation) নিয়ে আসা হয়েছে ---
+    receipt_html = f"""<div class="receipt-container">
+<div class="receipt-header">
+<div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
+<div style="font-size:13px; color:#475569; margin-top:4px;">Mollah stand, Auliapur, Patuakhali</div>
+<div style="font-size:13px; color:#475569;">Mobile: 01711867627</div>
+</div>
+<table style="width:100%; font-size:14px; margin-bottom:15px; color:#1e293b;">
+<tr>
+<td><b>Invoice ID:</b> #{p_id}</td>
+<td style="text-align:right;"><b>Date:</b> {billing_date}</td>
+</tr>
+<tr>
+<td><b>Patient Name:</b> {p_name}</td>
+<td style="text-align:right;"><b>Age:</b> {p_age} Y</td>
+</tr>
+<tr>
+<td><b>Mobile No:</b> {p_phone}</td>
+<td style="text-align:right;"><b>Ref. By:</b> {p_doctor}</td>
+</tr>
+</table>
+<div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:4px; font-size:15px;">Test Description & Rate</div>
+<table class="receipt-table">
+<thead>
+<tr>
+<th style="width:10%; text-align:center;">SL</th>
+<th style="width:65%;">Test Name</th>
+<th style="width:25%; text-align:right;">Price</th>
+</tr>
+</thead>
+<tbody>"""
 
-    # 🛠️ নতুন ও শক্তিশালী টেক্সট স্প্লিটিং কুয়েরি
+    # 🛠️ টেক্সট স্প্লিটিং কুয়েরি
     if p_tests_str:
-        # কমা ধরে টেস্টগুলোকে আলাদা লাইনে ভাগ করা
         tests_list = p_tests_str.split(",")
     else:
         tests_list = []
@@ -179,7 +174,6 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
-            # "CBC(600.0)" থেকে নাম ও দাম আলাদা করার নতুন মেথড
             t_name = test_item.split("(")[0].strip()
             t_price = test_item.split("(")[1].replace(")", "").strip()
             try:
@@ -190,31 +184,25 @@ if record:
             t_name = test_item
             t_price_formatted = "0.00"
             
-        receipt_html += f"""
-            <tr>
-                <td style="text-align:center;">{serial_no}</td>
-                <td>{t_name}</td>
-                <td style="text-align:right;">{t_price_formatted} Tk</td>
-            </tr>
-        """
+        receipt_html += f"""<tr>
+<td style="text-align:center;">{serial_no}</td>
+<td>{t_name}</td>
+<td style="text-align:right;">{t_price_formatted} Tk</td>
+</tr>"""
         serial_no += 1
 
-    receipt_html += f"""
-            </tbody>
-        </table>
-        
-        <div style="margin-top:20px; border-top:1px dashed #cbd5e1; padding-top:10px;">
-            <div class="summary-text"><b>Total Bill:</b> {total_bill:.2f} Tk</div>
-            <div class="summary-text"><b>Discount:</b> {discount_tk:.2f} Tk</div>
-            <div class="summary-text"><b>Advance Paid:</b> {advance_paid:.2f} Tk</div>
-            <div class="summary-text" style="font-size:16px; color:#ef4444; margin-top:6px;"><b>Due Amount:</b> {due_amount:.2f} Tk</div>
-        </div>
-        
-        <div style="text-align:center; margin-top:35px; font-size:13px; color:#64748b; font-style:italic;">
-            Thank you for trusting us with your care.
-        </div>
-    </div>
-    """
+    receipt_html += f"""</tbody>
+</table>
+<div style="margin-top:20px; border-top:1px dashed #cbd5e1; padding-top:10px;">
+<div class="summary-text"><b>Total Bill:</b> {total_bill:.2f} Tk</div>
+<div class="summary-text"><b>Discount:</b> {discount_tk:.2f} Tk</div>
+<div class="summary-text"><b>Advance Paid:</b> {advance_paid:.2f} Tk</div>
+<div class="summary-text" style="font-size:16px; color:#ef4444; margin-top:6px;"><b>Due Amount:</b> {due_amount:.2f} Tk</div>
+</div>
+<div style="text-align:center; margin-top:35px; font-size:13px; color:#64748b; font-style:italic;">
+Thank you for trusting us with your care.
+</div>
+</div>"""
     
     st.markdown(receipt_html, unsafe_allow_html=True)
 
