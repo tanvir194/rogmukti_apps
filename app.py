@@ -57,7 +57,7 @@ else:
                 st.warning(f"🚨 ফাইলটি পাওয়া যায়নি: {file_path}")
             return st.Page(fallback_view, title=title, icon=icon)
 
-    # আপনার স্ক্রিনশটের সব কটি পেজ
+    # সাইডবারের সব কটি পেজের নাম ও সঠিক পাথ
     patient_entry = create_safe_page("pages/1_Patient_Entry.py", "Patient Entry & Billing", "📝")
     dashboard = create_safe_page("pages/2_Dashboard.py", "Daily Dashboard", "📊")
     print_receipt = create_safe_page("pages/3_Print_Receipt.py", "Money Receipt & Print", "🖨️")
@@ -77,15 +77,15 @@ else:
     advanced_dashboard = create_safe_page("pages/12_Advanced_Dashboard.py", "Advanced Dashboard", "📈")
     logo_receipt_print = create_safe_page("pages/13_Logo_Receipt_Print.py", "Logo & Receipt Setup", "🖼️")
     
-    # মেনু নেভিগেশন
+    # মেনু ক্যাটাগরি নেভিগেশন
     pg = st.navigation({
         "প্রধান কার্যক্রম (Main)": [patient_entry, print_receipt, due_collection, english_receipt, logo_receipt_print],
-        "অ্যানালিტიკ্স ও রেকর্ড": [dashboard, advanced_dashboard, pathology_report],
+        "অ্যানালিটিক্স ও রেকর্ড": [dashboard, advanced_dashboard, pathology_report],
         "যোগাযোগ ও ডাক্তার": [doctor_cv, doctor_referral, send_sms],
         "অ্যাডমিন সেকশন": [admin_unlock, admin_panel, backup_data]
     })
     
-    # সাইডবার প্যানেল
+    # সাইডবার লাইভ হিসাব ও লগআউট
     with st.sidebar:
         st.markdown("---")
         st.subheader("🏢 Rog Mukti Diagnostic")
