@@ -24,7 +24,7 @@ st.markdown("""
         border-radius: 8px !important;
         padding: 10px !important;
     }
-    .stButton button {
+    .stButton button, .stDownloadButton button {
         background-color: #0284c7 !important;
         color: white !important;
         border-radius: 8px !important;
@@ -79,19 +79,6 @@ st.markdown("""
         margin-top: 4px;
         color: #1e293b;
     }
-    
-    @media print {
-        body * { visibility: hidden; }
-        .receipt-container, .receipt-container * { visibility: visible; }
-        .receipt-container {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            box-shadow: none;
-            padding: 0;
-        }
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -124,12 +111,9 @@ if record:
     due_amount = record[9]
     billing_date = record[10]
 
-    st.write("")
-    if st.button("🖨️ Print Money Receipt Now"):
-        st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
-    st.write("")
+    # এখানে আগের প্রিন্ট স্ক্রিপ্ট বাটনটি মুছে দেওয়া হয়েছে
 
-# --- এখানে HTML স্ট্রিং বাম পাশে (Zero Indentation) নিয়ে আসা হয়েছে ---
+    # HTML রিসিট জেনারেট করা (Zero Indentation রাখা হয়েছে যাতে কোড ব্লক না তৈরি হয়)
     receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
@@ -191,20 +175,38 @@ if record:
 </tr>"""
         serial_no += 1
 
+    try:
+        total_bill_val = float(total_bill)
+        discount_tk_val = float(discount_tk)
+        advance_paid_val = float(advance_paid)
+        due_amount_val = float(due_amount)
+    except:
+        total_bill_val, discount_tk_val, advance_paid_val, due_amount_val = 0.0, 0.0, 0.0, 0.0
+
     receipt_html += f"""</tbody>
 </table>
 <div style="margin-top:20px; border-top:1px dashed #cbd5e1; padding-top:10px;">
-<div class="summary-text"><b>Total Bill:</b> {total_bill:.2f} Tk</div>
-<div class="summary-text"><b>Discount:</b> {discount_tk:.2f} Tk</div>
-<div class="summary-text"><b>Advance Paid:</b> {advance_paid:.2f} Tk</div>
-<div class="summary-text" style="font-size:16px; color:#ef4444; margin-top:6px;"><b>Due Amount:</b> {due_amount:.2f} Tk</div>
+<div class="summary-text"><b>Total Bill:</b> {total_bill_val:.2f} Tk</div>
+<div class="summary-text"><b>Discount:</b> {discount_tk_val:.2f} Tk</div>
+<div class="summary-text"><b>Advance Paid:</b> {advance_paid_val:.2f} Tk</div>
+<div class="summary-text" style="font-size:16px; color:#ef4444; margin-top:6px;"><b>Due Amount:</b> {due_amount_val:.2f} Tk</div>
 </div>
 <div style="text-align:center; margin-top:35px; font-size:13px; color:#64748b; font-style:italic;">
 Thank you for trusting us with your care.
 </div>
 </div>"""
     
+    # প্রথমে স্ক্রিনে রিসিটের ডিজাইনটি দেখাবে
     st.markdown(receipt_html, unsafe_allow_html=True)
+    st.write("")
+    
+    # 💾 নতুন ডাউনলোড বাটন যা সরাসরি ফাইল সেভ করবে (প্রিন্ট উইন্ডো আসবে না)
+    st.download_button(
+        label="💾 Save Money Receipt",
+        data=receipt_html,
+        file_name=f"Invoice_{p_id}.html",
+        mime="text/html"
+    )
 
 else:
     if invoice_id > 0:
