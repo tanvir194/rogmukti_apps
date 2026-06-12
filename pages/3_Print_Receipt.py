@@ -1,3 +1,4 @@
+conn.close()
 import sys
 import os
 import streamlit as st
@@ -24,7 +25,7 @@ st.markdown("""
         border-radius: 8px !important;
         padding: 10px !important;
     }
-    .stButton button, .stDownloadButton button {
+    .stButton button {
         background-color: #0284c7 !important;
         color: white !important;
         border-radius: 8px !important;
@@ -33,7 +34,7 @@ st.markdown("""
         width: 100%;
     }
     
-    /* 📄 রিসিট প্রিন্ট করার জন্য হোয়ایت পেপার ডিজাইন */
+    /* 📄 রিসিট প্রিভিউ ডিজাইন */
     .receipt-container {
         background-color: #ffffff !important;
         color: #000000 !important;
@@ -79,6 +80,39 @@ st.markdown("""
         margin-top: 4px;
         color: #1e293b;
     }
+    
+    /* 🖨️ A4 পেপার প্রিন্টিং ফিক্স */
+    @media print {
+        /* পুরো স্ক্রিনের সব অ্যাপ এলিমেন্ট ও সাইডবার লুকিয়ে ফেলবে */
+        header, [data-testid="stSidebar"], .stButton, .stNumberInput, #tabs-bui3-tab-0 {
+            display: none !important;
+            visibility: hidden !important;
+        }
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        .stApp {
+            background-color: #ffffff !important;
+        }
+        /* রিসিট কন্টেইনারটিকে A4 পেজের মাপে সেট করা */
+        .receipt-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            max-width: 100%;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+        }
+        /* পেজ মার্জিন রিসেট */
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -111,9 +145,13 @@ if record:
     due_amount = record[9]
     billing_date = record[10]
 
-    # এখানে আগের প্রিন্ট স্ক্রিপ্ট বাটনটি মুছে দেওয়া হয়েছে
+    st.write("")
+    # প্রিন্ট বাটনটি আবার সচল করা হলো
+    if st.button("🖨️ Print Money Receipt Now"):
+        st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
+    st.write("")
 
-    # HTML রিসিট জেনারেট করা (Zero Indentation রাখা হয়েছে যাতে কোড ব্লক না তৈরি হয়)
+    # HTML রিসিট জেনারেট করা
     receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
@@ -196,17 +234,7 @@ Thank you for trusting us with your care.
 </div>
 </div>"""
     
-    # প্রথমে স্ক্রিনে রিসিটের ডিজাইনটি দেখাবে
     st.markdown(receipt_html, unsafe_allow_html=True)
-    st.write("")
-    
-    # 💾 নতুন ডাউনলোড বাটন যা সরাসরি ফাইল সেভ করবে (প্রিন্ট উইন্ডো আসবে না)
-    st.download_button(
-        label="💾 Save Money Receipt",
-        data=receipt_html,
-        file_name=f"Invoice_{p_id}.html",
-        mime="text/html"
-    )
 
 else:
     if invoice_id > 0:
