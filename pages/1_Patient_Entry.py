@@ -77,7 +77,7 @@ if custom_name.strip():
     total_fee += int(custom_price)
     test_with_prices.append(f"{custom_name.strip()}:{int(custom_price)}")
 
-# 📊 লাইভ মোট বিল - মডার্ন নীল কার্ড ডিজাইন
+# 📊 লাইভ মোট বিল - মডার্ন নীল কার্ড ডিজাইন (দশমিক ছাড়া)
 st.markdown(
     f"""
     <div style="background-color: #e8f4f8; padding: 15px; border-left: 5px solid #29b6f6; border-radius: 5px; margin-top: 15px; margin-bottom: 15px;">
@@ -100,9 +100,9 @@ with col3:
 net_payable = total_fee - int(discount_amount)
 due_amount = net_payable - int(advance_paid)
 
-# 🎨 ডিসকাউন্ট ও বাকি টাকা - সুন্দর ব্যানার ডিজাইন
+# 🎨 ডিসকাউন্ট ও বাকি টাকা - সুন্দর ব্যানার ডিজাইন (দশমিক ছাড়া)
 with col4:
-    st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True) # অ্যালাইনমেন্ট ঠিক করার ফাঁকা জায়গা
+    st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True) 
     st.success(f"💰 **ডিসকাউন্ট প্রদত্ত:** {int(discount_amount)} ৳")
     
     if due_amount > 0:
@@ -122,7 +122,7 @@ if submit_button:
         current_date = datetime.now().strftime("%Y-%m-%d")
         tests_data_str = "|".join(test_with_prices)
         
-        # 🩺 ক্যাটাগরি লজিক ১: নতুন কোন ডাক্তার এর এন্ট্রি হলে তা ডাটাবেজে ওটার তালিকায় এড হয়ে যাবে
+        # 🩺 ক্যাটাগরি লজিক ১: নতুন ডাক্তার অটো-সেভ
         if selected_doctor_setup == "অন্যান্য" and doctor.strip():
             try:
                 c.execute("INSERT OR IGNORE INTO doctors_list (doc_name) VALUES (?)", (doctor.strip(),))
@@ -130,7 +130,7 @@ if submit_button:
             except:
                 pass
                 
-        # 🩺 ক্যাটাগরি লজিক ২: নতুন কোন কাস্টম টেস্ট এর নাম লিখলে তা তালিকার ডাটাবেজে জমা হয়ে যাবে
+        # 🩺 ক্যাটাগরি লজিক ২: নতুন কাস্টম টেস্ট অটো-সেভ
         if custom_name.strip():
             try:
                 c.execute("INSERT OR IGNORE INTO custom_tests_list (test_name) VALUES (?)", (custom_name.strip(),))
@@ -138,11 +138,9 @@ if submit_button:
             except:
                 pass
                 
-        # Saving the patient's original bill record
-        c.execute("""
-            INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (name, age, phone, doctor.strip() if hasattr(doctor, 'strip') else doctor, tests_data_str, int(total_fee), int(discount_amount), int(advance_paid), int(due_amount), current_date))
+        # 🛠️ ডাটাবেজে রেকর্ড সেভ করার ফিক্সড সিকিউর লজিক
+        c.execute("INSERT INTO billing_records VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                  (name, age, phone, doctor.strip() if hasattr(doctor, 'strip') else doctor, tests_data_str, int(total_fee), int(discount_amount), int(advance_paid), int(due_amount), current_date))
         conn.commit()
         
         st.session_state.last_invoice_id = c.lastrowid
