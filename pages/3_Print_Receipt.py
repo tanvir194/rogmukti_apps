@@ -47,7 +47,7 @@ st.markdown("""
     .receipt-header {
         text-align: center;
         border-bottom: 3px solid #1e3a8a;
-        padding-bottom: 15px;
+        padding-bottom: 12px;
         margin-bottom: 25px;
     }
     .receipt-title {
@@ -138,6 +138,7 @@ except Exception as e:
     st.error(f"Database Error: {e}")
 
 if record:
+    # ডাটাবেজের সঠিক ইনডেক্সগুলো এখানে পুনরায় ঠিক করা হলো
     p_id = record[0]
     p_name = record[1]
     p_age = record[2]
@@ -150,7 +151,7 @@ if record:
     due_amount = record[9]
     billing_date = record[10]
 
-    # ফাইল ডাউনলোডের জন্য প্রিমিয়াম CSS স্টাইল (যাতে মোবাইলে ফাইল খুললে চমৎকার দেখায়)
+    # ফাইল ডাউনলোডের জন্য প্রিমিয়াম CSS স্টাইল
     embedded_css = """
     <style>
     .receipt-container { background-color: #ffffff !important; color: #000000 !important; border-radius: 12px; padding: 35px; max-width: 650px; margin: 20px auto; font-family: 'Segoe UI', Arial, sans-serif; border: 1px solid #cbd5e1; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
@@ -163,7 +164,7 @@ if record:
     </style>
     """
 
-    # HTML রিসিট জেনারেট করা (সংশোধিত মোবাইল নম্বরসহ)
+    # HTML রিসিট জেনারেট করা (সংশোধিত মোবাইল নম্বর: 01711867637)
     receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
@@ -207,6 +208,7 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
+            # এখানে ইনডেক্সিং এবং স্প্লিটিং ফিক্স করা হলো
             t_name = test_item.split("(")[0].strip()
             t_price = test_item.split("(")[1].replace(")", "").strip()
             try:
@@ -266,7 +268,7 @@ Thank you for trusting us with your care.
     # স্ক্রিনে প্রিভিউ দেখানো
     st.markdown(receipt_html, unsafe_allow_html=True)
 
-else
+else:
     if invoice_id > 0:
         st.error(f"🚨 দুঃখিত, #{invoice_id} নম্বরের কোনো বিল ডাটাবেজে খুঁজে পাওয়া যায়নি!")
     else:
