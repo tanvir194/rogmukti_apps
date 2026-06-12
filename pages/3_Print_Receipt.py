@@ -226,8 +226,10 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
-            t_name = test_item.split("(")[0].strip()
-            t_price = test_item.split("(")[1].replace(")", "").strip()
+            # 🛠️ টেক্সট স্প্লিটিং মেথড পুরোপুরি ফিক্স করা হলো
+            parts = test_item.split("(")
+            t_name = parts[0].strip()
+            t_price = parts[1].replace(")", "").strip()
             try:
                 t_price_formatted = f"{float(t_price):.2f}"
             except:
@@ -270,7 +272,3 @@ Thank you for trusting us with your care.
     
     with col_btn1:
         if st.button("🖨️ Print Receipt (For PC)"):
-            st.markdown("<script>setTimeout(function() { window.print(); }, 200);</script>", unsafe_allow_html=True)
-            
-    with col_btn2:
-        st.download_button(
