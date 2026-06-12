@@ -55,14 +55,14 @@ except:
 selected_tests = st.multiselect("তালিকা থেকে টেস্ট সিলেক্ট করুন:", available_tests)
 
 test_with_prices = []
-total_fee = 0.0
+total_fee = 0
 
 if selected_tests:
     st.markdown("##### 📌 নির্বাচিত টেস্টগুলোর দাম এখানে লিখে দিন:")
     for test in selected_tests:
-        price = st.number_input(f"ফি দিন -> {test} (টাকা):", min_value=0.0, step=50.0, key=f"price_{test}")
-        total_fee += price
-        test_with_prices.append(f"{test}:{price}")
+        price = st.number_input(f"ফি দিন -> {test} (টাকা):", min_value=0, value=0, step=50, key=f"price_{test}")
+        total_fee += int(price)
+        test_with_prices.append(f"{test}:{int(price)}")
 
 # Custom test option (enter a new test name outside the list)
 st.markdown("---")
@@ -71,18 +71,18 @@ col_c1, col_c2 = st.columns(2)
 with col_c1:
     custom_name = st.text_input("কাস্টম টেস্টের নাম:")
 with col_c2:
-    custom_price = st.number_input("কাস্টম টেস্টের দাম:", min_value=0.0, step=50.0)
+    custom_price = st.number_input("কাস্টম টেস্টের দাম:", min_value=0, value=0, step=50)
 
 if custom_name.strip():
-    total_fee += custom_price
-    test_with_prices.append(f"{custom_name.strip()}:{custom_price}")
+    total_fee += int(custom_price)
+    test_with_prices.append(f"{custom_name.strip()}:{int(custom_price)}")
 
 # 📊 লাইভ মোট বিল - মডার্ন নীল কার্ড ডিজাইন
 st.markdown(
     f"""
     <div style="background-color: #e8f4f8; padding: 15px; border-left: 5px solid #29b6f6; border-radius: 5px; margin-top: 15px; margin-bottom: 15px;">
         <span style="font-size: 15px; color: #01579b; font-weight: bold;">📋 লাইভ মোট বিল (টোটাল ফি):</span><br>
-        <span style="font-size: 26px; color: #01579b; font-weight: bold;">{total_fee} ৳</span>
+        <span style="font-size: 26px; color: #01579b; font-weight: bold;">{int(total_fee)} ৳</span>
     </div>
     """, 
     unsafe_allow_html=True
@@ -94,21 +94,21 @@ st.markdown("---")
 st.subheader("💳 পেমেন্ট ও ডিসকাউন্ট")
 col3, col4 = st.columns(2)
 with col3:
-    discount_amount = st.number_input("ডিসকাউন্ট (টাকা)", min_value=, value=, step=)
-    advance_paid = st.number_input("অগ্রিম পরিশোধ (Advance Paid)", min_value=, value=)
+    discount_amount = st.number_input("ডিসকাউন্ট (টাকা)", min_value=0, value=0, step=10)
+    advance_paid = st.number_input("অগ্রিম পরিশোধ (Advance Paid)", min_value=0, value=0)
 
-net_payable = total_fee - discount_amount
-due_amount = net_payable - advance_paid
+net_payable = total_fee - int(discount_amount)
+due_amount = net_payable - int(advance_paid)
 
 # 🎨 ডিসকাউন্ট ও বাকি টাকা - সুন্দর ব্যানার ডিজাইন
 with col4:
     st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True) # অ্যালাইনমেন্ট ঠিক করার ফাঁকা জায়গা
-    st.success(f"💰 **ডিসকাউন্ট প্রদত্ত:** {discount_amount} ৳")
+    st.success(f"💰 **ডিসকাউন্ট প্রদত্ত:** {int(discount_amount)} ৳")
     
-    if due_amount > :
-        st.error(f"⚠️ **মোট বাকি টাকা (Due):** {due_amount} ৳")
+    if due_amount > 0:
+        st.error(f"⚠️ **মোট বাকি টাকা (Due):** {int(due_amount)} ৳")
     else:
-        st.info(f"✅ **কোনো বাকি নেই (Paid):** {due_amount} ৳")
+        st.info(f"✅ **কোনো বাকি নেই (Paid):** {int(due_amount)} ৳")
 
 st.markdown("---")
 submit_button = st.button("Save Bill and Go to Print (বিল সেভ করুন)")
@@ -142,7 +142,7 @@ if submit_button:
         c.execute("""
             INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (name, age, phone, doctor.strip() if hasattr(doctor, 'strip') else doctor, tests_data_str, total_fee, discount_amount, advance_paid, due_amount, current_date))
+        """, (name, age, phone, doctor.strip() if hasattr(doctor, 'strip') else doctor, tests_data_str, int(total_fee), int(discount_amount), int(advance_paid), int(due_amount), current_date))
         conn.commit()
         
         st.session_state.last_invoice_id = c.lastrowid
