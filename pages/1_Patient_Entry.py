@@ -33,7 +33,7 @@ st.markdown("""
         width: 100%;
     }
     
-    /* 📄 রিসিট প্রিন্ট করার জন্য হোয়াইট পেপার ডিজাইন */
+    /* 📄 রিসিট প্রিন্ট করার জন্য হোয়ایت পেপার ডিজাইন */
     .receipt-container {
         background-color: #ffffff !important;
         color: #000000 !important;
@@ -80,7 +80,6 @@ st.markdown("""
         color: #1e293b;
     }
     
-    /* 🖨️ ব্রাউজার প্রিন্ট সেটিংস */
     @media print {
         body * { visibility: hidden; }
         .receipt-container, .receipt-container * { visibility: visible; }
@@ -102,10 +101,9 @@ st.title("🖨️ English Money Receipt")
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
 
-# পেশেন্ট এন্ট্রি পেজ থেকে অটোমেটিক জেনারেট হওয়া আইডি রিড করা
 default_invoice = st.session_state.get('last_invoice_id', 0)
 
-col_search1, col_search2 = st.columns([4, 1])
+col_search1, col_search2 = st.columns(2)
 with col_search1:
     invoice_id = st.number_input("Enter Bill No / Invoice ID to Print:", min_value=0, value=int(default_invoice), step=1)
 
@@ -114,7 +112,6 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
-    # ডাটাবেজ কলাম ম্যাপিং (আপনার ৩টি স্ক্রিনশটের স্ট্রাকচার অনুযায়ী)
     p_id = record[0]
     p_name = record[1]
     p_age = record[2]
@@ -122,7 +119,7 @@ if record:
     p_doctor = record[4]
     p_tests_str = record[5]      # "Aso Titre(450.0), CBC(600.0), CRP(450.0)"
     total_bill = record[6]
-    discount_tk = record[7]     # আপনার নতুন করা মোট ডিসকাউন্ট টাকা
+    discount_tk = record[7]     
     advance_paid = record[8]
     due_amount = record[9]
     billing_date = record[10]
@@ -132,9 +129,6 @@ if record:
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-    # ==========================================
-    # 📄 রিসিটের ভিজ্যুয়াল ডিজাইন লেআউট (HTML)
-    # ==========================================
     receipt_html = f"""
     <div class="receipt-container">
         <div class="receipt-header">
@@ -171,25 +165,31 @@ if record:
             <tbody>
     """
 
-    # 🛠️ কমা দিয়ে আলাদা করা টেস্টের স্ট্রিংটিকে আলাদা আলাদা লাইনে ভাঙার ম্যাজিক লুপ
-    tests_list = p_tests_str.split(", ")
+    # 🛠️ নতুন ও শক্তিশালী টেক্সট স্প্লিটিং কুয়েরি
+    if p_tests_str:
+        # কমা ধরে টেস্টগুলোকে আলাদা লাইনে ভাগ করা
+        tests_list = p_tests_str.split(",")
+    else:
+        tests_list = []
+        
     serial_no = 1
-    
     for test_item in tests_list:
+        test_item = test_item.strip()
+        if not test_item:
+            continue
+            
         if "(" in test_item and ")" in test_item:
-            # নাম এবং দাম আলাদা করা (যেমন: "CBC(600.0)" -> "CBC" এবং "600.0")
-            parts = test_item.split("(")
-            t_name = parts[0].strip()
-            t_price = parts[1].replace(")", "").strip()
+            # "CBC(600.0)" থেকে নাম ও দাম আলাদা করার নতুন মেথড
+            t_name = test_item.split("(")[0].strip()
+            t_price = test_item.split("(")[1].replace(")", "").strip()
             try:
                 t_price_formatted = f"{float(t_price):.2f}"
             except:
                 t_price_formatted = t_price
         else:
-            t_name = test_item.strip()
+            t_name = test_item
             t_price_formatted = "0.00"
             
-        # প্রতিটা টেস্টকে আলাদা <tr> টেবিল রো হিসেবে যুক্ত করা হলো
         receipt_html += f"""
             <tr>
                 <td style="text-align:center;">{serial_no}</td>
@@ -199,7 +199,6 @@ if record:
         """
         serial_no += 1
 
-    # বিলের নিচের টোটাল এবং ডিসকাউন্ট সামারি অংশ
     receipt_html += f"""
             </tbody>
         </table>
@@ -217,7 +216,6 @@ if record:
     </div>
     """
     
-    # স্ক্রিনে রিসিটটি রেন্ডার করা
     st.markdown(receipt_html, unsafe_allow_html=True)
 
 else:
