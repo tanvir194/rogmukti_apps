@@ -138,36 +138,27 @@ if submit_button:
             except:
                 pass
                 
-        # 🛠️ স্বয়ংক্রিয় কলাম ডিটেকশন ও ডাটা সেভিং বুলেটপ্রুফ লজিক
+        # 🛠️ ডাটাবেজে রেকর্ড সেভ করার ১টি একক নিরাপদ ও স্ট্যান্ডার্ড লজিক
         try:
-            c.execute("PRAGMA table_info(billing_records)")
-            columns_info = c.fetchall()
-            
-            # প্রাইমারি কি (ID কলাম) বাদে বাকি কলামগুলোর নাম বের করা
-            db_columns = [col[1] for col in columns_info if col[5] == 0]
-            
-            # ইনসার্ট করার জন্য প্রস্তুত করা ১০টি ভ্যালু
-            all_values = [
-                name, age, phone, 
-                doctor.strip() if hasattr(doctor, 'strip') else doctor, 
-                tests_data_str, int(total_fee), int(discount_amount), 
-                int(advance_paid), int(due_amount), current_date
-            ]
-            
-            # ডাটাবেজের কলাম সংখ্যার সাথে ম্যাচ করিয়ে ডাটা অ্যাডজাস্ট করা
-            insert_values = all_values[:len(db_columns)]
-            col_names = ", ".join(db_columns[:len(insert_values)])
-            placeholders = ", ".join(["?"] * len(insert_values))
-            
-            sql_query = f"INSERT INTO billing_records ({col_names}) VALUES ({placeholders})"
-            c.execute(sql_query, insert_values)
+            c.execute("""
+                INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (name, age, phone, doctor.strip() if hasattr(doctor, 'strip') else doctor, tests_data_str, int(total_fee), int(discount_amount), int(advance_paid), int(due_amount), current_date))
             conn.commit()
             
             st.session_state.last_invoice_id = c.lastrowid
             st.success("🎉 সফলভাবে ডাটা সেভ হয়েছে! প্রিন্ট পেজে নিয়ে যাওয়া হচ্ছে...")
             st.switch_page("pages/3_Print_Receipt.py")
-            
-        except Exception as db_err:
-            st.error(f"❌ ডাটাবেজ সেভ করতে সমস্যা হয়েছে: {db_err}")
+        except sqlite3.OperationalError:
+            # যদি কলাম নিয়ে কোনো জটিলতা থাকে, তবে এটি ব্যাকআপ হিসেবে টেবিলের স্ট্রাকচার না দেখেই ফোর্স ইনসার্ট করবে
+            try:
+                c.execute("INSERT INTO billing_records VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                          (name, age, phone, doctor.strip() if hasattr(doctor, 'strip') else doctor, tests_data_str, int(total_fee), int(discount_amount), int(advance_paid), int(due_amount), current_date))
+                conn.commit()
+                st.session_state.last_invoice_id = c.lastrowid
+                st.success("🎉 সফলভাবে ডাটা সেভ হয়েছে! প্রিন্ট পেজে নিয়ে যাওয়া হচ্ছে...")
+                st.switch_page("pages/3_Print_Receipt.py")
+            except Exception as e:
+                st.error(f"❌ ডাটাবেজ এরর: {e}")
 
 conn.close()
