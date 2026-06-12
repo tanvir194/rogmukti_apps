@@ -226,7 +226,6 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
-            # 🛠️ টেক্সট স্প্লিটিং মেথড এবার ১০০% নির্ভুলভাবে লেখা হয়েছে
             parts = test_item.split("(")
             t_name = parts[0].strip()
             t_price = parts[1].replace(")", "").strip()
@@ -272,3 +271,6 @@ Thank you for trusting us with your care.
     
     with col_btn1:
         if st.button("🖨️ Print Receipt (For PC)"):
+            st.markdown("<script>setTimeout(function() { window.print(); }, 200);</script>", unsafe_allow_html=True)
+            
+    with col_btn2:
