@@ -66,12 +66,10 @@ st.markdown("""
         padding: 12px !important;
         box-shadow: 0 0 15px rgba(14, 165, 233, 0.15) !important;
     }
-    /* লাইভ ঘরের ভেতরের টাকার সংখ্যার কালার সবুজ/হলুদ করা */
     [data-testid="stMetricValue"] {
         color: #22c55e !important;
         font-weight: bold !important;
     }
-    /* লাইভ ঘরের ভেতরের লেবেলের কালার */
     [data-testid="stMetricLabel"] {
         color: #38bdf8 !important;
     }
@@ -152,7 +150,7 @@ if c.fetchone() == 0:
 
 # ডাটাবেজ থেকে টেস্টের তালিকা লোড করা
 c.execute("SELECT test_name FROM custom_tests_list")
-available_tests = [row[0] for row in c.fetchall()] # Tuple থেকে সাধারণ টেক্সটে রূপান্তর ফিক্স
+available_tests = [row[0] for row in c.fetchall()] # Tuple থেকে টেক্সট কনভার্সন ফিক্স
 available_tests.sort()
 
 # মূল ইউজার ইন্টারফেস
@@ -168,7 +166,7 @@ with col2:
 
 # ডাটাবেজ থেকে ডাক্তারদের লিস্ট লোড
 c.execute("SELECT doc_name FROM doctors_list")
-db_doctors = [row[0] for row in c.fetchall()] # Tuple থেকে সাধারণ টেক্সটে রূপান্তর ফিক্স (Error Fixing Line)
+db_doctors = [row[0] for row in c.fetchall()] # Tuple থেকে টেক্সট কনভার্সন ফিক্স
 
 doctor_options = db_doctors + ["অন্যান্য"]
 selected_doctor_setup = st.selectbox("ডাক্তার সিলেক্ট করুন (Refd By)", doctor_options)
@@ -190,6 +188,7 @@ total_fee = 0.0
 if selected_tests:
     st.markdown("##### 📌 নির্বাচিত টেস্টসমূহের দাম এখানে দেখে নিন:")
     for test in selected_tests:
+        # value=None দেওয়ার কারণে ০.০০ কাটার ঝামেলা থাকবে না
         price_input = st.number_input(
             f"ফি (৳) -- {test}:", 
             min_value=0.0, 
@@ -221,6 +220,7 @@ st.subheader("পেমেন্ট ও ডিসকাউন্ট")
 col3, col4 = st.columns(2)
 
 with col3:
+    # ফ্ল্যাট ডিসকাউন্ট টাকা ইনপুট (বক্স খালি থাকবে)
     discount_amount_input = st.number_input("মোট ডিসকাউন্ট (Discount Amount ৳)", min_value=0.0, value=None, step=10.0, placeholder="ডিসকাউন্ট লিখুন...")
     discount_amount = discount_amount_input if discount_amount_input is not None else 0.0
     
@@ -232,7 +232,6 @@ net_payable = total_fee - discount_amount
 due_amount = net_payable - advance_paid
 
 with col4:
-    # এই ঘরগুলো এখন আকর্ষণীয় ব্যাকগ্রাউন্ড ও নিয়ন কালার নিয়ে শো করবে
     st.metric("ডিসকাউন্ট প্রণয় (টাকা)", f"{discount_amount} ৳")
     st.metric("মোট বাকি টাকা (Due)", f"{due_amount} ৳")
 
@@ -262,7 +261,7 @@ if submit_button:
             except:
                 pass
                 
-        # ডাটাবেজে সেভ করার ফাইনাল কোড (Tuple এরর ফিক্সড)
+        # ডাটাবেজে সেভ করার ফাইনাল কোড
         try:
             c.execute("""
             INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
@@ -273,3 +272,7 @@ if submit_button:
             st.session_state.last_invoice_id = c.lastrowid
             st.success("🎉 বিল সফলভাবে সংরক্ষিত হয়েছে! প্রিন্ট পেজে নেওয়া হচ্ছে...")
             st.switch_pages("pages/3_Print_Receipt.py")
+        except Exception as e:
+            st.error(f"ডাটাবেজ এরর: {e}")
+
+conn.close()
