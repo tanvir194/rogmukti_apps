@@ -169,13 +169,11 @@ if submit_button:
             except:
                 pass
         
-        # Saving the patient's original bill record
-        c.execute("""
+                c.execute("""
             INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (name, age, phone, doctor.strip() if hasattr(doctor, 'strip') else doctor, tests_data_str, total_fee, discount_pct, advance_paid, due_amount, current_date))
+        """, (name, age, phone, doctor.strip() if hasattr(doctor, 'strip') else doctor, tests_data_str, total_fee, discount_amount, advance_paid, due_amount, current_date))
         conn.commit()
-        
         st.session_state.last_invoice_id = c.lastrowid
         st.success("✅ সফলভাবে ডাটা সেভ হয়েছে! প্রিন্ট পেজে নিয়ে যাওয়া হচ্ছে...")
         st.switch_page("pages/3_Print_Receipt.py")
