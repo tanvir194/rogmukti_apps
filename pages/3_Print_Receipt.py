@@ -1,4 +1,3 @@
-conn.close()
 import sys
 import os
 import streamlit as st
@@ -83,8 +82,7 @@ st.markdown("""
     
     /* 🖨️ A4 পেপার প্রিন্টিং ফিক্স */
     @media print {
-        /* পুরো স্ক্রিনের সব অ্যাপ এলিমেন্ট ও সাইডবার লুকিয়ে ফেলবে */
-        header, [data-testid="stSidebar"], .stButton, .stNumberInput, #tabs-bui3-tab-0 {
+        header, [data-testid="stSidebar"], .stButton, .stNumberInput, div.block-container button {
             display: none !important;
             visibility: hidden !important;
         }
@@ -95,7 +93,6 @@ st.markdown("""
         .stApp {
             background-color: #ffffff !important;
         }
-        /* রিসিট কন্টেইনারটিকে A4 পেজের মাপে সেট করা */
         .receipt-container {
             position: absolute;
             left: 0;
@@ -107,7 +104,6 @@ st.markdown("""
             margin: 0 !important;
             border: none !important;
         }
-        /* পেজ মার্জিন রিসেট */
         @page {
             size: A4;
             margin: 20mm;
@@ -118,19 +114,25 @@ st.markdown("""
 
 st.title("🖨️ English Money Receipt")
 
-# ডাটাবেজ কানেকশন
-conn = sqlite3.connect("rogmukti_clinic_fix.db")
-c = conn.cursor()
+# ডাটাবেজ থেকে ডাটা কুয়েরি করা (Safe Try-Except Block)
+record = None
+invoice_id = 0
 
-default_invoice = st.session_state.get('last_invoice_id', 0)
+try:
+    conn = sqlite3.connect("rogmukti_clinic_fix.db")
+    c = conn.cursor()
 
-col_search1, col_search2 = st.columns(2)
-with col_search1:
-    invoice_id = st.number_input("Enter Bill No / Invoice ID to Print:", min_value=0, value=int(default_invoice), step=1)
+    default_invoice = st.session_state.get('last_invoice_id', 0)
 
-# ডাটাবেজ থেকে ডাটা কুয়েরি করা
-c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
-record = c.fetchone()
+    col_search1, col_search2 = st.columns(2)
+    with col_search1:
+        invoice_id = st.number_input("Enter Bill No / Invoice ID to Print:", min_value=0, value=int(default_invoice), step=1)
+
+    c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
+    record = c.fetchone()
+    conn.close() # কাজ শেষেই সেফলি কানেকশন ক্লোজ করা হলো
+except Exception as e:
+    st.error(f"Database Error: {e}")
 
 if record:
     p_id = record[0]
@@ -138,7 +140,7 @@ if record:
     p_age = record[2]
     p_phone = record[3]
     p_doctor = record[4]
-    p_tests_str = record[5]      # "Aso Titre(450.0), CBC(600.0), CRP(450.0)"
+    p_tests_str = record[5]
     total_bill = record[6]
     discount_tk = record[7]     
     advance_paid = record[8]
@@ -146,9 +148,15 @@ if record:
     billing_date = record[10]
 
     st.write("")
-    # প্রিন্ট বাটনটি আবার সচল করা হলো
+    # 🖨️ এই বাটনে চাপ দিলে সরাসরি প্রিন্ট ডায়ালগ ওপেন হবে
     if st.button("🖨️ Print Money Receipt Now"):
-        st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
+        st.markdown("""
+            <script>
+                setTimeout(function() {
+                    window.print();
+                }, 300);
+            </script>
+        """, unsafe_allow_html=True)
     st.write("")
 
     # HTML রিসিট জেনারেট করা
@@ -183,7 +191,6 @@ if record:
 </thead>
 <tbody>"""
 
-    # 🛠️ টেক্সট স্প্লিটিং কুয়েরি
     if p_tests_str:
         tests_list = p_tests_str.split(",")
     else:
@@ -241,5 +248,3 @@ else:
         st.error(f"🚨 দুঃখিত, #{invoice_id} নম্বরের কোনো বিল ডাটাবেজে খুঁজে পাওয়া যায়নি!")
     else:
         st.info("ℹ️ বিল প্রিন্ট করার জন্য উপরে সঠিক Invoice ID নম্বরটি ইনপুট দিন।")
-
-conn.close()
