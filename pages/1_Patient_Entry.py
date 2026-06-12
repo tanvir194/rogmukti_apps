@@ -17,23 +17,18 @@ if 'logged_in' not in st.session_state or not st.session_state.logged_in:
     st.warning("অনধিকার প্রবেশাধিকার! দয়া করে ড্যাশবোর্ড থেকে লগইন করুন।")
     st.stop()
 
-# ৪. আধুনিক ডার্ক মোড এবং লাইভ ঘরের নতুন কালার হাইলাইট করার কাস্টম CSS
+# ৪. আধুনিক ডার্ক মোড কাস্টম CSS
 st.markdown("""
     <style>
-    /* মূল অ্যাপ ব্যাকগ্রাউন্ড */
     .stApp {
         background-color: #0b131f !important;
         color: #e2e8f0 !important;
     }
-    
-    /* লেবেল বা লেখার শিরোনামের কালার */
     .stApp label {
         color: #38bdf8 !important;
         font-weight: 500 !important;
         font-size: 0.95rem !important;
     }
-    
-    /* সাইডবার ডার্ক থিম */
     [data-testid="stSidebar"] {
         background-color: #0f172a !important;
         border-right: 1px solid #1e293b;
@@ -41,24 +36,17 @@ st.markdown("""
     [data-testid="stSidebar"] * {
         color: #e2e8f0 !important;
     }
-    
-    /* ইনপুট বক্স ডিজাইন */
-    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"], .stDateInput input {
+    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"], .stDateInput input, .stMultiSelect div[data-baseweb="select"] {
         background-color: #18263c !important;
         color: #ffffff !important;
         border: 1px solid #2d3f5d !important;
         border-radius: 8px !important;
         padding: 10px !important;
-        height: 44px !important;
     }
-    
-    /* ইনপুট বক্সে ক্লিক করলে গ্লো ইফেক্ট */
     .stTextInput input:focus, .stNumberInput input:focus {
         border-color: #0284c7 !important;
         box-shadow: 0 0 10px rgba(2, 132, 199, 0.4) !important;
     }
-    
-    /* 🎨 লাইভ দেখার ঘরের জন্য বিশেষ গ্লোয়িং ব্যাকগ্রাউন্ড ও নিয়ন টেক্সট কালার */
     [data-testid="stMetricBlock"] {
         background-color: #16253b !important;
         border: 1px solid #0ea5e9 !important;
@@ -73,8 +61,6 @@ st.markdown("""
     [data-testid="stMetricLabel"] {
         color: #38bdf8 !important;
     }
-    
-    /* সেভ বাটনের স্টাইল */
     .stButton button {
         background-color: #0284c7 !important;
         color: white !important;
@@ -126,14 +112,14 @@ conn.commit()
 
 # ডিফল্ট ডাক্তার ডেটা ইনসার্ট লজিক
 c.execute("SELECT COUNT(*) FROM doctors_list")
-if c.fetchone() == 0:
+if c.fetchone()[0] == 0:
     default_docs = [("ডা. সাইদুল ইসলাম",), ("ডা. আসাদুর রহমান",)]
     c.executemany("INSERT INTO doctors_list (doc_name) VALUES (?)", default_docs)
     conn.commit()
 
-# ডিফল্ট টেস্ট ডেটা ইনসার্ট লজিক
+# ডিফল্ট টেস্ট ডেটা ইনসার্ট লজিক (আপনার আসল সম্পূর্ণ টেস্টের নামগুলো এখানে ফিরিয়ে আনা হলো)
 c.execute("SELECT COUNT(*) FROM custom_tests_list")
-if c.fetchone() == 0:
+if c.fetchone()[0] == 0:
     default_tests = [
         ("CBC",), ("ESR",), ("TC.DC",), ("HB%",), ("Platelet Count",), ("MP",), ("BT/CT",), ("C/E Count",),
         ("Widal",), ("Aso Titre",), ("CRP",), ("RA/RF",), ("HBs Ag (Screen Test)",), ("TPHA",), ("VDRL",),
@@ -150,7 +136,7 @@ if c.fetchone() == 0:
 
 # ডাটাবেজ থেকে টেস্টের তালিকা লোড করা
 c.execute("SELECT test_name FROM custom_tests_list")
-available_tests = [row[0] for row in c.fetchall()] # Tuple থেকে টেক্সট কনভার্সন ফিক্স
+available_tests = [row[0] for row in c.fetchall()] # Tuple থেকে টেক্সট কনভার্সন একদম ১০০% ফিক্সড
 available_tests.sort()
 
 # মূল ইউজার ইন্টারফেস
@@ -166,7 +152,7 @@ with col2:
 
 # ডাটাবেজ থেকে ডাক্তারদের লিস্ট লোড
 c.execute("SELECT doc_name FROM doctors_list")
-db_doctors = [row[0] for row in c.fetchall()] # Tuple থেকে টেক্সট কনভার্সন ফিক্স
+db_doctors = [row[0] for row in c.fetchall()] # Tuple থেকে টেক্সট কনভার্সন ফিক্সড
 
 doctor_options = db_doctors + ["অন্যান্য"]
 selected_doctor_setup = st.selectbox("ডাক্তার সিলেক্ট করুন (Refd By)", doctor_options)
@@ -179,7 +165,7 @@ else:
 st.markdown("---")
 st.subheader("টেস্ট সিলেকশন ও লাইভ রেট এন্ট্রি")
 
-# মাল্টিসিলেক্ট ড্রপডাউন
+# মাল্টিসিলেক্ট ড্রপডাউন (টেস্ট লিস্ট খালি দেখানোর সমস্যাটি সমাধান করা হয়েছে)
 selected_tests = st.multiselect("তালিকা থেকে টেস্ট সিলেক্ট করুন:", available_tests)
 
 test_with_prices = []
@@ -188,7 +174,6 @@ total_fee = 0.0
 if selected_tests:
     st.markdown("##### 📌 নির্বাচিত টেস্টসমূহের দাম এখানে দেখে নিন:")
     for test in selected_tests:
-        # value=None দেওয়ার কারণে ০.০০ কাটার ঝামেলা থাকবে না
         price_input = st.number_input(
             f"ফি (৳) -- {test}:", 
             min_value=0.0, 
@@ -220,7 +205,6 @@ st.subheader("পেমেন্ট ও ডিসকাউন্ট")
 col3, col4 = st.columns(2)
 
 with col3:
-    # ফ্ল্যাট ডিসকাউন্ট টাকা ইনপুট (বক্স খালি থাকবে)
     discount_amount_input = st.number_input("মোট ডিসকাউন্ট (Discount Amount ৳)", min_value=0.0, value=None, step=10.0, placeholder="ডিসকাউন্ট লিখুন...")
     discount_amount = discount_amount_input if discount_amount_input is not None else 0.0
     
@@ -233,7 +217,7 @@ due_amount = net_payable - advance_paid
 
 with col4:
     st.metric("ডিসকাউন্ট প্রণয় (টাকা)", f"{discount_amount} ৳")
-    st.metric("মোট বাকি টাকা (Due)", f"{due_amount} ৳")
+    st.metric("মোট باقی টাকা (Due)", f"{due_amount} ৳")
 
 st.markdown("---")
 submit_button = st.button("Save Bill and Go to Print (বিল সেভ করুন)")
@@ -271,7 +255,9 @@ if submit_button:
             
             st.session_state.last_invoice_id = c.lastrowid
             st.success("🎉 বিল সফলভাবে সংরক্ষিত হয়েছে! প্রিন্ট পেজে নেওয়া হচ্ছে...")
-            st.switch_pages("pages/3_Print_Receipt.py")
+            
+            # 🛠️ প্রিন্ট পেজের এরর সমাধান (st.switch_page ব্যবহার করা হয়েছে)
+            st.switch_page("pages/3_Print_Receipt.py")
         except Exception as e:
             st.error(f"ডাটাবেজ এরর: {e}")
 
