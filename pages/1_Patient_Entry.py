@@ -4,7 +4,7 @@ from sidebar_monitor import show_live_sidebar
 show_live_sidebar()
 
 # ৩. সিকিউরিটি চেক (নিরাপত্তা ব্যবস্থা)
-if "logged_in" not in st.session_state or not st.session_state.logged_in:
+if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
     st.warning("অ্যাক্সেস রিফিউজড! দয়া করে আগে মেইন পেজ থেকে লগইন করুন।")
     st.stop()
 
