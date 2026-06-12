@@ -29,7 +29,7 @@ with col_n2:
     
     # ডাটাবেজ থেকে ডাক্তারদের তালিকা আনা
     c.execute("SELECT doc_name FROM doctors_list")
-    db_doctors = [row[0] for row in c.fetchall()]
+    db_doctors = [row for row in c.fetchall()]
     doctor_options = ["Choose option"] + db_doctors + ["অন্যান্য"]
     
     selected_doctor_setup = st.selectbox("ডাক্তার সিলেক্ট করুন (Refd By):", doctor_options)
@@ -45,10 +45,10 @@ st.markdown("---")
 # ২. টেস্ট সিলেকশন সেকশন
 st.subheader("টেস্ট সিলেকশন ও লাইভ রেট এন্ট্রি")
 
-# ডাটাবেজ থেকে টেস্টের তালিকা আনা (অনুমান সাপেক্ষে টেস্ট লিস্ট তৈরি)
+# ডাটাবেজ থেকে টেস্টের তালিকা আনা
 try:
     c.execute("SELECT test_name FROM available_tests_list")
-    available_tests = [row[0] for row in c.fetchall()]
+    available_tests = [row for row in c.fetchall()]
 except:
     available_tests = ["CBC", "RBS", "Serum Creatinine", "Lipid Profile", "Urine RE", "USG of W/A"]
 
@@ -77,7 +77,16 @@ if custom_name.strip():
     total_fee += custom_price
     test_with_prices.append(f"{custom_name.strip()}:{custom_price}")
 
-st.info(f"📋 লাইভ মোট বিল (টোটাল ফি): {total_fee} টাকা")
+# 📊 লাইভ মোট বিল - মডার্ন নীল কার্ড ডিজাইন
+st.markdown(
+    f"""
+    <div style="background-color: #e8f4f8; padding: 15px; border-left: 5px solid #29b6f6; border-radius: 5px; margin-top: 15px; margin-bottom: 15px;">
+        <span style="font-size: 15px; color: #01579b; font-weight: bold;">📋 লাইভ মোট বিল (টোটাল ফি):</span><br>
+        <span style="font-size: 26px; color: #01579b; font-weight: bold;">{total_fee} ৳</span>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
 
 st.markdown("---")
 
@@ -91,9 +100,15 @@ with col3:
 net_payable = total_fee - discount_amount
 due_amount = net_payable - advance_paid
 
+# 🎨 ডিসকাউন্ট ও বাকি টাকা - সুন্দর ব্যানার ডিজাইন
 with col4:
-    st.metric("ডিসকাউন্ট প্রদত্ত (টাকা)", f"{discount_amount} ৳")
-    st.metric("মোট বাকি টাকা (Due)", f"{due_amount} ৳")
+    st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True) # অ্যালাইনমেন্ট ঠিক করার ফাঁকা জায়গা
+    st.success(f"💰 **ডিসকাউন্ট প্রদত্ত:** {discount_amount} ৳")
+    
+    if due_amount > 0:
+        st.error(f"⚠️ **মোট বাকি টাকা (Due):** {due_amount} ৳")
+    else:
+        st.info(f"✅ **কোনো বাকি নেই (Paid):** {due_amount} ৳")
 
 st.markdown("---")
 submit_button = st.button("Save Bill and Go to Print (বিল সেভ করুন)")
