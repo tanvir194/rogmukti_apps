@@ -166,7 +166,7 @@ if record:
     due_amount = record[9]
     billing_date = record[10]
 
-    # ফাইল ডাউনলোডের কাস্টম এমবেডেড প্রিমিয়াম CSS স্টাইল
+    # ফাইল ডাউনলোডের জন্য প্রিমিয়াম CSS স্টাইল
     embedded_css = """
     <style>
     .receipt-container { background-color: #ffffff !important; color: #1e293b !important; border-radius: 16px; padding: 40px; max-width: 680px; margin: 25px auto; font-family: 'Segoe UI', system-ui, sans-serif; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
@@ -251,7 +251,6 @@ if record:
     except:
         total_bill_val, discount_tk_val, advance_paid_val, due_amount_val = 0.0, 0.0, 0.0, 0.0
 
-    # ডাউনলোড ফাইলের জন্য ও অ্যাপের জন্য সামারি বক্স ফরম্যাট
     receipt_html += f"""</tbody>
 </table>
 <div class="summary-box">
@@ -272,3 +271,6 @@ Thank you for trusting us with your care.
     
     with col_btn1:
         if st.button("🖨️ Print Receipt (For PC)"):
+            st.markdown("<script>setTimeout(function() { window.print(); }, 200);</script>", unsafe_allow_html=True)
+            
+    with col_btn2:
