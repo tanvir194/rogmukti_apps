@@ -38,45 +38,48 @@ st.markdown("""
         background-color: #ffffff !important;
         color: #000000 !important;
         border-radius: 12px;
-        padding: 30px;
-        max-width: 650px;
+        padding: 35px;
+        max-width: 700px;
         margin: 0 auto;
         font-family: 'Segoe UI', Arial, sans-serif;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
     .receipt-header {
         text-align: center;
-        border-bottom: 2px solid #1e3a8a;
-        padding-bottom: 12px;
-        margin-bottom: 20px;
+        border-bottom: 3px solid #1e3a8a;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
     }
     .receipt-title {
         color: #1e3a8a !important;
-        font-size: 24px;
+        font-size: 28px;
         font-weight: bold;
         margin: 0;
+        letter-spacing: 0.5px;
     }
     .receipt-table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 15px;
+        margin-top: 20px;
     }
     .receipt-table th {
-        background-color: #f1f5f9;
+        background-color: #f8fafc;
         color: #1e3a8a;
-        border-bottom: 2px solid #cbd5e1;
-        padding: 8px;
+        border-top: 1px solid #cbd5e1;
+        border-bottom: 2px solid #1e3a8a;
+        padding: 10px;
         text-align: left;
+        font-weight: bold;
     }
     .receipt-table td {
         border-bottom: 1px solid #e2e8f0;
-        padding: 8px;
+        padding: 10px;
         color: #334155;
     }
     .summary-text {
         text-align: right;
-        font-size: 14px;
-        margin-top: 4px;
+        font-size: 15px;
+        margin-top: 6px;
         color: #1e293b;
     }
     
@@ -147,30 +150,30 @@ if record:
     due_amount = record[9]
     billing_date = record[10]
 
-    # ফাইল ডাউনলোডের জন্য আলাদা করে ভেতরের CSS স্টাইল তৈরি করা হলো
+    # ফাইল ডাউনলোডের জন্য প্রিমিয়াম CSS স্টাইল (যাতে মোবাইলে ফাইল খুললে চমৎকার দেখায়)
     embedded_css = """
     <style>
-    .receipt-container { background-color: #ffffff !important; color: #000000 !important; border-radius: 12px; padding: 30px; max-width: 650px; margin: 20px auto; font-family: 'Segoe UI', Arial, sans-serif; border: 1px solid #cbd5e1; }
-    .receipt-header { text-align: center; border-bottom: 2px solid #1e3a8a; padding-bottom: 12px; margin-bottom: 20px; }
-    .receipt-title { color: #1e3a8a !important; font-size: 24px; font-weight: bold; margin: 0; }
-    .receipt-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    .receipt-table th { background-color: #f1f5f9; color: #1e3a8a; border-bottom: 2px solid #cbd5e1; padding: 8px; text-align: left; }
-    .receipt-table td { border-bottom: 1px solid #e2e8f0; padding: 8px; color: #334155; }
-    .summary-text { text-align: right; font-size: 14px; margin-top: 4px; color: #1e293b; }
+    .receipt-container { background-color: #ffffff !important; color: #000000 !important; border-radius: 12px; padding: 35px; max-width: 650px; margin: 20px auto; font-family: 'Segoe UI', Arial, sans-serif; border: 1px solid #cbd5e1; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .receipt-header { text-align: center; border-bottom: 3px solid #1e3a8a; padding-bottom: 15px; margin-bottom: 25px; }
+    .receipt-title { color: #1e3a8a !important; font-size: 26px; font-weight: bold; margin: 0; }
+    .receipt-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .receipt-table th { background-color: #f8fafc; color: #1e3a8a; border-top: 1px solid #cbd5e1; border-bottom: 2px solid #1e3a8a; padding: 10px; text-align: left; font-weight: bold; }
+    .receipt-table td { border-bottom: 1px solid #e2e8f0; padding: 10px; color: #334155; }
+    .summary-text { text-align: right; font-size: 15px; margin-top: 6px; color: #1e293b; }
     </style>
     """
 
-    # HTML রিসিট জেনারেট করা
+    # HTML রিসিট জেনারেট করা (সংশোধিত মোবাইল নম্বরসহ)
     receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
-<div style="font-size:13px; color:#475569; margin-top:4px;">Mollah stand, Auliapur, Patuakhali</div>
-<div style="font-size:13px; color:#475569;">Mobile: 01711867627</div>
+<div style="font-size:14px; color:#475569; margin-top:6px;">Mollah stand, Auliapur, Patuakhali</div>
+<div style="font-size:14px; color:#475569; font-weight: bold; margin-top:2px;">Mobile: 01711867637</div>
 </div>
-<table style="width:100%; font-size:14px; margin-bottom:15px; color:#1e293b;">
+<table style="width:100%; font-size:15px; margin-bottom:20px; color:#1e293b; line-height: 1.6;">
 <tr>
-<td><b>Invoice ID:</b> #{p_id}</td>
-<td style="text-align:right;"><b>Date:</b> {billing_date}</td>
+<td style="width:50%;"><b>Invoice ID:</b> #{p_id}</td>
+<td style="text-align:right; width:50%;"><b>Date:</b> {billing_date}</td>
 </tr>
 <tr>
 <td><b>Patient Name:</b> {p_name}</td>
@@ -181,12 +184,12 @@ if record:
 <td style="text-align:right;"><b>Ref. By:</b> {p_doctor}</td>
 </tr>
 </table>
-<div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:4px; font-size:15px;">Test Description & Rate</div>
+<div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:6px; font-size:16px;">Test Description & Rate</div>
 <table class="receipt-table">
 <thead>
 <tr>
-<th style="width:10%; text-align:center;">SL</th>
-<th style="width:65%;">Test Name</th>
+<th style="width:12%; text-align:center;">SL</th>
+<th style="width:63%;">Test Name</th>
 <th style="width:25%; text-align:right;">Price</th>
 </tr>
 </thead>
@@ -231,21 +234,20 @@ if record:
 
     receipt_html += f"""</tbody>
 </table>
-<div style="margin-top:20px; border-top:1px dashed #cbd5e1; padding-top:10px;">
+<div style="margin-top:25px; border-top:1px dashed #cbd5e1; padding-top:12px;">
 <div class="summary-text"><b>Total Bill:</b> {total_bill_val:.2f} Tk</div>
 <div class="summary-text"><b>Discount:</b> {discount_tk_val:.2f} Tk</div>
 <div class="summary-text"><b>Advance Paid:</b> {advance_paid_val:.2f} Tk</div>
-<div class="summary-text" style="font-size:16px; color:#ef4444; margin-top:6px;"><b>Due Amount:</b> {due_amount_val:.2f} Tk</div>
+<div class="summary-text" style="font-size:18px; color:#ef4444; margin-top:8px;"><b>Due Amount:</b> {due_amount_val:.2f} Tk</div>
 </div>
-<div style="text-align:center; margin-top:35px; font-size:13px; color:#64748b; font-style:italic;">
+<div style="text-align:center; margin-top:45px; font-size:14px; color:#64748b; font-style:italic;">
 Thank you for trusting us with your care.
 </div>
 </div>"""
 
-    # মোবাইলে ডাউনলোডের ফাইলে স্টাইলসহ পাঠানোর জন্য দুটিকে একত্র করা হলো
     downloadable_html = embedded_css + receipt_html
 
-    # 🖨️ বাটন দুটি লেআউট করা হলো
+    # 🖨️ বাটন লেআউট
     col_btn1, col_btn2 = st.columns(2)
     
     with col_btn1:
@@ -261,10 +263,10 @@ Thank you for trusting us with your care.
         )
 
     st.write("")
-    # স্ক্রিনে রিসিট দেখানো
+    # স্ক্রিনে প্রিভিউ দেখানো
     st.markdown(receipt_html, unsafe_allow_html=True)
 
-else:
+else
     if invoice_id > 0:
         st.error(f"🚨 দুঃখিত, #{invoice_id} নম্বরের কোনো বিল ডাটাবেজে খুঁজে পাওয়া যায়নি!")
     else:
