@@ -130,22 +130,17 @@ if custom_name.strip():
     test_with_prices.append(f"{custom_name.strip()}:{custom_price}")
 
 st.info(f"📋 লাইভ মোট বিল (টোটাল充 ফি): {total_fee} টাকা")
-
-st.markdown("---")
-st.subheader("পেমেন্ট ও ডিসকাউন্ট")
-col3, col4 = st.columns(2)
 with col3:
-    discount_pct = st.number_input("ডিসকাউন্ট (Discount %)", min_value=0.0, max_value=100.0, value=0.0)
+    discount_amount = st.number_input("ডিসকাউন্ট (টাকা)", min_value=0.0, value=0.0, step=10.0)
     advance_paid = st.number_input("অগ্রিম পরিশোধ (Advance Paid)", min_value=0.0, value=0.0)
 
-discount_amount = (total_fee * discount_pct) / 100.0
 net_payable = total_fee - discount_amount
 due_amount = net_payable - advance_paid
 
 with col4:
-    st.metric("ডিসকাউন্ট প্রদেয় (টাকা)", f"{discount_amount} ৳")
+    st.metric("ডিসকাউন্ট প্রদত্ত (টাকা)", f"{discount_amount} ৳")
     st.metric("মোট বাকি টাকা (Due)", f"{due_amount} ৳")
-
+    
 st.markdown("---")
 submit_button = st.button("Save Bill and Go to Print (ডাটা সেভ করুন)")
 
