@@ -6,7 +6,7 @@ import sqlite3
 # ১. পেজ কনফিগারেশন
 st.set_page_config(page_title="Money Receipt", layout="wide")
 
-# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম হোয়াইট কার্ড CSS
+# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম হোয়ایت কার্ড CSS
 st.markdown("""
     <style>
     .stApp {
@@ -114,7 +114,7 @@ st.markdown("""
 
 st.title("🖨️ English Money Receipt")
 
-# ডাটাবেজ থেকে ডাটা কুয়েরি করা (Safe Try-Except Block)
+# ডাটাবেজ থেকে ডাটা কুয়েরি করা
 record = None
 invoice_id = 0
 
@@ -130,7 +130,7 @@ try:
 
     c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
     record = c.fetchone()
-    conn.close() # কাজ শেষেই সেফলি কানেকশন ক্লোজ করা হলো
+    conn.close()
 except Exception as e:
     st.error(f"Database Error: {e}")
 
@@ -147,20 +147,8 @@ if record:
     due_amount = record[9]
     billing_date = record[10]
 
-    st.write("")
-    # 🖨️ এই বাটনে চাপ দিলে সরাসরি প্রিন্ট ডায়ালগ ওপেন হবে
-    if st.button("🖨️ Print Money Receipt Now"):
-        st.markdown("""
-            <script>
-                setTimeout(function() {
-                    window.print();
-                }, 300);
-            </script>
-        """, unsafe_allow_html=True)
-    st.write("")
-
-    # HTML রিসিট জেনারেট করা
-    receipt_html = f"""<div class="receipt-container">
+    # HTML রিসিট জেনারেট করা (এটি বাটনের আগেই তৈরি করে রাখা হচ্ছে যাতে ডাউনলোডে ব্যবহার করা যায়)
+    receipt_html = f"""<div class="receipt-container" id="printable-receipt">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
 <div style="font-size:13px; color:#475569; margin-top:4px;">Mollah stand, Auliapur, Patuakhali</div>
@@ -240,7 +228,35 @@ if record:
 Thank you for trusting us with your care.
 </div>
 </div>"""
-    
+
+    st.write("")
+    # 🖨️ কাস্টম বাটন (স্মার্ট ডিভাইস ডিটেকশন লজিক সহ)
+    if st.button("🖨️ Print / Save Money Receipt"):
+        # জাভাস্ক্রিপ্ট কোড যা মোবাইল ও পিসি আলাদা করে একশনে যাবে
+        st.markdown(f"""
+            <script>
+                setTimeout(function() {{
+                    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    if (isMobile) {{
+                        // মোবাইলের জন্য ফাইল ডাউনলোড স্ক্রিপ্ট
+                        var element = document.createElement('a');
+                        var htmlContent = `{receipt_html}`;
+                        element.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
+                        element.setAttribute('download', 'Invoice_{p_id}.html');
+                        element.style.display = 'none';
+                        document.body.appendChild(element);
+                        element.click();
+                        document.body.removeChild(element);
+                    }} else {{
+                        // কম্পিউটারের জন্য সরাসরি প্রিন্ট অপশন
+                        window.print();
+                    }}
+                }}, 300);
+            </script>
+        """, unsafe_allow_html=True)
+    st.write("")
+
+    # স্ক্রিনে রিসিট দেখানো
     st.markdown(receipt_html, unsafe_allow_html=True)
 
 else:
