@@ -39,7 +39,7 @@ st.markdown("""
         color: #000000 !important;
         border-radius: 12px;
         padding: 30px;
-        max-width: 950px;
+        max-width: 100% !important; /* স্ক্রিনেও চওড়া দেখাবে */
         margin: 0 auto;
         font-family: 'Segoe UI', Arial, sans-serif;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
@@ -81,7 +81,7 @@ st.markdown("""
         color: #1e293b !important;
     }
     
-    /* 🖨️ প্রিন্ট স্ক্রিপ্ট (A4 ফুল স্ক্রিন চওড়া এবং আনলিমিটেড পেজ ফিক্স) */
+    /* 🖨️ প্রিন্ট স্ক্রিপ্ট (A4 ফুল স্ক্রিন চওড়া এবং ডাবল ফেস বন্ধ করার আসল ফিক্স) */
     @media print {
         body * {
             visibility: hidden !important;
@@ -95,7 +95,7 @@ st.markdown("""
             position: absolute !important;
             left: 0 !important; 
             top: 0 !important;
-            width: 100% !important;  
+            width: 100% !important;  /* রিসিটটি পুরো এ৪ পেজ জুড়ে বড় করার জন্য */
             max-width: 100% !important;
             box-shadow: none !important;
             border: none !important;  
@@ -103,7 +103,7 @@ st.markdown("""
             margin: 0px !important;
             line-height: 1.6 !important;
             display: block !important;
-            height: auto !important; /* লেখা কেটে যাওয়া রোধ করবে */
+            height: auto !important; 
         }
         
         .receipt-header {
@@ -132,7 +132,7 @@ st.markdown("""
         
         @page {
             size: A4;
-            margin: 10mm 0mm !important; /* উপর-নিচে সামান্য সেফটি মার্জিন, ডানে-বামে ০ */
+            margin: 0mm !important; /* কাগজের চারপাশের সমস্ত ডিফল্ট সাদা মার্জিন পুরোপুরি ০ করা হলো */
         }
     }
     </style>
@@ -155,7 +155,7 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
-    # 🛠️ ফিক্সড: ডাটাবেজের সঠিক ইণ্ডেক্সিং নম্বর ম্যাপ করা হলো যাতে ডেটা ক্র্যাশ না করে
+    # 🛠️ ফিক্সড: ডাটাবেজের আসল ইনডেক্সিং পুনরুদ্ধার করা হলো যাতে রোগীর ডাটা ক্র্যাশ না করে
     p_id = record[0]
     p_name = record[1]
     p_age = record[2]
@@ -173,12 +173,12 @@ if record:
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-    # HTML রিসিট জেনারেট করা (আপনার নতুন মোবাইল নম্বরটি সহ)
+    # HTML রিসিট জেনারেট করা (মোবাইল নম্বর: 01711867637)
     receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
 <div style="font-size:14px; color:#475569; margin-top:6px;">Mollah stand, Auliapur, Patuakhali</div>
-<div style="font-size:14px; color:#1e3a8a; font-weight: bold; margin-top:2px;">Mobile: 01711867637</div>
+<div style="font-size:14px; color:#1e3a8a; font-weight: bold; margin-top:4px;">Mobile: 01711867637</div>
 </div>
 <table style="width:100%; font-size:15px; margin-bottom:25px; color:#1e293b; line-height: 1.6;">
 <tr>
@@ -217,7 +217,7 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
-            # 🛠️ ফিক্সড: পাইথন লিস্ট স্প্লিট মেথডের ইনডেক্সিং এর মারাত্মক ভুলটি সংশোধন করা হলো
+            # 🛠️ ফিক্সড: পাইথন লিস্ট স্প্লিট মেথড এবং ইনডেক্সিং পুরোপুরি ঠিক করা হয়েছে
             parts = test_item.split("(")
             t_name = parts[0].strip()
             t_price = parts[1].replace(")", "").strip()
@@ -236,7 +236,6 @@ if record:
 </tr>"""
         serial_no += 1
 
-    # ফ্লোট কনভার্সন সেফটি চেক
     try:
         t_bill = float(total_bill)
         d_tk = float(discount_tk)
