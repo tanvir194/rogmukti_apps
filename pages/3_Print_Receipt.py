@@ -39,19 +39,19 @@ if not row:
     st.error(f"❌ No record found for ID #{invoice_id}.")
     st.stop()
 
-# Assign variables from database row index
-name = row
-age = row
-phone = row
-doctor = row
-selected_tests_data = row 
-total_amount = float(row)
-discount_amount = float(row)
-advance_paid = float(row)
-due_amount = float(row)
-current_date = row
+# Assign variables from database row index (সঠিক ইনডেক্স নম্বর ফিরিয়ে আনা হলো)
+name = row[1]
+age = row[2]
+phone = row[3]
+doctor = row[4]
+selected_tests_data = row[5] 
+total_amount = float(row[6])
+discount_amount = float(row[7])
+advance_paid = float(row[8])
+due_amount = float(row[9])
+current_date = row[10]
 
-# --- কমা দিয়ে যুক্ত协同 টেস্ট এবং ব্র্যাকেটের রেট আলাদা করা ---
+# --- কমা দিয়ে যুক্ত টেস্ট এবং ব্র্যাকেটের রেট আলাদা করা ---
 tests_found = re.findall(r'([^,(\d]+)\s*(?:\(([\d.]+)\))?', selected_tests_data)
 
 table_rows = ""
@@ -106,7 +106,7 @@ full_html_page = """
     white-space: nowrap;
 }
 
-/* রোগীর তথ্যের টেবিলকে উন্মুক্ত (Free) এবং ১০০% এক লাইনে রাখার জন্য সিএসএস */
+/* রোগীর তথ্যের উন্মুক্ত টেবিল সিস্টেম (সব ডাটা এক লাইনে সোজা থাকবে) */
 .info-table { 
     width: 100%; 
     border-collapse: collapse; 
@@ -117,8 +117,7 @@ full_html_page = """
     font-size: 14px; 
     color: #000;
     border: 1px solid #333;
-    /* এই প্রোপার্টিটির কারণে নাম যত বড়ই হোক, কখনো দুই লাইন হবে না, সবসময় এক লাইনে সোজা থাকবে */
-    white-space: nowrap !important; 
+    white-space: nowrap !important; /* লেখা নিচে নামা বন্ধ রাখার জন্য */
 }
 .info-label {
     font-weight: bold;
@@ -235,7 +234,6 @@ full_html_page = """
     
     <div class="money-receipt-title">MONEY RECEIPT</div>
     
-    <!-- সম্পূর্ণ ফ্রি টেবিল লেআউট (সব ডাটা বাধ্যতামূলক এক লাইনে থাকবে) -->
     <table class="info-table">
         <tr>
             <td class="info-label">Invoice ID:</td>
