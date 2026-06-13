@@ -1,9 +1,9 @@
 import streamlit as st
 
-# ১. ইনভয়েস আইডি ইনপুট নেওয়ার বক্স
+# ১. ইনভয়েস আইডি ইনপুট বক্স
 invoice_id = st.number_input("Enter Bill No / Invoice ID to Print:", min_value=1, value=11, step=1)
 
-# ২. সম্পূর্ণ HTML এবং CSS ডিজাইন কোনো f-string এর ঝামেলা ছাড়া সরাসরি রাখা হলো
+# ২. এইচটিএমএল ডিজাইন (কোনো f-string বা পাইথন ক্যাটিনেশন ছাড়া সাধারণ টেক্সট)
 html_receipt = """
 <!-- প্রিন্ট অ্যাকশন বাটন -->
 <div style="text-align: right; margin-bottom: 20px;">
@@ -21,7 +21,7 @@ html_receipt = """
     </button>
 </div>
 
-<!-- মানি রিসিটের প্রধান বডি (কন্টেইনার) -->
+<!-- মানি রিসিটের প্রধান বডি -->
 <div id="receipt-body" style="font-family: 'Arial', sans-serif; padding: 20px; border: 1px solid #ddd; background: #fff; color: #000;">
     
     <!-- ডায়াগনস্টিক সেন্টারের হেডার -->
@@ -34,7 +34,7 @@ html_receipt = """
     <!-- পেশেন্ট ইনফরমেশন টেবিল -->
     <table style="width: 100%; font-size: 16px; margin-top: 25px; margin-bottom: 25px; line-height: 1.6; border-collapse: collapse;">
         <tr>
-            <td style="width: 50%;"><b>Invoice ID:</b> """ + str(invoice_id) + """</td>
+            <td style="width: 50%;"><b>Invoice ID:</b> <span id="bill-id-placeholder"></span></td>
             <td style="text-align: right; width: 50%;"><b>Date:</b> 2026-06-13</td>
         </tr>
         <tr>
@@ -95,7 +95,12 @@ html_receipt = """
 
 </div>
 
-<!-- ৩. শুধুমাত্র প্রিন্ট ফরম্যাটের জন্য বিশেষ সিএসএস (CSS) -->
+<!-- ৩. জাভাস্ক্রিপ্ট দিয়ে ইনপুট বক্সের মান রিসিটে পাঠানো -->
+<script>
+    document.getElementById("bill-id-placeholder").innerText = "PLACEHOLDER_ID";
+</script>
+
+<!-- ৪. প্রিন্ট করার জন্য বিশেষ সিএসএস -->
 <style>
 @media print {
     [data-testid="stSidebar"], 
@@ -114,5 +119,8 @@ html_receipt = """
 </style>
 """
 
-# ৩. HTML-কে ব্রাউজারে ভিজ্যুয়াল রিসিট হিসেবে রেন্ডার করার কমান্ড
-st.markdown(html_receipt, unsafe_allow_html=True)
+# ইনপুট বক্সের আইডিটি এইচটিএমএল-এ ডাইনামিকালি সেট করা
+final_html = html_receipt.replace("PLACEHOLDER_ID", str(invoice_id))
+
+# ৩. ফাইনাল আউটপুট রেন্ডার করা
+st.markdown(final_html, unsafe_allow_html=True)
