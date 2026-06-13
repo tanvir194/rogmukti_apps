@@ -95,9 +95,9 @@ st.markdown("""
         /* ৩. রিসিটটিকে এ৪ কাগজের একদম টপে এবং ফুল স্ক্রিনে সেট করার জন্য রিসেট */
         .receipt-container {
             position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
+            left: 0% !important;
+            top: 1% !important;
+            width: 80% !important;
             max-width: 100% !important;
             box-shadow: none !important;
             border: 1px solid #000000 !important;
@@ -119,7 +119,7 @@ st.markdown("""
         /* ৫. পেজ মার্জিন সাইজ */
         @page {
             size: A4;
-            margin: 15mm;
+            margin: 20mm;
         }
     }
     </style>
@@ -187,7 +187,7 @@ if record:
 <tr>
 <th style="width:10%; text-align:center;">SL</th>
 <th style="width:65%;">Test Name</th>
-<th style="width:25%; text-align:right;">Price</th>
+<th style="width:30%; text-align:right;">Price</th>
 </tr>
 </thead>
 <tbody>"""
