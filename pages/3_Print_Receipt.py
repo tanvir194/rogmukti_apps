@@ -93,15 +93,15 @@ st.markdown("""
         /* 🖨️ চারপাশের সাদা বর্ডার ও মার্জিন ডিলিট করে পুরো এ৪ পেজ চওড়া করার ফিক্স */
         .receipt-container {
             position: absolute !important;
-            left: 0 !important; 
-            top: 0 !important;
+            left: -50 !important; 
+            top: -50 !important;
             width: 100% !important;  /* 👈 চিকন ভাব দূর করে পুরো এ৪ পেজ জুড়ে বড় করার জন্য ১০০% করা হলো */
             max-width: 100% !important;
             box-shadow: none !important;
-            border: none !important;  /* 👈 চারপাশের বাড়তি বর্ডার ফ্রেম মুছে ফেলা হলো */
+            border: true !important;  /* 👈 চারপাশের বাড়তি বর্ডার ফ্রেম মুছে ফেলা হলো */
             padding: 0px !important;  /* 👈 ভেতরের ও চারপাশের বাড়তি ফালতু সাদা মার্জিন ডিলিট */
             margin: 0px !important;
-            line-height: 1.4 !important;
+            line-height: auto !important;
         }
         
         .receipt-header {
