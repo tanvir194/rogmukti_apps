@@ -77,11 +77,16 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 🔔 [নতুন আপডেট] লাল মার্ক করা ফাঁকা জায়গার জন্য স্ক্রলিং নোটিশ বক্সে (Marquee)
+# 🔔 [নতুন আপডেট] লাল মার্ক করা ফাঁকা জায়গার জন্য বড় লাল স্বাগতম টেক্সট ও বড় স্ক্রলিং নোটিশ (Marquee)
 st.markdown(
     """
-    <div style='background-color: #16253b; padding: 10px; border-radius: 8px; border: 1px solid #1f172a; margin-bottom: 20px;'>
-        <marquee style='color: #f1f72a; font-size: 16px; font-weight: bold;'>
+    <div style='text-align: center; margin-bottom: 15px;'>
+        <h1 style='color: #ff3333; font-size: 38px; font-weight: 900; font-family: "Kalpurush", "Siyam Rupali", sans-serif; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin: 0;'>
+            মো: তানভীর আহমেদ আপনাকে স্বাগতম
+        </h1>
+    </div>
+    <div style='background-color: #16253b; padding: 15px; border-radius: 8px; border: 2px solid #0ea5e9; margin-bottom: 25px; box-shadow: 0 0 15px rgba(14, 165, 233, 0.2);'>
+        <marquee style='color: #f1f72a; font-size: 24px; font-weight: bold; font-family: "Kalpurush", "Siyam Rupali", sans-serif;'>
             👋 রোগমুক্তি ডায়াগনস্টিক অ্যান্ড ডিজিটাল ল্যাবে স্বাগতম! ⚠️ সতর্কর্তা: নতুন পেশেন্ট এন্ট্রি ও বিল তৈরি করার সময় তথ্যগুলো অনুগ্রহ করে ডাবল চেক করে নিন।
         </marquee>
     </div>
@@ -124,7 +129,7 @@ conn.commit()
 
 # ডিফল্ট ডাক্তার ডেটা ইনসার্ট লজিক
 c.execute("SELECT COUNT(*) FROM doctors_list")
-if c.fetchone()[0] == 0:
+if c.fetchone() == 0:
     default_docs = [("ডাঃ সাইদুল ইসলাম",), ("ডাঃ আসাদুর রহমান",)]
     c.executemany("INSERT INTO doctors_list (doc_name) VALUES (?)", default_docs)
     conn.commit()
@@ -132,7 +137,7 @@ if c.fetchone()[0] == 0:
 # ডাটাবেজ থেকে টেস্টের তালিকা লোড করা
 try:
     c.execute("SELECT test_name FROM custom_tests_list")
-    available_tests = [str(row[0]) for row in c.fetchall() if row[0]]
+    available_tests = [str(row[0]) for row in c.fetchall() if row]
 except:
     available_tests = []
 
@@ -269,11 +274,3 @@ if submit_button:
             conn.commit()
             
             st.session_state.last_invoice_id = c.lastrowid
-            st.success("🎉 বিল সফলভাবে সংরক্ষিত হয়েছে! প্রিন্ট পেজে নেওয়া হচ্ছে...")
-            
-            # প্রিন্ট পেজে রিডাইরেক্ট (Error Fixed)
-            st.switch_page("pages/3_Print_Receipt.py")
-        except Exception as e:
-            st.error(f"ডাটাবেজ এরর: {e}")
-
-conn.close()
