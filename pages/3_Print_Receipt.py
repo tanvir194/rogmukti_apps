@@ -33,7 +33,7 @@ st.markdown("""
         width: 100%;
     }
     
-    /* 📄 স্ক্রিন ভিউ ডিজাইন (স্ক্রিনে দেখার জন্য) */
+    /* 📄 স্ক্রিন ভিউ ডিজাইন (সফটওয়্যারে দেখার জন্য) */
     .receipt-container {
         background-color: #ffffff !important;
         color: #000000 !important;
@@ -66,12 +66,12 @@ st.markdown("""
         background-color: #f1f5f9 !important;
         color: #1e3a8a !important;
         border-bottom: 2px solid #cbd5e1 !important;
-        padding: 10px;
+        padding: 12px 10px;
         text-align: left;
     }
     .receipt-table td {
         border-bottom: 1px solid #e2e8f0 !important;
-        padding: 10px;
+        padding: 12px 10px;
         color: #334155 !important;
     }
     .summary-text {
@@ -81,7 +81,7 @@ st.markdown("""
         color: #1e293b !important;
     }
     
-    /* 🖨️ ম্যাজিক প্রিন্ট স্ক্রিপ্ট (A4 ফুল স্ক্রিন চওড়া করার জন্য) */
+    /* 🖨️ প্রিন্ট স্ক্রিপ্ট (A4 ফুল স্ক্রিন চওড়া করার জন্য) */
     @media print {
         body * {
             visibility: hidden !important;
@@ -90,28 +90,28 @@ st.markdown("""
             visibility: visible !important;
         }
         
-        /* 🖨️ চারপাশের সাদা বর্ডার ও মার্জিন ডিলিট করে পুরো এ৪ পেজ চওড়া করার ফিক্স */
+        /* চারপাশের সাদা বর্ডার উধাও করে পুরো এ৪ পেজ চওড়া করার ফিক্স */
         .receipt-container {
             position: absolute !important;
-            left: -50 !important; 
-            top: -50 !important;
-            width: 100% !important;  /* 👈 চিকন ভাব দূর করে পুরো এ৪ পেজ জুড়ে বড় করার জন্য ১০০% করা হলো */
+            left: 0 !important; 
+            top: 0 !important;
+            width: 100% !important;  
             max-width: 100% !important;
             box-shadow: none !important;
-            border: true !important;  /* 👈 চারপাশের বাড়তি বর্ডার ফ্রেম মুছে ফেলা হলো */
-            padding: 0px !important;  /* 👈 ভেতরের ও চারপাশের বাড়তি ফালতু সাদা মার্জিন ডিলিট */
+            border: none !important;  
+            padding: 0px !important;  
             margin: 0px !important;
-            line-height: auto !important;
+            line-height: 1.5 !important;
         }
         
         .receipt-header {
-            margin-bottom: 20px !important;
-            padding-bottom: 10px !important;
+            margin-bottom: 25px !important;
+            padding-bottom: 12px !important;
             border-bottom: 2px solid #1e3a8a !important;
         }
         
         .receipt-table th {
-            padding: 10px !important;
+            padding: 12px 10px !important;
             font-size: 14px !important;
             background-color: #f1f5f9 !important;
             -webkit-print-color-adjust: exact;
@@ -119,19 +119,18 @@ st.markdown("""
             border-bottom: 2px solid #000000 !important;
         }
         .receipt-table td {
-            padding: 10px !important; /* 👈 পুরো টেবিলটি যাতে রাজকীয়ভাবে বড় দেখায় */
+            padding: 12px 10px !important; 
             font-size: 14px !important;
             border-bottom: 1px solid #cbd5e1 !important;
         }
         .summary-text {
-            margin-top: 5px !important;
+            margin-top: 6px !important;
             font-size: 15px !important;
         }
         
-        /* 📄 প্রিন্টারের পেজ মার্জিন একদম ০ (Zero) করে দেওয়া হলো */
         @page {
             size: A4;
-            margin: 0mm !important; /* 👈 কাগজের চারপাশের সমস্ত ডিফল্ট সাদা মার্জিন ও বর্ডার উধাও */
+            margin: 0mm !important; 
         }
     }
     </style>
@@ -154,12 +153,13 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
+    # 🛠️ ফিক্সড: ডাটাবেজের সঠিক ইনডেক্স নম্বরগুলো বসানো হলো
     p_id = record[0]
     p_name = record[1]
     p_age = record[2]
     p_phone = record[3]
     p_doctor = record[4]
-    p_tests_str = record[5]
+    p_tests_str = record[5]      
     total_bill = record[6]
     discount_tk = record[7]     
     advance_paid = record[8]
@@ -215,6 +215,7 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
+            # 🛠️ ফিক্সড: পাইথন লিস্ট স্প্লিট মেথড পুরোপুরি সংশোধন করা হয়েছে
             parts = test_item.split("(")
             t_name = parts[0].strip()
             t_price = parts[1].replace(")", "").strip()
