@@ -73,9 +73,8 @@ for t_name, t_price in tests_found:
 # ------------------- Full HTML, CSS and Print Logic -------------------
 full_html_page = """
 <style>
-/* রিসিটটি স্ক্রিনে ও প্রিন্টে যেন পুরো A4 চওড়া (Full Width) জুড়ে থাকে */
 .receipt-box {
-    max-width: 100%; /* ১০০% চওড়া করার জন্য */
+    max-width: 100%;
     margin: 10px auto;
     padding: 30px;
     border: 2px solid #000000 !important;
@@ -93,7 +92,6 @@ full_html_page = """
 .header h2 { margin: 0; font-size: 28px; font-weight: bold; text-transform: uppercase; color: #000; }
 .header p { margin: 4px 0 0 0; font-size: 15px; font-weight: 500; }
 
-/* MONEY RECEIPT টাইটেল যেন কখনোই এক লাইনের বেশি না ভাঙে */
 .money-receipt-title {
     text-align: center;
     font-size: 22px;
@@ -102,21 +100,27 @@ full_html_page = """
     margin: 15px auto;
     color: #000;
     border: 1.5px solid #000;
-    width: 280px; /* চওড়া বাড়ানো হলো যাতে এক লাইনে সুন্দর ধরে */
+    width: 280px;
     padding: 6px 0;
     text-transform: uppercase;
-    white-space: nowrap; /* লেখা ভাঙা বন্ধ করার জন্য */
+    white-space: nowrap;
 }
 
+/* রোগীর তথ্যের টেবিল সিস্টেম স্টাইল */
 .info-table { 
     width: 100%; 
     border-collapse: collapse; 
     margin-bottom: 25px; 
 }
 .info-table td { 
-    padding: 6px 0; 
-    font-size: 15px; 
+    padding: 8px 12px; 
+    font-size: 14px; 
     color: #000;
+    border: 1px solid #333; /* নিখুঁত ছক তৈরি করার বর্ডার */
+}
+.info-label {
+    font-weight: bold;
+    background-color: #f9fafb; /* লেবেলের জন্য হালকা ব্যাকগ্রাউন্ড */
 }
 
 .test-table { 
@@ -133,36 +137,41 @@ full_html_page = """
     color: #000; 
     font-weight: bold; 
 }
-.test-table td { 
-    padding: 10px; 
-    font-size: 14px; 
-    color: #000;
-}
 
 .bill-footer-container {
     width: 100%;
     margin-top: 20px;
     display: block;
 }
+
 .total-section { 
     margin-left: auto;
-    width: 280px;
+    width: 300px;
     font-size: 15px; 
-    line-height: 1.8; 
-    border: 1px solid #333;
-    padding: 12px;
-    background-color: #fafafa;
+    line-height: 2.0; 
+    border: 2px solid #1a365d;
+    border-radius: 6px;
+    padding: 12px 15px;
+    background-color: #f8fafc !important;
 }
 .total-section table {
     width: 100%;
     border-collapse: collapse;
 }
 .total-section td {
-    padding: 3px 0;
+    padding: 2px 0;
+    color: #000;
+}
+.due-row {
+    font-size: 17px; 
+    font-weight: bold; 
+    border-top: 1px dashed #1a365d;
+    padding-top: 6px !important;
+    margin-top: 4px;
 }
 
 .signature-section {
-    margin-top: 60px;
+    margin-top: 50px;
     width: 100%;
     display: block;
 }
@@ -193,13 +202,16 @@ full_html_page = """
         padding: 30px !important;
         margin: 0 auto !important;
         width: 100% !important;
-        max-width: 100% !important; /* প্রিন্ট পেজেও ফুল উইডথ চওড়া থাকবে */
+        max-width: 100% !important;
         display: block !important;
         border: 2px solid #000000 !important;
     }
     .total-section {
         margin-left: auto !important;
         float: right !important;
+        background-color: #f8fafc !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
     .signature-wrapper {
         margin-left: auto !important;
@@ -207,7 +219,7 @@ full_html_page = """
     }
     @page {
         size: A4 portrait;
-        margin: 8mm 10mm 10mm 10mm; /* ওপরে হালকা পর্যাপ্ত মার্জিন */
+        margin: 8mm 10mm 10mm 10mm;
     }
 }
 </style>
@@ -221,18 +233,25 @@ full_html_page = """
     
     <div class="money-receipt-title">MONEY RECEIPT</div>
     
+    <!-- নতুন টেবিল সিস্টেম আকারে সাজানো রোগীর তথ্য -->
     <table class="info-table">
         <tr>
-            <td style="width: 55%;"><b>Invoice ID:</b> #__INVOICE_ID__</td>
-            <td style="width: 45%; text-align: right;"><b>Date:</b> __CURRENT_DATE__</td>
+            <td class="info-label" style="width: 20%;">Invoice ID:</td>
+            <td style="width: 30%;">#__INVOICE_ID__</td>
+            <td class="info-label" style="width: 20%;">Date:</td>
+            <td style="width: 30%;">__CURRENT_DATE__</td>
         </tr>
         <tr>
-            <td><b>Patient Name:</b> __NAME__</td>
-            <td style="text-align: right;"><b>Age:</b> __AGE__ Y</td>
+            <td class="info-label">Patient Name:</td>
+            <td>__NAME__</td>
+            <td class="info-label">Age / Sex:</td>
+            <td>__AGE__ Y</td>
         </tr>
         <tr>
-            <td><b>Mobile No:</b> __PHONE__</td>
-            <td style="text-align: right;"><b>Ref. By:</b> __DOCTOR__</td>
+            <td class="info-label">Ref. By:</td>
+            <td>__DOCTOR__</td>
+            <td class="info-label">Mobile No:</td>
+            <td>__PHONE__</td>
         </tr>
     </table>
     
@@ -253,20 +272,20 @@ full_html_page = """
         <div class="total-section">
             <table>
                 <tr>
-                    <td>Total Bill:</td>
-                    <td style="text-align: right;">__TOTAL_AMOUNT__ Tk</td>
+                    <td style="font-weight: 600;">Total Bill</td>
+                    <td style="text-align: right; font-weight: 600;">__TOTAL_AMOUNT__ Tk</td>
                 </tr>
                 <tr>
-                    <td>Discount:</td>
-                    <td style="text-align: right;">__DISCOUNT_AMOUNT__ Tk</td>
+                    <td style="color: #475569;">Discount</td>
+                    <td style="text-align: right; color: #475569;">__DISCOUNT_AMOUNT__ Tk</td>
                 </tr>
-                <tr style="border-bottom: 1px solid #333;">
-                    <td style="padding-bottom: 4px;">Advance Paid:</td>
-                    <td style="text-align: right; padding-bottom: 4px;"><b>__ADVANCE_PAID__ Tk</b></td>
+                <tr>
+                    <td style="color: #475569; padding-bottom: 6px;">Advance Paid</td>
+                    <td style="text-align: right; color: #475569; padding-bottom: 6px;">__ADVANCE_PAID__ Tk</td>
                 </tr>
-                <tr style="font-size: 16px; font-weight: bold;">
-                    <td style="padding-top: 4px;">Due Amount:</td>
-                    <td style="text-align: right; color: red; padding-top: 4px;">__DUE_AMOUNT__ Tk</td>
+                <tr class="due-row">
+                    <td style="padding-top: 6px;">Due Amount</td>
+                    <td style="text-align: right; color: #dc2626; padding-top: 6px;">__DUE_AMOUNT__ Tk</td>
                 </tr>
             </table>
         </div>
