@@ -6,7 +6,7 @@ import sqlite3
 # ১. পেজ কনফিগারেশন
 st.set_page_config(page_title="Money Receipt", layout="wide")
 
-# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম হোয়াইট কার্ড CSS
+# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম হোয়ایت কার্ড CSS
 st.markdown("""
     <style>
     .stApp {
@@ -22,7 +22,6 @@ st.markdown("""
         color: #ffffff !important;
         border: 1px solid #2d3f5d !important;
         border-radius: 8px !important;
-        padding: 10px !important;
     }
     .stButton button {
         background-color: #0284c7 !important;
@@ -33,7 +32,7 @@ st.markdown("""
         width: 100%;
     }
     
-    /* 📄 রিসিট প্রিভিউ ডিজাইন (স্ক্রিনে যেমন দেখাবে) */
+    /* 📄 স্ক্রিন ভিউ ডিজাইন */
     .receipt-container {
         background-color: #ffffff !important;
         color: #000000 !important;
@@ -81,29 +80,32 @@ st.markdown("""
         color: #1e293b !important;
     }
     
-    /* 🖨️ প্রিন্ট করার সময় এই ডিজাইনটি চালু হবে (A4 Premium Fix) */
+    /* 🖨️ কাস্টম এ৪ প্রিন্ট স্ক্রিপ্ট (সব বাড়তি জিনিসপত্র ভ্যানিশ করার ম্যাজিক) */
     @media print {
-        header, [data-testid="stSidebar"], .stButton, .stNumberInput, div.block-container button {
-            display: none !important;
+        /* ১. স্ক্রিনের সব ধরনের অ্যাপ কন্টেন্ট, সাইডবার, টাইটেল, বাটন এবং ইনপুট পুরোপুরি মুছে ফেলবে */
+        body * {
             visibility: hidden !important;
         }
-        body, .stApp {
-            background-color: #ffffff !important;
-            color: #000000 !important;
+        
+        /* ২. শুধুমাত্র আমাদের রিসিট কন্টেইনার এবং এর ভেতরের লেখাগুলোকে দৃশ্যমান করবে */
+        .receipt-container, .receipt-container * {
+            visibility: visible !important;
         }
+        
+        /* ৩. রিসিটটিকে এ৪ কাগজের একদম টপে এবং ফুল স্ক্রিনে সেট করার জন্য রিসেট */
         .receipt-container {
             position: absolute !important;
-            left: 5% !important;
+            left: 0 !important;
             top: 0 !important;
-            width: 90% !important;
+            width: 100% !important;
             max-width: 100% !important;
             box-shadow: none !important;
-            padding: 20px !important;
-            margin: 0 !important;
             border: 1px solid #000000 !important;
-            background: #ffffff !important;
-            color: #000000 !important;
+            padding: 10px !important;
+            margin: 0 !important;
         }
+        
+        /* ৪. টেবিল বর্ডার প্রিন্ট ফিক্স */
         .receipt-table th {
             background-color: #f1f5f9 !important;
             -webkit-print-color-adjust: exact;
@@ -111,8 +113,10 @@ st.markdown("""
             border-bottom: 2px solid #000000 !important;
         }
         .receipt-table td {
-            border-bottom: 1px solid #cbd5e1 !important;
+            border-bottom: 1px solid #000000 !important;
         }
+        
+        /* ৫. পেজ মার্জিন সাইজ */
         @page {
             size: A4;
             margin: 15mm;
@@ -151,16 +155,12 @@ if record:
     billing_date = record[10]
 
     st.write("")
-    # 🛠️ বাটন ট্রিগার জাভাস্ক্রিপ্ট ফিক্স
+    # আপনার অরিজিনাল বাটন ও প্রিন্ট ট্রিগার
     if st.button("🖨️ Print Money Receipt Now"):
-        st.markdown("""
-            <script>
-                window.print();
-            </script>
-        """, unsafe_allow_html=True)
+        st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-# --- HTML স্ট্রিং রেন্ডারিং (Zero Indentation বজায় রাখা হয়েছে) ---
+# --- HTML রিসিট জেনারেট করা ---
     receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
