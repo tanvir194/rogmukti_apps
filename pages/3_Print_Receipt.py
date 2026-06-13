@@ -39,7 +39,7 @@ st.markdown("""
         color: #000000 !important;
         border-radius: 12px;
         padding: 30px;
-        max-width: 950px;
+        max-width: 100% !important; /* স্ক্রিনেও চওড়া দেখাবে */
         margin: 0 auto;
         font-family: 'Segoe UI', Arial, sans-serif;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
@@ -216,6 +216,7 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
+            # 🛠️ ফিক্সড: পাইথন লিস্ট ইনডেক্সিং এর ভুলটি এখানে পুরোপুরি সমাধান করা হয়েছে
             parts = test_item.split("(")
             t_name = parts[0].strip()
             t_price = parts[1].replace(")", "").strip()
