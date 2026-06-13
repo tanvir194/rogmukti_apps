@@ -46,13 +46,10 @@ phone = row[3]
 doctor = row[4]
 selected_tests_data = row[5] 
 total_amount = float(row[6])
-discount_pct = float(row[7])
+discount_amount = float(row[7]) # ডেটাবেজ থেকে সরাসরি ডিসকাউন্টের মোট টাকা নেওয়া হলো
 advance_paid = float(row[8])
 due_amount = float(row[9])
 current_date = row[10]
-
-# Calculate Discount Amount
-discount_amount = (total_amount * discount_pct) / 100.0
 
 # --- নতুন লজিক: কমা দিয়ে যুক্ত টেস্ট এবং ব্র্যাকেটের রেট আলাদা করা ---
 tests_found = re.findall(r'([^,(\d]+)\s*(?:\(([\d.]+)\))?', selected_tests_data)
@@ -76,7 +73,6 @@ for t_name, t_price in tests_found:
 # ------------------- Full HTML, CSS and Print Logic -------------------
 full_html_page = """
 <style>
-/* রিসিট বক্সের বর্ডার স্টাইল */
 .receipt-box {
     max-width: 550px;
     margin: 20px auto;
@@ -106,7 +102,6 @@ full_html_page = """
 .total-section { text-align: right; font-size: 15px; line-height: 1.6; }
 .total-section b { color: #1a365d; }
 
-/* MONEY RECEIPT সেন্ট্রাল পয়েন্ট স্টাইল */
 .money-receipt-title {
     text-align: center;
     font-size: 22px;
@@ -119,7 +114,6 @@ full_html_page = """
     padding-bottom: 5px;
 }
 
-/* সিগনেচার সেকশন স্টাইল */
 .signature-section {
     margin-top: 50px;
     text-align: right;
@@ -139,11 +133,15 @@ full_html_page = """
     header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, div.stWrite {
         display: none !important;
     }
-    .main .block-container {
+    
+    /* প্রিন্টের সময় মেইন উইন্ডোর অতিরিক্ত টপ মার্জিন ও প্যাডিং শূন্য করা */
+    .main, .main .block-container {
         padding: 0 !important;
         margin: 0 !important;
         max-width: 100% !important;
+        top: 0 !important;
     }
+    
     .receipt-box {
         box-shadow: none !important;
         padding: 20px !important;
@@ -153,25 +151,24 @@ full_html_page = """
         display: block !important;
         border: 2px solid #1a365d !important;
     }
+    
+    /* কাগজের ওপরের সাদা মার্জিন (Top Margin) একদম কমিয়ে ০ করা */
     @page {
         size: A4 portrait;
-        margin: 15mm 10mm 10mm 10mm;
+        margin: 0mm 10mm 10mm 10mm; /* প্রথম মানটি (0mm) ওপরের মার্জিন শুন্য করে */
     }
 }
 </style>
 
 <div class="receipt-box">
-    <!-- Receipts Official Header Section -->
     <div class="header">
         <h2>Rogmukti Diagnostic Centre</h2>
         <p style="font-size: 15px; font-weight: bold; margin-top: 3px;">Mollah stand, Auliapur, Patuakhali</p>
         <p style="font-size: 13px;">📞 Mobile: 01711867637</p>
     </div>
     
-    <!-- MONEY RECEIPT টাইটেল -->
     <div class="money-receipt-title">MONEY RECEIPT</div>
     
-    <!-- Patient Info Section in English -->
     <table class="info-table">
         <tr>
             <td><b>Invoice ID:</b> #__INVOICE_ID__</td>
@@ -201,17 +198,15 @@ full_html_page = """
         </tbody>
     </table>
     
-    <!-- Cost Breakdowns in English -->
     <div class="total-section">
         <p>Total Bill: __TOTAL_AMOUNT__ Tk</p>
-        <p>Discount: __DISCOUNT_AMOUNT__ Tk (__DISCOUNT_PCT__%)</p>
+        <p>Discount: __DISCOUNT_AMOUNT__ Tk</p>
         <p>Advance Paid: <b>__ADVANCE_PAID__ Tk</b></p>
         <p style="font-size: 16px; border-top: 1px dashed #1a365d; padding-top: 5px; margin-top: 5px;">
             <b>Due Amount: <span style="color: red;">__DUE_AMOUNT__ Tk</span></b>
         </p>
     </div>
     
-    <!-- অফিশিয়াল সিগনেচার এরিয়া -->
     <div class="signature-section">
         <div class="signature-line">Authorized Signature</div>
     </div>
@@ -222,7 +217,7 @@ full_html_page = """
 </div>
 """
 
-# ডেটাবেজের মানগুলো নিরাপদে HTML টেমপ্লেটে রিপ্লেস করা হচ্ছে
+# রিপ্লেস লজিক
 full_html_page = full_html_page.replace("__INVOICE_ID__", str(invoice_id))
 full_html_page = full_html_page.replace("__CURRENT_DATE__", str(current_date))
 full_html_page = full_html_page.replace("__NAME__", str(name))
@@ -232,7 +227,6 @@ full_html_page = full_html_page.replace("__DOCTOR__", str(doctor))
 full_html_page = full_html_page.replace("__TABLE_ROWS__", table_rows)
 full_html_page = full_html_page.replace("__TOTAL_AMOUNT__", f"{total_amount:.2f}")
 full_html_page = full_html_page.replace("__DISCOUNT_AMOUNT__", f"{discount_amount:.2f}")
-full_html_page = full_html_page.replace("__DISCOUNT_PCT__", str(discount_pct))
 full_html_page = full_html_page.replace("__ADVANCE_PAID__", f"{advance_paid:.2f}")
 full_html_page = full_html_page.replace("__DUE_AMOUNT__", f"{due_amount:.2f}")
 
