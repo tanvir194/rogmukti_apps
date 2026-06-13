@@ -118,7 +118,6 @@ if record:
         t_name = test_item
         t_price_formatted = "0.00"
         
-        # ব্র্যাকেটের ভেতর থেকে দাম আলাদা করার লজিক ফিক্স (যেমন: Test Name(500.0))
         if "(" in test_item and ")" in test_item:
             try:
                 start_idx = test_item.rfind("(")
@@ -191,7 +190,6 @@ if record:
     </style>
     """
 
-    # এই মেথডটি কোড রেন্ডার না করে সুন্দর ওয়েবসাইট হিসেবে পেজটি দেখাবে
     st.markdown(receipt_html, unsafe_allow_html=True)
 
 else:
