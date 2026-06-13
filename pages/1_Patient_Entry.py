@@ -14,10 +14,10 @@ show_live_sidebar()
 
 # ৩. সিকিউরিটি চেক
 if 'logged_in' not in st.session_state or not st.session_state.logged_in:
-    st.warning("অনধিকার প্রবেশাধিকার! দয়া করে ড্যাশবোর্ড থেকে লগইন করুন।")
+    st.warning("⚠️ অননুমোদিত প্রবেশাধিকার! দয়া করে ড্যাশবোর্ড থেকে লগইন করুন।")
     st.stop()
 
-# ৪. আধুনিক ডার্ক মোড ও গ্লোয়িং মেট্রিকেক্স কালার কাস্টম CSS
+# ৪. আধুনিক ডার্ক মোড ও গ্লোডি মেট্রিকক্স কালার কাস্টম CSS
 st.markdown("""
     <style>
     .stApp {
@@ -36,7 +36,7 @@ st.markdown("""
     [data-testid="stSidebar"] * {
         color: #e2e8f0 !important;
     }
-    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"], .stDateInput input, .stMultiSelect div[data-baseweb="select"] {
+    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"], .stDateInput input, .stMultiSelect div {
         background-color: #18263c !important;
         color: #ffffff !important;
         border: 1px solid #2d3f5d !important;
@@ -77,6 +77,18 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# 🔔 [নতুন আপডেট] লাল মার্ক করা ফাঁকা জায়গার জন্য স্ক্রলিং নোটিশ বক্সে (Marquee)
+st.markdown(
+    """
+    <div style='background-color: #16253b; padding: 10px; border-radius: 8px; border: 1px solid #1f172a; margin-bottom: 20px;'>
+        <marquee style='color: #f1f72a; font-size: 16px; font-weight: bold;'>
+            👋 রোগমুক্তি ডায়াগনস্টিক অ্যান্ড ডিজিটাল ল্যাবে স্বাগতম! ⚠️ সতর্কর্তা: নতুন পেশেন্ট এন্ট্রি ও বিল তৈরি করার সময় তথ্যগুলো অনুগ্রহ করে ডাবল চেক করে নিন।
+        </marquee>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+
 # ৫. ডাটাবেজ কানেকশন
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
@@ -112,19 +124,19 @@ conn.commit()
 
 # ডিফল্ট ডাক্তার ডেটা ইনসার্ট লজিক
 c.execute("SELECT COUNT(*) FROM doctors_list")
-if c.fetchone() == 0:
-    default_docs = [("ডা. সাইদুল ইসলাম",), ("ডা. আসাদুর রহমান",)]
+if c.fetchone()[0] == 0:
+    default_docs = [("ডাঃ সাইদুল ইসলাম",), ("ডাঃ আসাদুর রহমান",)]
     c.executemany("INSERT INTO doctors_list (doc_name) VALUES (?)", default_docs)
     conn.commit()
 
-# ডাটাবেজ থেকে টেস্টের তালিকা লোড করা (এরর ও ফাঁকা লিস্ট ফিক্সিং সিস্টেম)
+# ডাটাবেজ থেকে টেস্টের তালিকা লোড করা
 try:
     c.execute("SELECT test_name FROM custom_tests_list")
-    available_tests = [str(row[0]) for row in c.fetchall() if row]
+    available_tests = [str(row[0]) for row in c.fetchall() if row[0]]
 except:
     available_tests = []
 
-# ল্যাবরেটরির সব আসল টেস্টের নাম ব্যাকআপ তালিকা (যাতে একটি টেস্টও বাদ না পড়ে)
+# ল্যাবরেটরির সব আসল টেস্টের নাম ব্যাকআপ তালিকা
 default_laboratory_tests = [
     "CBC", "ESR", "TC.DC", "HB%", "Platelet Count", "MP", "BT/CT", "C/E Count",
     "Widal", "Aso Titre", "CRP", "RA/RF", "HBs Ag (Screen Test)", "TPHA", "VDRL",
@@ -150,17 +162,16 @@ st.subheader("পেশেন্ট ইনফরমেশন")
 
 col1, col2 = st.columns(2)
 with col1:
-    name = st.text_input("পেশেন্টের নাম (Name of the PT) *")
+    patient_name = st.text_input("পেশেন্টের নাম (Name of the PT) *")
     phone = st.text_input("মোবাইল নাম্বার (Phone) *")
+
 with col2:
     age = st.number_input("বয়স (Age)", min_value=1, max_value=120, value=25)
-
-# ডাটাবেজ থেকে ডাক্তারদের লিস্ট লোড
+    
 c.execute("SELECT doc_name FROM doctors_list")
-db_doctors = [str(row[0]) for row in c.fetchall() if row]
-
+db_doctors = [row[0] for row in c.fetchall()]
 doctor_options = db_doctors + ["অন্যান্য"]
-selected_doctor_setup = st.selectbox("ডাক্তার সিলেক্ট করুন (Refd By)", doctor_options)
+selected_doctor_setup = st.selectbox("রেফারেন্স ডাক্তার (Refd By)*", doctor_options)
 
 if selected_doctor_setup == "অন্যান্য":
     doctor = st.text_input("নতুন ডাক্তারের নাম ও ডিগ্রি এখানে লিখুন: *")
@@ -170,21 +181,20 @@ else:
 st.markdown("---")
 st.subheader("টেস্ট সিলেকশন ও লাইভ রেট এন্ট্রি")
 
-# মাল্টিসিলেক্ট ড্রপডাউন (সব টেস্ট নাম শো করবে)
 selected_tests = st.multiselect("তালিকা থেকে টেস্ট সিলেক্ট করুন:", available_tests)
 
 test_with_prices = []
 total_fee = 0.0
 
 if selected_tests:
-    st.markdown("##### 📌 নির্বাচিত টেস্টসমূহের দাম এখানে দেখে নিন:")
+    st.markdown("##### 📌 নির্বাচিত টেস্টসমূহের দাম এখানে লিখে দিন:")
     for test in selected_tests:
         price_input = st.number_input(
-            f"ফি (৳) -- {test}:", 
-            min_value=0.0, 
-            step=50.0, 
-            value=None, 
-            placeholder="ফি লিখুন...", 
+            f"💰 {test}:",
+            min_value=0.0,
+            step=50.0,
+            value=None,
+            placeholder="ফি লিখুন...",
             key=f"price_{test}"
         )
         price = price_input if price_input is not None else 0.0
@@ -196,24 +206,24 @@ col_c1, col_c2 = st.columns(2)
 with col_c1:
     custom_name = st.text_input("কাস্টম টেস্টের নাম:")
 with col_c2:
-    custom_price_input = st.number_input("কাস্টম টেস্টের মূল্য:", min_value=0.0, step=50.0, value=None, placeholder="মূল্য লিখুন...")
+    custom_price_input = st.number_input("কাস্টম টেস্টের মূল্য:", min_value=0.0, step=50.0, value=None, placeholder="ফি...")
     custom_price = custom_price_input if custom_price_input is not None else 0.0
 
 if custom_name.strip():
     total_fee += custom_price
     test_with_prices.append(f"{custom_name.strip()}({custom_price})")
 
-st.info(f"ℹ️ লাইভ মোট বিল (টোটাল টেস্ট ফি): {total_fee} টাকা")
+st.info(f"💵 লাইভ মোট বিল (টোটাল টেস্ট ফি): {total_fee} টাকা")
 st.markdown("---")
 
 st.subheader("পেমেন্ট ও ডিসকাউন্ট")
 col3, col4 = st.columns(2)
 
 with col3:
-    discount_amount_input = st.number_input("মোট ডিসকাউন্ট (Discount Amount ৳)", min_value=0.0, value=None, step=10.0, placeholder="ডিসকাউন্ট লিখুন...")
+    discount_amount_input = st.number_input("মোট ডিসকাউন্ট (Discount Amount ৳)", min_value=0.0, value=None, placeholder="৳...")
     discount_amount = discount_amount_input if discount_amount_input is not None else 0.0
     
-    advance_paid_input = st.number_input("অগ্রিম পরিশোধ (Advance Paid)", min_value=0.0, value=None, placeholder="অগ্রিম টাকা লিখুন...")
+    advance_paid_input = st.number_input("অগ্রিম পরিশোধ (Advance Paid)", min_value=0.0, value=None, placeholder="৳...")
     advance_paid = advance_paid_input if advance_paid_input is not None else 0.0
 
 # গাণিতিক সূত্র
@@ -221,17 +231,17 @@ net_payable = total_fee - discount_amount
 due_amount = net_payable - advance_paid
 
 with col4:
-    st.metric("ডিসকাউন্ট প্রণয় (টাকা)", f"{discount_amount} ৳")
+    st.metric("ডিসকাউন্ট প্রাপ্য (টাকা)", f"{discount_amount} ৳")
     st.metric("মোট বাকি টাকা (Due)", f"{due_amount} ৳")
 
 st.markdown("---")
 submit_button = st.button("Save Bill and Go to Print (বিল সেভ করুন)")
 
 if submit_button:
-    if not name or not test_with_prices:
+    if not patient_name or not test_with_prices:
         st.error("🚨 পেশেন্টের নাম এবং অন্তত একটি টেস্টের নাম দেওয়া বাধ্যতামূলক!")
     elif selected_doctor_setup == "অন্যান্য" and not doctor.strip():
-        st.error("🚨 নতুন ডাক্তারের নাম টেক্সট বক্সে লিখুন!")
+        st.error("🚨 নতুন ডাক্তারের নাম দেওয়া বাধ্যতামূলক!")
     else:
         current_date = datetime.now().strftime("%Y-%m-%d")
         tests_data_str = ", ".join(test_with_prices)
@@ -254,8 +264,8 @@ if submit_button:
         try:
             c.execute("""
             INSERT INTO billing_records (patient_name, age, phone, doctor, selected_tests, total_amount, discount_percent, net_paid, due_amount, billing_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (str(name), int(age), str(phone), str(doctor), str(tests_data_str), float(total_fee), float(discount_amount), float(advance_paid), float(due_amount), str(current_date)))
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+            (patient_name, int(age), str(phone), str(doctor), str(tests_data_str), float(total_fee), float(discount_amount), float(advance_paid), float(due_amount), str(current_date)))
             conn.commit()
             
             st.session_state.last_invoice_id = c.lastrowid
