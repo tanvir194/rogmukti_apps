@@ -6,7 +6,7 @@ import sqlite3
 # ১. পেজ কনফিগারেশন
 st.set_page_config(page_title="Money Receipt", layout="wide")
 
-# ২. কাস্টম ডার্ক মোড এবং রিসিটের ফুল-উইডথ CSS
+# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম ফুল-উইডথ ও ফ্রেম CSS
 st.markdown("""
     <style>
     .stApp {
@@ -39,11 +39,11 @@ st.markdown("""
         color: #000000 !important;
         border-radius: 12px;
         padding: 30px;
-        max-width: 100% !important; /* স্ক্রিনেও চওড়া দেখাবে */
+        max-width: 950px;
         margin: 0 auto;
         font-family: 'Segoe UI', Arial, sans-serif;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        border: 1px solid #cbd5e1;
+        border: 2px solid #000000;
     }
     .receipt-header {
         text-align: center;
@@ -66,12 +66,12 @@ st.markdown("""
         background-color: #f1f5f9 !important;
         color: #1e3a8a !important;
         border-bottom: 2px solid #cbd5e1 !important;
-        padding: 12px 10px;
+        padding: 10px;
         text-align: left;
     }
     .receipt-table td {
         border-bottom: 1px solid #e2e8f0 !important;
-        padding: 12px 10px;
+        padding: 10px;
         color: #334155 !important;
     }
     .summary-text {
@@ -81,7 +81,7 @@ st.markdown("""
         color: #1e293b !important;
     }
     
-    /* 🖨️ প্রিন্ট স্ক্রিপ্ট (A4 ফুল স্ক্রিন চওড়া এবং ডাবল ফেস বন্ধ করার আসল ফিক্স) */
+    /* 🖨️ প্রিন্ট স্ক্রিপ্ট (A4 ফুল স্ক্রিন চওড়া ও ফ্রেম আবদ্ধ করার আসল লজিক) */
     @media print {
         body * {
             visibility: hidden !important;
@@ -90,49 +90,50 @@ st.markdown("""
             visibility: visible !important;
         }
         
-        /* চারপাশের সাদা মার্জিন উধাও করে পুরো এ৪ পেজ চওড়া করার ফিক্স */
+        /* পুরো এ৪ পেজ চওড়া এবং বর্ডার ফ্রেমে আবদ্ধ করার কাস্টম কোড */
         .receipt-container {
             position: absolute !important;
             left: 0 !important; 
             top: 0 !important;
-            width: 100% !important;  /* রিসিটটি পুরো এ৪ পেজ জুড়ে বড় করার জন্য */
+            width: 100% !important;  
             max-width: 100% !important;
             box-shadow: none !important;
-            border: none !important;  
-            padding: 0px !important;  
+            border: 2px solid #000000 !important; /* 👈 পুরো রিসিটটিকে কালো ফ্রেমে আবদ্ধ করবে */
+            padding: 30px !important;  
             margin: 0px !important;
-            line-height: 1.6 !important;
+            line-height: 1.5 !important;
             display: block !important;
             height: auto !important; 
+            box-sizing: border-box !important;
         }
         
         .receipt-header {
-            margin-bottom: 30px !important;
-            padding-bottom: 15px !important;
+            margin-bottom: 20px !important;
+            padding-bottom: 12px !important;
             border-bottom: 2px solid #1e3a8a !important;
         }
         
         .receipt-table th {
-            padding: 12px 10px !important;
+            padding: 10px !important;
             font-size: 15px !important;
             background-color: #f1f5f9 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
             border-bottom: 2px solid #000000 !important;
         }
         .receipt-table td {
-            padding: 12px 10px !important; 
+            padding: 10px !important; 
             font-size: 15px !important;
             border-bottom: 1px solid #cbd5e1 !important;
         }
         .summary-text {
-            margin-top: 8px !important;
+            margin-top: 6px !important;
             font-size: 16px !important;
         }
         
         @page {
             size: A4;
-            margin: 0mm !important; /* কাগজের চারপাশের সমস্ত ডিফল্ট সাদা মার্জিন পুরোপুরি ০ করা হলো */
+            margin: 0mm !important; /* চারপাশের বাড়তি জায়গা জিরো */
         }
     }
     </style>
@@ -155,7 +156,7 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
-    # 🛠️ ফিক্সড: ডাটাবেজের আসল ইনডেক্সিং পুনরুদ্ধার করা হলো যাতে রোগীর ডাটা ক্র্যাশ না করে
+    # ডাটাবেজ ইনডেক্সিং ফিক্স
     p_id = record[0]
     p_name = record[1]
     p_age = record[2]
@@ -173,7 +174,7 @@ if record:
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-    # HTML রিসিট জেনারেট করা (মোবাইল নম্বর: 01711867637)
+    # HTML রিসিট জেনারেট করা
     receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
@@ -187,11 +188,11 @@ if record:
 </tr>
 <tr>
 <td><b>Patient Name:</b> {p_name}</td>
-<td style="text-align:right;"><b>Age:</b> {p_age} Y</td>
+<td style="text-align:right; width:50%;"><b>Age:</b> {p_age} Y</td>
 </tr>
 <tr>
 <td><b>Mobile No:</b> {p_phone}</td>
-<td style="text-align:right;"><b>Ref. By:</b> {p_doctor}</td>
+<td style="text-align:right; width:50%;"><b>Ref. By:</b> {p_doctor}</td>
 </tr>
 </table>
 <div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:6px; font-size:16px;">Test Description & Rate</div>
@@ -217,7 +218,7 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
-            # 🛠️ ফিক্সড: পাইথন লিস্ট স্প্লিট মেথড এবং ইনডেক্সিং পুরোপুরি ঠিক করা হয়েছে
+            # পাইথন লিস্ট স্প্লিট মেথড একুরেট ফিক্স
             parts = test_item.split("(")
             t_name = parts[0].strip()
             t_price = parts[1].replace(")", "").strip()
