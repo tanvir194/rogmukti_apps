@@ -83,7 +83,6 @@ st.markdown("""
     
     /* 🖨️ প্রিন্ট করার সময় এই ডিজাইনটি চালু হবে (A4 Premium Fix) */
     @media print {
-        /* অ্যাপের অন্যান্য সব বাটন ও ইনপুট বক্স লুকিয়ে ফেলবে */
         header, [data-testid="stSidebar"], .stButton, .stNumberInput, div.block-container button {
             display: none !important;
             visibility: hidden !important;
@@ -92,7 +91,6 @@ st.markdown("""
             background-color: #ffffff !important;
             color: #000000 !important;
         }
-        /* রিসিটটি যাতে ভাঙা না আসে, কাগজের মাপে সুন্দর বর্ডারসহ বসবে */
         .receipt-container {
             position: absolute !important;
             left: 5% !important;
@@ -108,7 +106,7 @@ st.markdown("""
         }
         .receipt-table th {
             background-color: #f1f5f9 !important;
-            -webkit-print-color-adjust: exact; /* ব্যাকগ্রাউন্ড কালার প্রিন্ট করার জন্য */
+            -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
             border-bottom: 2px solid #000000 !important;
         }
@@ -145,7 +143,7 @@ if record:
     p_age = record[2]
     p_phone = record[3]
     p_doctor = record[4]
-    p_tests_str = record[5]      # "Aso Titre(450.0), CBC(600.0), CRP(450.0)"
+    p_tests_str = record[5]
     total_bill = record[6]
     discount_tk = record[7]     
     advance_paid = record[8]
@@ -153,11 +151,16 @@ if record:
     billing_date = record[10]
 
     st.write("")
+    # 🛠️ বাটন ট্রিগার জাভাস্ক্রিপ্ট ফিক্স
     if st.button("🖨️ Print Money Receipt Now"):
-        st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
+        st.markdown("""
+            <script>
+                window.print();
+            </script>
+        """, unsafe_allow_html=True)
     st.write("")
 
-# --- HTML স্ট্রিং এর শুরুতে বাড়তি স্পেস (Indentation) রাখা যাবে না ---
+# --- HTML স্ট্রিং রেন্ডারিং (Zero Indentation বজায় রাখা হয়েছে) ---
     receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
@@ -189,7 +192,6 @@ if record:
 </thead>
 <tbody>"""
 
-    # টেক্সট স্প্লিটিং লজিক (আপনার অরিজিনাল কোডের শক্তিশালী মেথড)
     if p_tests_str:
         tests_list = p_tests_str.split(",")
     else:
