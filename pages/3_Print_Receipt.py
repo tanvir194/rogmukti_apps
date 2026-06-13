@@ -6,130 +6,7 @@ import sqlite3
 # ১. পেজ কনফিগারেশন
 st.set_page_config(page_title="Money Receipt", layout="wide")
 
-# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম ফ্রি-সাইজ (Full A4) CSS
-st.markdown("""
-    <style>
-    .stApp {
-        background-color: #0b131f !important;
-        color: #e2e8f0 !important;
-    }
-    .stApp label {
-        color: #38bdf8 !important;
-        font-weight: 500 !important;
-    }
-    .stTextInput input {
-        background-color: #18263c !important;
-        color: #ffffff !important;
-        border: 1px solid #2d3f5d !important;
-        border-radius: 8px !important;
-        padding: 10px !important;
-    }
-    .stButton button {
-        background-color: #0284c7 !important;
-        color: white !important;
-        border-radius: 8px !important;
-        padding: 10px 24px !important;
-        font-weight: bold !important;
-        width: 100%;
-    }
-    
-    /* 📄 স্ক্রিন ভিউ ডিজাইন (সফটওয়্যারে যেমন দেখাবে) */
-    .receipt-container {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-        border-radius: 12px;
-        padding: 30px;
-        max-width: 850px;
-        margin: 0 auto;
-        font-family: 'Segoe UI', Arial, sans-serif;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        border: 1px solid #cbd5e1;
-    }
-    .receipt-header {
-        text-align: center;
-        border-bottom: 2px solid #1e3a8a;
-        padding-bottom: 12px;
-        margin-bottom: 20px;
-    }
-    .receipt-title {
-        color: #1e3a8a !important;
-        font-size: 24px;
-        font-weight: bold;
-        margin: 0;
-    }
-    .receipt-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-    }
-    .receipt-table th {
-        background-color: #f1f5f9 !important;
-        color: #1e3a8a !important;
-        border-bottom: 2px solid #cbd5e1 !important;
-        padding: 8px;
-        text-align: left;
-    }
-    .receipt-table td {
-        border-bottom: 1px solid #e2e8f0 !important;
-        padding: 8px;
-        color: #334155 !important;
-    }
-    .summary-text {
-        text-align: right;
-        font-size: 14px;
-        margin-top: 4px;
-        color: #1e293b !important;
-    }
-    
-    /* 🖨️ প্রিন্ট স্ক্রিপ্ট (A4 ফ্রি সাইজ এবং ওপরের লেখা ভ্যানিশ করার আসল লজিক) */
-    @media print {
-        /* ১. পেজের ওপরে ও চারপাশে থাকা "English Money Receipt" সহ সব কিছু পুরোপুরি হাইড বা অদৃশ্য করবে */
-        body * {
-            visibility: hidden !important;
-        }
-        
-        /* ২. শুধুমাত্র মানি রিসিটের মেইন কন্টেইনার এবং এর ভেতরের লেখা দৃশ্যমান রাখবে */
-        .receipt-container, .receipt-container * {
-            visibility: visible !important;
-        }
-        
-        /* ৩. রিসিটটিকে ফ্রি-সাইজ করে পুরো এ৪ পেজ জুড়ে চওড়া করা এবং বর্ডারে আবদ্ধ করা */
-        .receipt-container {
-            position: absolute !important;
-            left: 0 !important; 
-            top: 0 !important;
-            width: 100% !important;   /* 👈 এটি রিসিটটিকে এক কোণায় ছোট না রেখে পুরো পেজ জুড়ে ফ্রি-সাইজ করবে */
-            max-width: 100% !important;
-            box-shadow: none !important;
-            border: 2px solid #000000 !important; /* 👈 চারদিকে একটি সুন্দর প্রফেশনাল ফ্রেম তৈরি করবে */
-            padding: 30px !important;  
-            margin: 0px !important;
-            line-height: 1.5 !important;
-            display: block !important;
-            height: auto !important; 
-            box-sizing: border-box !important;
-        }
-        
-        .receipt-table th {
-            background-color: #f1f5f9 !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            border-bottom: 2px solid #000000 !important;
-        }
-        .receipt-table td {
-            border-bottom: 1px solid #cbd5e1 !important;
-        }
-        
-        /* ৪. এ৪ পেজের ডিফল্ট বর্ডার মার্জিন একদম ০ (Zero) করে দেওয়া */
-        @page {
-            size: A4;
-            margin: 0mm !important; /* 👈 ওপরে ও চারপাশের সমস্ত বাড়তি সাদা বর্ডার স্পেস ডিলিট */
-        }
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-st.title("🖨️ English Money Receipt")
+st.title("🖨️ A4 Full Width Money Receipt")
 
 # ডাটাবেজ কানেকশন
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
@@ -146,6 +23,7 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
+    # ডাটাবেজ থেকে ইনডেক্স অনুযায়ী ডেটা রিড করা
     p_id = record[0]
     p_name = record[1]
     p_age = record[2]
@@ -163,38 +41,49 @@ if record:
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-    # HTML রিসিট জেনারেট করা (মোবাইল নম্বর: 01711867637)
-    receipt_html = f"""<div class="receipt-container">
-<div class="receipt-header">
-<div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
-<div style="font-size:14px; color:#475569; margin-top:4px;">Mollah stand, Auliapur, Patuakhali</div>
-<div style="font-size:14px; color:#1e3a8a; font-weight: bold; margin-top:4px;">Mobile: 01711867637</div>
-</div>
-<table style="width:100%; font-size:15px; margin-bottom:25px; color:#1e293b; line-height: 1.6;">
-<tr>
-<td style="width:50%;"><b>Invoice ID:</b> #{p_id}</td>
-<td style="text-align:right; width:50%;"><b>Date:</b> {billing_date}</td>
-</tr>
-<tr>
-<td><b>Patient Name:</b> {p_name}</td>
-<td style="text-align:right; width:50%;"><b>Age:</b> {p_age} Y</td>
-</tr>
-<tr>
-<td><b>Mobile No:</b> {p_phone}</td>
-<td style="text-align:right; width:50%;"><b>Ref. By:</b> {p_doctor}</td>
-</tr>
-</table>
-<div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:6px; font-size:16px;">Test Description & Rate</div>
-<table class="receipt-table">
-<thead>
-<tr>
-<th style="width:10%; text-align:center;">SL</th>
-<th style="width:65%;">Test Name</th>
-<th style="width:25%; text-align:right;">Price</th>
-</tr>
-</thead>
-<tbody>"""
+    # 📄 উইন্ডোজ ৭ ও পুরানো ক্রোমের জন্য সরাসরি টেবিল বডি (যা পুরো এ৪ পেজ চওড়া হতে বাধ্য করবে)
+    # চারপাশের বাড়তি বর্ডার বা মার্জিন ডিলিট করার কাস্টম স্টাইলসহ
+    receipt_html = f"""
+    <div style="width:100%; max-width:100%; font-family:Arial, sans-serif; color:#000000; padding:10px; box-sizing:border-box;">
+        
+        <!-- ডায়াগনস্টিক সেন্টারের হেডার সেকশন -->
+        <div style="text-align:center; border-bottom:3px double #000000; padding-bottom:15px; margin-bottom:20px;">
+            <h1 style="font-size:32px; font-weight:bold; margin:0; color:#000000;">ROGMUKTI DIAGNOSTIC CENTRE</h1>
+            <p style="font-size:15px; margin:5px 0 0 0;">Mollah stand, Auliapur, Patuakhali</p>
+            <p style="font-size:16px; font-weight:bold; margin:3px 0 0 0;">Mobile: 01711867637</p>
+        </div>
+        
+        <!-- পেশেন্ট ডিটেইলস টেবিল (পুরো এ৪ পেজ চওড়া) -->
+        <table style="width:100%; font-size:16px; margin-bottom:25px; line-height:1.8;">
+            <tr>
+                <td style="width:50%;"><b>Invoice ID:</b> #{p_id}</td>
+                <td style="text-align:right; width:50%;"><b>Date:</b> {billing_date}</td>
+            </tr>
+            <tr>
+                <td><b>Patient Name:</b> {p_name}</td>
+                <td style="text-align:right;"><b>Age:</b> {p_age} Y</td>
+            </tr>
+            <tr>
+                <td><b>Mobile No:</b> {p_phone}</td>
+                <td style="text-align:right;"><b>Ref. By:</b> {p_doctor}</td>
+            </tr>
+        </table>
+        
+        <div style="font-weight:bold; font-size:16px; border-bottom:2px solid #000000; padding-bottom:5px; margin-bottom:10px;">Test Description & Rate</div>
+        
+        <!-- মূল টেস্টের লিস্ট টেবিল (ফুল উইডথ এ৪) -->
+        <table style="width:100%; border-collapse:collapse; font-size:16px;">
+            <thead>
+                <tr style="background-color:#f2f2f2;">
+                    <th style="width:10%; border:1px solid #000000; padding:10px; text-align:center;">SL</th>
+                    <th style="width:65%; border:1px solid #000000; padding:10px; text-align:left;">Test Name</th>
+                    <th style="width:25%; border:1px solid #000000; padding:10px; text-align:right;">Price</th>
+                </tr>
+            </thead>
+            <tbody>
+    """
 
+    # কমা ধরে টেস্টগুলোকে আলাদা লাইনে ভাগ করা
     if p_tests_str:
         tests_list = p_tests_str.split(",")
     else:
@@ -207,8 +96,10 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
-            t_name = test_item.split("(")[0].strip()
-            t_price = test_item.split("(")[1].replace(")", "").strip()
+            # পাইথনের নিখুঁত লিস্ট ইনডেক্সিং স্প্লিট লজিক
+            parts = test_item.split("(")
+            t_name = parts[0].strip()
+            t_price = parts[1].replace(")", "").strip()
             try:
                 t_price_formatted = f"{float(t_price):.2f}"
             except:
@@ -217,25 +108,50 @@ if record:
             t_name = test_item
             t_price_formatted = "0.00"
             
-        receipt_html += f"""<tr>
-<td style="text-align:center;">{serial_no}</td>
-<td>{t_name}</td>
-<td style="text-align:right;">{t_price_formatted} Tk</td>
-</tr>"""
+        receipt_html += f"""
+                <tr>
+                    <td style="border:1px solid #000000; padding:10px; text-align:center;">{serial_no}</td>
+                    <td style="border:1px solid #000000; padding:10px;">{t_name}</td>
+                    <td style="border:1px solid #000000; padding:10px; text-align:right;">{t_price_formatted} Tk</td>
+                </tr>
+        """
         serial_no += 1
 
-    receipt_html += f"""</tbody>
-</table>
-<div style="margin-top:25px; border-top:1px dashed #cbd5e1; padding-top:12px;">
-<div class="summary-text"><b>Total Bill:</b> {total_bill:.2f} Tk</div>
-<div class="summary-text"><b>Discount:</b> {discount_tk:.2f} Tk</div>
-<div class="summary-text"><b>Advance Paid:</b> {advance_paid:.2f} Tk</div>
-<div class="summary-text" style="font-size:18px; color:#ef4444; margin-top:6px;"><b>Due Amount:</b> {due_amount:.2f} Tk</div>
-</div>
-<div style="text-align:center; margin-top:50px; font-size:14px; color:#64748b; font-style:italic;">
-Thank you for trusting us with your care.
-</div>
-</div>"""
+    # ফ্লোট ডাটা টাইপ সেফটি কনভার্সন
+    try:
+        t_bill = float(total_bill)
+        d_tk = float(discount_tk)
+        a_paid = float(advance_paid)
+        d_amt = float(due_amount)
+    except:
+        t_bill, d_tk, a_paid, d_amt = 0.0, 0.0, 0.0, 0.0
+
+    # ফাইনাল সামারি এবং টাকার হিসাব (ডান পাশে চওড়া বক্স আকারে)
+    receipt_html += f"""
+            </tbody>
+        </table>
+        
+        <div style="margin-top:25px; float:right; width:45%; font-size:16px; border:1px solid #000000; padding:15px; background-color:#f9f9f9; line-height:1.6;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><b>Total Bill:</b> <span>{t_bill:.2f} Tk</span></div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><b>Discount:</b> <span>{d_tk:.2f} Tk</span></div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><b>Advance Paid:</b> <span>{a_paid:.2f} Tk</span></div>
+            <div style="display:flex; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid #000000; font-size:18px; color:#ff0000;"><b>Due Amount:</b> <b>{d_amt:.2f} Tk</b></div>
+        </div>
+        <div style="clear:both;"></div>
+        
+        <div style="text-align:center; margin-top:60px; font-size:14px; color:#555555; font-style:italic; border-top:1px dashed #000000; padding-top:15px;">
+            Thank you for trusting us with your care.
+        </div>
+    </div>
+    
+    <!-- প্রিন্ট মার্জিন এবং ফালতু অংশ মুছে ফেলার ডিফল্ট প্রিন্ট ট্যাগ -->
+    <style>
+    @media print {
+        header, [data-testid="stSidebar"], .stButton, .stNumberInput { display: none !important; }
+        @page { size: A4; margin: 0mm; }
+    }
+    </style>
+    """
     
     st.markdown(receipt_html, unsafe_allow_html=True)
 
