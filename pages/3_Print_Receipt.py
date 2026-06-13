@@ -91,27 +91,27 @@ st.markdown("""
         .receipt-container, .receipt-container * {
             visibility: visible !important;
         }
-        
-        /* ৩. রিসিটটিকে এ৪ কাগজের একদম টপে এবং ফুল স্ক্রিনে সেট করার জন্য রিসেট */
+                /* 🖨️ বর্তমান পজিশন ঠিক রেখে রসিদটি কাগজের আরও ওপরে উঠানোর ফিক্স */
         .receipt-container {
             position: absolute !important;
-            left: -30% !important;
-            top: -150% !important;
-            width: 100% !important;
-            max-width: 150% !important;
+            left: 15% !important; 
+            top: 0 !important;           /* এটি ০-ই থাকবে যাতে পজিশন ঠিক থাকে */
+            width: 70% !important; 
             box-shadow: none !important;
-            border: 4px solid #000000 !important;
-            padding: 00px !important;
-            margin: 0 auto !important;
+            border: 1px solid #000000 !important;
+            padding: 20px !important;
+            margin-top: -10px !important; /* 👈 ওপরে উঠানোর জন্য মাইনাস মার্জিন যোগ করা হলো */
         }
         
-        /* ৪. টেবিল বর্ডার প্রিন্ট ফিক্স */
-        .receipt-table th {
-            background-color: #f1f5f9 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-            border-bottom: 2px solid #000000 !important;
+        /* 📄 পেজের চারপাশের বর্ডার মার্জিন ফিক্স */
+        @page {
+            size: A4;
+            margin-top: 5mm;       /* 👈 ওপরের মার্জিন ১৫মিমি থেকে কমিয়ে ৫মিমি করা হলো */
+            margin-bottom: 15mm;
+            margin-left: 15mm;
+            margin-right: 15mm;
         }
+        
         .receipt-table td {
             border-bottom: 1px solid #000000 !important;
         }
