@@ -93,12 +93,12 @@ st.markdown("""
         /* চারপাশের সাদা বর্ডার উধাও করে পুরো এ৪ পেজ চওড়া করার ফিক্স */
         .receipt-container {
             position: absolute !important;
-            left: 0 !important; 
-            top: 0 !important;
-            width: 100% !important;  
-            max-width: 100% !important;
+            left: -100 !important; 
+            top: -100 !important;
+            width: -100% !important;  
+            max-width: -100% !important;
             box-shadow: none !important;
-            border: none !important;  
+            border: true !important;  
             padding: 0px !important;  
             margin: 0px !important;
             line-height: 1.5 !important;
