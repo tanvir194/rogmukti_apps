@@ -72,9 +72,10 @@ for index, item in enumerate(tests_list, start=1):
     table_rows += f"<tr><td style='text-align: center;'>{index}</td><td>{t_name}</td><td style='text-align: right;'>{t_price_val:.2f} Tk</td></tr>"
 
 # ------------------- Full HTML, CSS and Print Logic -------------------
-full_html_page = f"""
+# CSS ব্র্যাকেটের ভুল এড়াতে এখানে f-string এর পরিবর্তে সাধারণ স্ট্রিং ও .replace() ব্যবহার করা হয়েছে।
+full_html_page = """
 <style>
-.receipt-box {{
+.receipt-box {
     max-width: 550px;
     margin: 20px auto;
     padding: 25px;
@@ -84,34 +85,34 @@ full_html_page = f"""
     color: black;
     font-family: 'Arial', sans-serif;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}}
-.header {{
+}
+.header {
     text-align: center;
     background-color: #1a365d;
     color: white;
     padding: 15px;
     border-radius: 8px 8px 0 0;
     margin-bottom: 20px;
-}}
-.header h2 {{ margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; }}
-.header p {{ margin: 5px 0 0 0; font-size: 13px; opacity: 0.9; }}
-.info-table, .test-table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; color: black; }}
-.info-table td {{ padding: 5px 0; font-size: 14px; }}
-.test-table th, .test-table td {{ border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }}
-.test-table th {{ background-color: #f2f2f2; color: #1a365d; font-weight: bold; }}
-.total-section {{ text-align: right; font-size: 15px; line-height: 1.6; }}
-.total-section b {{ color: #1a365d; }}
+}
+.header h2 { margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; }
+.header p { margin: 5px 0 0 0; font-size: 13px; opacity: 0.9; }
+.info-table, .test-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; color: black; }
+.info-table td { padding: 5px 0; font-size: 14px; }
+.test-table th, .test-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
+.test-table th { background-color: #f2f2f2; color: #1a365d; font-weight: bold; }
+.total-section { text-align: right; font-size: 15px; line-height: 1.6; }
+.total-section b { color: #1a365d; }
 
-@media print {{
-    header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, div.stWrite {{
+@media print {
+    header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, div.stWrite {
         display: none !important;
-    }}
-    .main .block-container {{
+    }
+    .main .block-container {
         padding: 0 !important;
         margin: 0 !important;
         max-width: 100% !important;
-    }}
-    .receipt-box {{
+    }
+    .receipt-box {
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
@@ -119,12 +120,12 @@ full_html_page = f"""
         width: 100% !important;
         max-width: 100% !important;
         display: block !important;
-    }}
-    @page {{
+    }
+    @page {
         size: A4 portrait;
         margin: 15mm 10mm 10mm 10mm;
-    }}
-}}
+    }
+}
 </style>
 
 <div class="receipt-box">
@@ -138,16 +139,16 @@ full_html_page = f"""
     <!-- Patient Info Section in English -->
     <table class="info-table">
         <tr>
-            <td><b>Invoice ID:</b> #{invoice_id}</td>
-            <td style="text-align: right;"><b>Date:</b> {current_date}</td>
+            <td><b>Invoice ID:</b> #__INVOICE_ID__</td>
+            <td style="text-align: right;"><b>Date:</b> __CURRENT_DATE__</td>
         </tr>
         <tr>
-            <td><b>Patient Name:</b> {name}</td>
-            <td style="text-align: right;"><b>Age:</b> {age} Y</td>
+            <td><b>Patient Name:</b> __NAME__</td>
+            <td style="text-align: right;"><b>Age:</b> __AGE__ Y</td>
         </tr>
         <tr>
-            <td><b>Mobile No:</b> {phone}</td>
-            <td style="text-align: right;"><b>Ref. By:</b> {doctor}</td>
+            <td><b>Mobile No:</b> __PHONE__</td>
+            <td style="text-align: right;"><b>Ref. By:</b> __DOCTOR__</td>
         </tr>
     </table>
     
@@ -161,17 +162,17 @@ full_html_page = f"""
             </tr>
         </thead>
         <tbody>
-            {table_rows}
+            __TABLE_ROWS__
         </tbody>
     </table>
     
     <!-- Cost Breakdowns in English -->
     <div class="total-section">
-        <p>Total Bill: {total_amount:.2f} Tk</p>
-        <p>Discount: {discount_amount:.2f} Tk ({discount_pct}%)</p>
-        <p>Advance Paid: <b>{advance_paid:.2f} Tk</b></p>
+        <p>Total Bill: __TOTAL_AMOUNT__ Tk</p>
+        <p>Discount: __DISCOUNT_AMOUNT__ Tk (__DISCOUNT_PCT__%)</p>
+        <p>Advance Paid: <b>__ADVANCE_PAID__ Tk</b></p>
         <p style="font-size: 16px; border-top: 1px dashed #1a365d; padding-top: 5px; margin-top: 5px;">
-            <b>Due Amount: <span style="color: red;">{due_amount:.2f} Tk</span></b>
+            <b>Due Amount: <span style="color: red;">__DUE_AMOUNT__ Tk</span></b>
         </p>
     </div>
     
@@ -180,6 +181,20 @@ full_html_page = f"""
     </div>
 </div>
 """
+
+# ডেটাবেজের মানগুলো নিরাপদে HTML টেমপ্লেটে রিপ্লেস করা হচ্ছে
+full_html_page = full_html_page.replace("__INVOICE_ID__", str(invoice_id))
+full_html_page = full_html_page.replace("__CURRENT_DATE__", str(current_date))
+full_html_page = full_html_page.replace("__NAME__", str(name))
+full_html_page = full_html_page.replace("__AGE__", str(age))
+full_html_page = full_html_page.replace("__PHONE__", str(phone))
+full_html_page = full_html_page.replace("__DOCTOR__", str(doctor))
+full_html_page = full_html_page.replace("__TABLE_ROWS__", table_rows)
+full_html_page = full_html_page.replace("__TOTAL_AMOUNT__", f"{total_amount:.2f}")
+full_html_page = full_html_page.replace("__DISCOUNT_AMOUNT__", f"{discount_amount:.2f}")
+full_html_page = full_html_page.replace("__DISCOUNT_PCT__", str(discount_pct))
+full_html_page = full_html_page.replace("__ADVANCE_PAID__", f"{advance_paid:.2f}")
+full_html_page = full_html_page.replace("__DUE_AMOUNT__", f"{due_amount:.2f}")
 
 # ------------------- 1. Streamlit Print Button -------------------
 if st.button("🖨️ Print Money Receipt Now", type="primary", use_container_width=True):
