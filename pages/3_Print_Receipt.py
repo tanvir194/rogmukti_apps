@@ -56,7 +56,7 @@ discount_amount = (total_amount * discount_pct) / 100.0
 # Split selected tests by pipe '|' symbol
 tests_list = [item.strip() for item in selected_tests_data.split('|') if item.strip()]
 
-# Create Dynamic HTML Table Rows for Tests
+# Create Dynamic HTML Table Rows for Tests (সিরিয়াল এবং প্রতিটা টেস্টের সামনে রেট আলাদা করার লজিক)
 table_rows = ""
 for index, item in enumerate(tests_list, start=1):
     if ":" in item:
@@ -72,7 +72,6 @@ for index, item in enumerate(tests_list, start=1):
     table_rows += f"<tr><td style='text-align: center;'>{index}</td><td>{t_name}</td><td style='text-align: right;'>{t_price_val:.2f} Tk</td></tr>"
 
 # ------------------- Full HTML, CSS and Print Logic -------------------
-# CSS ব্র্যাকেটের ভুল এড়াতে এখানে f-string এর পরিবর্তে সাধারণ স্ট্রিং ও .replace() ব্যবহার করা হয়েছে।
 full_html_page = """
 <style>
 .receipt-box {
@@ -96,12 +95,25 @@ full_html_page = """
 }
 .header h2 { margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; }
 .header p { margin: 5px 0 0 0; font-size: 13px; opacity: 0.9; }
-.info-table, .test-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; color: black; }
+.info-table, .test-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; color: black; }
 .info-table td { padding: 5px 0; font-size: 14px; }
 .test-table th, .test-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
 .test-table th { background-color: #f2f2f2; color: #1a365d; font-weight: bold; }
 .total-section { text-align: right; font-size: 15px; line-height: 1.6; }
 .total-section b { color: #1a365d; }
+
+/* MONEY RECEIPT বড় লেখার জন্য স্টাইল */
+.money-receipt-title {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    margin: 15px 0;
+    color: #1a365d;
+    border-top: 1px dashed #1a365d;
+    border-bottom: 1px dashed #1a365d;
+    padding: 5px 0;
+}
 
 @media print {
     header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, div.stWrite {
@@ -151,6 +163,9 @@ full_html_page = """
             <td style="text-align: right;"><b>Ref. By:</b> __DOCTOR__</td>
         </tr>
     </table>
+    
+    <!-- বড় করে বোল্ড MONEY RECEIPT টাইটেল -->
+    <div class="money-receipt-title">MONEY RECEIPT</div>
     
     <h3 style="color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 5px; font-size: 15px; margin-top: 10px;">Test Description & Rate</h3>
     <table class="test-table">
