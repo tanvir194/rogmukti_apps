@@ -167,7 +167,22 @@ if record:
                 <td style="padding: 5px;"><b>Due Amount:</b></td>
                 <td style="text-align: right; padding: 5px;"><b>{d_amt:.2f} Tk</b></td>
             </tr>
-        # আপনার এক্সিসটিং receipt_html এর ট্রিপল কোটেশন শেষ হওয়ার ঠিক পরেই নিচের ২ টি লাইন থাকবে
+        </table>
+        <div style="clear: both;"></div>
+
+        <div style="text-align: center; margin-top: 40px; font-size: 14px; color: #555555; font-style: italic;">
+            Thank you for trusting us with your care.
+        </div>
+    </div>
+    
+    <style>
+    @media print {{
+        header, [data-testid="stSidebar"], .stButton, .stNumberInput {{ display: none !important; }}
+        @page {{ size: A4; margin: 0mm; }}
+    }}
+    </style>
+    """
+
     st.markdown(receipt_html, unsafe_allow_html=True)
 
 else:
