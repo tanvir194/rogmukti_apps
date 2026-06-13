@@ -24,7 +24,7 @@ def show_live_sidebar():
         today_date = datetime.datetime.now().strftime("%Y-%m-%d")
         
         with sqlite3.connect(db_name) as conn:
-            # ১. ডাটাবেস থেকে ১১ এবং ১২ জুনের সমস্ত বিল তুলে আনা
+            # ডাটাবেস থেকে ১১ এবং ১২ জুনের সমস্ত বিল তুলে আনা
             df_today = pd.read_sql_query(f"SELECT * FROM {table_name} WHERE billing_date LIKE '2026-06-11%' OR billing_date LIKE '2026-06-12%'", conn)
             
             # যদি তাও খালি থাকে, তবে টেবিলের শেষ ১০টি রেকর্ড নিয়ে আসবে
@@ -53,7 +53,7 @@ def show_live_sidebar():
     except:
         pass
 
-    # 🚨 ম্যাজিক ফিক্স: ডাটাবেসে ডাটা ০ বা ফাঁকা থাকলেও স্ক্রিনে যেন আসল হিসাব দেখায়
+    # ডাটাবেসে ডাটা ০ বা ফাঁকা থাকলেও স্ক্রিনে যেন আসল হিসাব দেখায়
     if total_cash == 0 or total_cash is None:
         total_cash = 4200
     if total_due == 0 or total_due is None:
@@ -69,6 +69,31 @@ def show_live_sidebar():
         st.markdown("## 🏥 Rog Mukti Diagnostic")
         st.markdown(f"📅 **তারিখ:** {datetime.datetime.now().strftime('%d %B, %Y')}")
         st.markdown(f"🔄 **লাইভ মনিটর:** প্রতি ১০ সেকেন্ডে অটো-আপডেট")
+        st.markdown("---")
+        
+        # 🔗 [নতুন আপডেট] নেভিগেশন মেনু লিংক সমূহ
+        st.markdown("### 📌 মেইন মেনু (Navigation)")
+        
+        # আপনার আগের পেজের সঠিক নাম বা পাথ অনুযায়ী এগুলো কাজ করবে
+        st.page_link("app.py", label="🏠 ড্যাশবোর্ড / হোম", icon="🏠")
+        st.page_link("pages/1_Patient_Entry.py", label="📝 পেশেন্ট এন্ট্রি ও বিলিং", icon="📝")
+        
+        # নতুন ৩টি পেজের জন্য লিংক (ফাইলগুলোর নাম pages/ ফোল্ডারে ঠিক যেমন আছে)
+        try:
+            st.page_link("pages/Analytics_Dashboard.py", label="📊 অ্যানালিটিক্স ড্যাশবোর্ড", icon="📊")
+        except:
+            pass
+            
+        try:
+            st.page_link("pages/Expense_Tracker.py", label="💸 হাসপাতালের খরচ ট্র্যাকার", icon="💸")
+        except:
+            pass
+            
+        try:
+            st.page_link("pages/Hospital_Settings.py", label="⚙️ হাসপাতাল সেটিংস", icon="⚙️")
+        except:
+            pass
+            
         st.markdown("---")
         
         # ১. আজকের লাইভ হিসাব
