@@ -22,6 +22,7 @@ st.markdown("""
         color: #ffffff !important;
         border: 1px solid #2d3f5d !important;
         border-radius: 8px !important;
+        padding: 10px !important;
     }
     .stButton button {
         background-color: #0284c7 !important;
@@ -37,8 +38,8 @@ st.markdown("""
         background-color: #ffffff !important;
         color: #000000 !important;
         border-radius: 12px;
-        padding: 30px;
-        max-width: 650px;
+        padding: 25px;
+        max-width: 600px;
         margin: 0 auto;
         font-family: 'Segoe UI', Arial, sans-serif;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
@@ -47,8 +48,8 @@ st.markdown("""
     .receipt-header {
         text-align: center;
         border-bottom: 2px solid #1e3a8a;
-        padding-bottom: 12px;
-        margin-bottom: 20px;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
     }
     .receipt-title {
         color: #1e3a8a !important;
@@ -80,46 +81,61 @@ st.markdown("""
         color: #1e293b !important;
     }
     
-    /* 🖨️ কাস্টম এ৪ প্রিন্ট স্ক্রিপ্ট (সব বাড়তি জিনিসপত্র ভ্যানিশ করার ম্যাজিক) */
+    /* 🖨️ প্রিন্ট করার সময় এই কাস্টম ডিজাইনটি চালু হবে */
     @media print {
-        /* ১. স্ক্রিনের সব ধরনের অ্যাপ কন্টেন্ট, সাইডবার, টাইটেল, বাটন এবং ইনপুট পুরোপুরি মুছে ফেলবে */
         body * {
             visibility: hidden !important;
         }
-        
-        /* ২. শুধুমাত্র আমাদের রিসিট কন্টেইনার এবং এর ভেতরের লেখাগুলোকে দৃশ্যমান করবে */
         .receipt-container, .receipt-container * {
             visibility: visible !important;
         }
-                /* 🖨️ বর্তমান পজিশন ঠিক রেখে রসিদটি কাগজের আরও ওপরে উঠানোর ফিক্স */
+        
+        /* 🖨️ রসিদটি কাগজের একদম উপরে ওঠানো এবং লম্বালম্বি সাইজ ছোট করার ফিক্স */
         .receipt-container {
             position: absolute !important;
             left: 15% !important; 
-            top: 0 !important;           /* এটি ০-ই থাকবে যাতে পজিশন ঠিক থাকে */
+            top: 0 !important;
             width: 70% !important; 
             box-shadow: none !important;
             border: 1px solid #000000 !important;
             padding: 20px !important;
-            margin-top: -10px !important; /* 👈 ওপরে উঠানোর জন্য মাইনাস মার্জিন যোগ করা হলো */
+            margin-top: -15px !important; /* ওপরে চাপানোর জন্য মার্জিন */
+            line-height: 1.2 !important;  /* রসিদের ফালতু লম্বা ভাব দূর করার জন্য */
         }
         
-        /* 📄 পেজের চারপাশের বর্ডার মার্জিন ফিক্স */
+        .receipt-header {
+            margin-bottom: 10px !important;
+            padding-bottom: 5px !important;
+        }
+        
+        /* টেস্ট টেবিলের লাইনের মাঝের ফালতু ফাঁকা জায়গা কমানো */
+        .receipt-table {
+            margin-top: 5px !important;
+        }
+        .receipt-table th {
+            padding: 5px !important;
+            font-size: 13px !important;
+            background-color: #f1f5f9 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            border-bottom: 1px solid #000000 !important;
+        }
+        .receipt-table td {
+            padding: 4px 5px !important; /* টেবিলের ঘরের উচ্চতা কমানো হলো */
+            font-size: 13px !important;
+            border-bottom: 1px solid #cbd5e1 !important;
+        }
+        .summary-text {
+            margin-top: 2px !important;
+            font-size: 13px !important;
+        }
+        
         @page {
             size: A4;
-            margin-top: 5mm;       /* 👈 ওপরের মার্জিন ১৫মিমি থেকে কমিয়ে ৫মিমি করা হলো */
+            margin-top: 5mm; /* কাগজের ওপরের ফাঁকা অংশ কমানো হলো */
             margin-bottom: 15mm;
             margin-left: 15mm;
             margin-right: 15mm;
-        }
-        
-        .receipt-table td {
-            border-bottom: 1px solid #000000 !important;
-        }
-        
-        /* ৫. পেজ মার্জিন সাইজ */
-        @page {
-            size: A4;
-            margin: 20mm;
         }
     }
     </style>
@@ -155,22 +171,21 @@ if record:
     billing_date = record[10]
 
     st.write("")
-    # আপনার অরিজিনাল বাটন ও প্রিন্ট ট্রিগার
     if st.button("🖨️ Print Money Receipt Now"):
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-# --- HTML রিসিট জেনারেট করা ---
+    # HTML রিসিট জেনারেট করা (আপনার চাওয়া মোবাইল নম্বরটি এখানে সঠিকভাবে দেওয়া হয়েছে)
     receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
 <div style="font-size:13px; color:#475569; margin-top:4px;">Mollah stand, Auliapur, Patuakhali</div>
 <div style="font-size:13px; color:#475569; font-weight: bold;">Mobile: 01711867637</div>
 </div>
-<table style="width:100%; font-size:14px; margin-bottom:15px; color:#1e293b;">
+<table style="width:100%; font-size:14px; margin-bottom:10px; color:#1e293b; line-height: 1.4;">
 <tr>
-<td><b>Invoice ID:</b> #{p_id}</td>
-<td style="text-align:right;"><b>Date:</b> {billing_date}</td>
+<td style="width:50%;"><b>Invoice ID:</b> #{p_id}</td>
+<td style="text-align:right; width:50%;"><b>Date:</b> {billing_date}</td>
 </tr>
 <tr>
 <td><b>Patient Name:</b> {p_name}</td>
@@ -181,13 +196,13 @@ if record:
 <td style="text-align:right;"><b>Ref. By:</b> {p_doctor}</td>
 </tr>
 </table>
-<div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:4px; font-size:15px;">Test Description & Rate</div>
+<div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:4px; font-size:14px;">Test Description & Rate</div>
 <table class="receipt-table">
 <thead>
 <tr>
 <th style="width:10%; text-align:center;">SL</th>
 <th style="width:65%;">Test Name</th>
-<th style="width:30%; text-align:right;">Price</th>
+<th style="width:25%; text-align:right;">Price</th>
 </tr>
 </thead>
 <tbody>"""
@@ -223,13 +238,13 @@ if record:
 
     receipt_html += f"""</tbody>
 </table>
-<div style="margin-top:20px; border-top:1px dashed #cbd5e1; padding-top:10px;">
+<div style="margin-top:15px; border-top:1px dashed #cbd5e1; padding-top:8px; line-height: 1.4;">
 <div class="summary-text"><b>Total Bill:</b> {total_bill:.2f} Tk</div>
 <div class="summary-text"><b>Discount:</b> {discount_tk:.2f} Tk</div>
 <div class="summary-text"><b>Advance Paid:</b> {advance_paid:.2f} Tk</div>
-<div class="summary-text" style="font-size:16px; color:#ef4444; margin-top:6px;"><b>Due Amount:</b> {due_amount:.2f} Tk</div>
+<div class="summary-text" style="font-size:15px; color:#ef4444; margin-top:4px;"><b>Due Amount:</b> {due_amount:.2f} Tk</div>
 </div>
-<div style="text-align:center; margin-top:35px; font-size:13px; color:#64748b; font-style:italic;">
+<div style="text-align:center; margin-top:25px; font-size:12px; color:#64748b; font-style:italic;">
 Thank you for trusting us with your care.
 </div>
 </div>"""
