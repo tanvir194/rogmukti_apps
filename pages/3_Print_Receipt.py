@@ -23,7 +23,7 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
-    # 🛠️ ফিক্সড: ডাটাবেজের সঠিক ইনডেক্স নম্বর পুনরুদ্ধার
+    # 🛠️ ডাটাবেজের ইনডেক্স নম্বরগুলো সঠিকভাবে ঠিক করা হলো
     p_id = record[0]
     p_name = record[1]
     p_age = record[2]
@@ -41,18 +41,18 @@ if record:
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-    # 📄 উইন্ডোজ ৭ ও পুরানো ক্রোমের জন্য সরাসরি ফুল-উইডথ বডি লেআউট
+    # 📄 পুরো A4 পেজ জুড়ে ছড়িয়ে আসার জন্য টেবিল স্ট্রাকচার
     receipt_html = f"""
     <div style="width:100%; max-width:100%; font-family:Arial, sans-serif; color:#000000; padding:15px; box-sizing:border-box;">
         
-        <!-- ডায়াগনস্টিক সেন্টারের হেডার সেকশন -->
+        <!-- ডায়াগনস্টিক সেন্টারের হেডার -->
         <div style="text-align:center; border-bottom:3px double #000000; padding-bottom:15px; margin-bottom:20px;">
             <h1 style="font-size:32px; font-weight:bold; margin:0; color:#000000;">ROGMUKTI DIAGNOSTIC CENTRE</h1>
             <p style="font-size:15px; margin:5px 0 0 0;">Mollah stand, Auliapur, Patuakhali</p>
             <p style="font-size:16px; font-weight:bold; margin:3px 0 0 0;">Mobile: 01711867637</p>
         </div>
         
-        <!-- পেশেন্ট ডিটেইলস টেবিল (পুরো এ৪ পেজ চওড়া) -->
+        <!-- পেশেন্ট ডিটেইলস টেবিল (ফুল এ৪ পেজ চওড়া) -->
         <table style="width:100%; font-size:16px; margin-bottom:25px; line-height:1.8;">
             <tr>
                 <td style="width:50%;"><b>Invoice ID:</b> #{p_id}</td>
@@ -94,7 +94,7 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
-            # 🛠️ ফিক্সড: পাইথন লিস্ট ইনডেক্সিং এবং স্প্লিট লজিক সম্পূর্ণ নির্ভুল করা হলো
+            # 🛠️ পাইথন লিস্ট ইনডেক্সিং এবার সম্পূর্ণ নির্ভুল করা হয়েছে
             parts = test_item.split("(")
             t_name = parts[0].strip()
             t_price = parts[1].replace(")", "").strip()
