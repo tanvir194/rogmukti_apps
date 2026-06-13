@@ -100,9 +100,9 @@ st.markdown("""
             width: 100% !important;
             max-width: 150% !important;
             box-shadow: none !important;
-            border: 1px solid #000000 !important;
-            padding: 10px !important;
-            margin: 10 !important;
+            border: 4px solid #000000 !important;
+            padding: 00px !important;
+            margin: 0 auto !important;
         }
         
         /* ৪. টেবিল বর্ডার প্রিন্ট ফিক্স */
