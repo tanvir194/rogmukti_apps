@@ -23,7 +23,7 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
-    # ডাটাবেজ ইনডেক্সিং পুনরুদ্ধার
+    # 🛠️ ফিক্সড: ডাটাবেজের সঠিক ইনডেক্স নম্বর পুনরুদ্ধার
     p_id = record[0]
     p_name = record[1]
     p_age = record[2]
@@ -41,9 +41,9 @@ if record:
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-    # 📄 উইন্ডোজ ৭ ও পুরানো ক্রোমের জন্য সরাসরি ফুল-উইডথ টেবিল স্ট্রাকচার
+    # 📄 উইন্ডোজ ৭ ও পুরানো ক্রোমের জন্য সরাসরি ফুল-উইডথ বডি লেআউট
     receipt_html = f"""
-    <div style="width:100%; max-width:100%; font-family:Arial, sans-serif; color:#000000; padding:10px; box-sizing:border-box;">
+    <div style="width:100%; max-width:100%; font-family:Arial, sans-serif; color:#000000; padding:15px; box-sizing:border-box;">
         
         <!-- ডায়াগনস্টিক সেন্টারের হেডার সেকশন -->
         <div style="text-align:center; border-bottom:3px double #000000; padding-bottom:15px; margin-bottom:20px;">
@@ -94,7 +94,7 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
-            # 🛠️ ফিক্সড: পাইথন লিস্ট অবজেক্ট এর মারাত্মক সিনট্যাক্স ইররটি পুরোপুরি ঠিক করা হলো
+            # 🛠️ ফিক্সড: পাইথন লিস্ট ইনডেক্সিং এবং স্প্লিট লজিক সম্পূর্ণ নির্ভুল করা হলো
             parts = test_item.split("(")
             t_name = parts[0].strip()
             t_price = parts[1].replace(")", "").strip()
@@ -128,12 +128,12 @@ if record:
         </table>
         
         <!-- ফাইনাল সামারি বক্স (ডান পাশে চওড়া বক্স আকারে) -->
-        <div style="margin-top:25px; float:right; width:45%; font-size:16px; border:1px solid #000000; padding:15px; background-color:#f9f9f9; line-height:1.6;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><b>Total Bill:</b> <span>{t_bill:.2f} Tk</span></div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><b>Discount:</b> <span>{d_tk:.2f} Tk</span></div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><b>Advance Paid:</b> <span>{a_paid:.2f} Tk</span></div>
-            <div style="display:flex; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid #000000; font-size:18px; color:#ff0000;"><b>Due Amount:</b> <b>{d_amt:.2f} Tk</b></div>
-        </div>
+        <table style="margin-top:25px; float:right; width:45%; font-size:16px; border:1px solid #000000; padding:15px; background-color:#f9f9f9; line-height:1.8; border-collapse:collapse;">
+            <tr><td style="padding:5px;"><b>Total Bill:</b></td><td style="text-align:right; padding:5px;">{t_bill:.2f} Tk</td></tr>
+            <tr><td style="padding:5px;"><b>Discount:</b></td><td style="text-align:right; padding:5px;">{d_tk:.2f} Tk</td></tr>
+            <tr><td style="padding:5px;"><b>Advance Paid:</b></td><td style="text-align:right; padding:5px;">{a_paid:.2f} Tk</td></tr>
+            <tr style="border-top:1px solid #000000; font-size:18px; color:#ff0000;"><td style="padding:5px;"><b>Due Amount:</b></td><td style="text-align:right; padding:5px;"><b>{d_amt:.2f} Tk</b></td></tr>
+        </table>
         <div style="clear:both;"></div>
         
         <div style="text-align:center; margin-top:60px; font-size:14px; color:#555555; font-style:italic; border-top:1px dashed #000000; padding-top:15px;">
