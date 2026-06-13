@@ -96,7 +96,7 @@ st.markdown("""
         .receipt-container {
             position: absolute !important;
             left: 00% !important;
-            top: 50% !important;
+            top: 40% !important;
             width: 100% !important;
             max-width: 105% !important;
             box-shadow: none !important;
