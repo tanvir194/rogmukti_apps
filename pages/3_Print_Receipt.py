@@ -6,7 +6,7 @@ import sqlite3
 # ১. পেজ কনফিগারেশন
 st.set_page_config(page_title="Money Receipt", layout="wide")
 
-# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম হোয়ایت কার্ড CSS
+# ২. কাস্টম ডার্ক মোড এবং রিসিটের ফুল-উইডথ CSS
 st.markdown("""
     <style>
     .stApp {
@@ -33,13 +33,13 @@ st.markdown("""
         width: 100%;
     }
     
-    /* 📄 স্ক্রিন ভিউ ডিজাইন */
+    /* 📄 স্ক্রিন ভিউ ডিজাইন (স্ক্রিনে দেখার জন্য) */
     .receipt-container {
         background-color: #ffffff !important;
         color: #000000 !important;
         border-radius: 12px;
-        padding: 25px;
-        max-width: 600px;
+        padding: 30px;
+        max-width: 900px;
         margin: 0 auto;
         font-family: 'Segoe UI', Arial, sans-serif;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
@@ -48,12 +48,12 @@ st.markdown("""
     .receipt-header {
         text-align: center;
         border-bottom: 2px solid #1e3a8a;
-        padding-bottom: 10px;
-        margin-bottom: 15px;
+        padding-bottom: 12px;
+        margin-bottom: 20px;
     }
     .receipt-title {
         color: #1e3a8a !important;
-        font-size: 24px;
+        font-size: 26px;
         font-weight: bold;
         margin: 0;
     }
@@ -66,22 +66,22 @@ st.markdown("""
         background-color: #f1f5f9 !important;
         color: #1e3a8a !important;
         border-bottom: 2px solid #cbd5e1 !important;
-        padding: 8px;
+        padding: 10px;
         text-align: left;
     }
     .receipt-table td {
         border-bottom: 1px solid #e2e8f0 !important;
-        padding: 8px;
+        padding: 10px;
         color: #334155 !important;
     }
     .summary-text {
         text-align: right;
-        font-size: 14px;
-        margin-top: 4px;
+        font-size: 15px;
+        margin-top: 6px;
         color: #1e293b !important;
     }
     
-    /* 🖨️ প্রিন্ট করার সময় এই কাস্টম ডিজাইনটি চালু হবে */
+    /* 🖨️ ম্যাজিক প্রিন্ট স্ক্রিপ্ট (A4 ফুল স্ক্রিন চওড়া করার জন্য) */
     @media print {
         body * {
             visibility: hidden !important;
@@ -90,58 +90,54 @@ st.markdown("""
             visibility: visible !important;
         }
         
-        /* 🖨️ রসিদটি কাগজের একদম উপরে ওঠানো এবং লম্বালম্বি সাইজ ছোট করার ফিক্স */
+        /* 🖨️ চারপাশের সাদা বর্ডার ও মার্জিন ডিলিট করে পুরো এ৪ পেজ চওড়া করার ফিক্স */
         .receipt-container {
             position: absolute !important;
-            left: 15% !important; 
+            left: 0 !important; 
             top: 0 !important;
-            width: 70% !important; 
+            width: 100% !important;  /* 👈 চিকন ভাব দূর করে পুরো এ৪ পেজ জুড়ে বড় করার জন্য ১০০% করা হলো */
+            max-width: 100% !important;
             box-shadow: none !important;
-            border: 1px solid #000000 !important;
-            padding: 20px !important;
-            margin-top: -15px !important; /* ওপরে চাপানোর জন্য মার্জিন */
-            line-height: 1.2 !important;  /* রসিদের ফালতু লম্বা ভাব দূর করার জন্য */
+            border: none !important;  /* 👈 চারপাশের বাড়তি বর্ডার ফ্রেম মুছে ফেলা হলো */
+            padding: 0px !important;  /* 👈 ভেতরের ও চারপাশের বাড়তি ফালতু সাদা মার্জিন ডিলিট */
+            margin: 0px !important;
+            line-height: 1.4 !important;
         }
         
         .receipt-header {
-            margin-bottom: 10px !important;
-            padding-bottom: 5px !important;
+            margin-bottom: 20px !important;
+            padding-bottom: 10px !important;
+            border-bottom: 2px solid #1e3a8a !important;
         }
         
-        /* টেস্ট টেবিলের লাইনের মাঝের ফালতু ফাঁকা জায়গা কমানো */
-        .receipt-table {
-            margin-top: 5px !important;
-        }
         .receipt-table th {
-            padding: 5px !important;
-            font-size: 13px !important;
+            padding: 10px !important;
+            font-size: 14px !important;
             background-color: #f1f5f9 !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
-            border-bottom: 1px solid #000000 !important;
+            border-bottom: 2px solid #000000 !important;
         }
         .receipt-table td {
-            padding: 4px 5px !important; /* টেবিলের ঘরের উচ্চতা কমানো হলো */
-            font-size: 13px !important;
+            padding: 10px !important; /* 👈 পুরো টেবিলটি যাতে রাজকীয়ভাবে বড় দেখায় */
+            font-size: 14px !important;
             border-bottom: 1px solid #cbd5e1 !important;
         }
         .summary-text {
-            margin-top: 2px !important;
-            font-size: 13px !important;
+            margin-top: 5px !important;
+            font-size: 15px !important;
         }
         
+        /* 📄 প্রিন্টারের পেজ মার্জিন একদম ০ (Zero) করে দেওয়া হলো */
         @page {
             size: A4;
-            margin-top: 5mm; /* কাগজের ওপরের ফাঁকা অংশ কমানো হলো */
-            margin-bottom: 15mm;
-            margin-left: 15mm;
-            margin-right: 15mm;
+            margin: 0mm !important; /* 👈 কাগজের চারপাশের সমস্ত ডিফল্ট সাদা মার্জিন ও বর্ডার উধাও */
         }
     }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🖨️ English Money Receipt")
+st.title("🖨️ Full Width A4 English Money Receipt")
 
 # ডাটাবেজ কানেকশন
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
@@ -175,14 +171,14 @@ if record:
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-    # HTML রিসিট জেনারেট করা (আপনার চাওয়া মোবাইল নম্বরটি এখানে সঠিকভাবে দেওয়া হয়েছে)
+    # HTML রিসিট জেনারেট করা (আপনার নতুন মোবাইল নম্বরটি সহ)
     receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
-<div style="font-size:13px; color:#475569; margin-top:4px;">Mollah stand, Auliapur, Patuakhali</div>
-<div style="font-size:13px; color:#475569; font-weight: bold;">Mobile: 01711867637</div>
+<div style="font-size:14px; color:#475569; margin-top:4px;">Mollah stand, Auliapur, Patuakhali</div>
+<div style="font-size:14px; color:#1e3a8a; font-weight: bold; margin-top:2px;">Mobile: 01711867637</div>
 </div>
-<table style="width:100%; font-size:14px; margin-bottom:10px; color:#1e293b; line-height: 1.4;">
+<table style="width:100%; font-size:15px; margin-bottom:20px; color:#1e293b; line-height: 1.6;">
 <tr>
 <td style="width:50%;"><b>Invoice ID:</b> #{p_id}</td>
 <td style="text-align:right; width:50%;"><b>Date:</b> {billing_date}</td>
@@ -196,7 +192,7 @@ if record:
 <td style="text-align:right;"><b>Ref. By:</b> {p_doctor}</td>
 </tr>
 </table>
-<div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:4px; font-size:14px;">Test Description & Rate</div>
+<div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:6px; font-size:15px;">Test Description & Rate</div>
 <table class="receipt-table">
 <thead>
 <tr>
@@ -219,8 +215,9 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
-            t_name = test_item.split("(")[0].strip()
-            t_price = test_item.split("(")[1].replace(")", "").strip()
+            parts = test_item.split("(")
+            t_name = parts[0].strip()
+            t_price = parts[1].replace(")", "").strip()
             try:
                 t_price_formatted = f"{float(t_price):.2f}"
             except:
@@ -238,13 +235,13 @@ if record:
 
     receipt_html += f"""</tbody>
 </table>
-<div style="margin-top:15px; border-top:1px dashed #cbd5e1; padding-top:8px; line-height: 1.4;">
+<div style="margin-top:20px; border-top:1px dashed #cbd5e1; padding-top:10px;">
 <div class="summary-text"><b>Total Bill:</b> {total_bill:.2f} Tk</div>
 <div class="summary-text"><b>Discount:</b> {discount_tk:.2f} Tk</div>
 <div class="summary-text"><b>Advance Paid:</b> {advance_paid:.2f} Tk</div>
-<div class="summary-text" style="font-size:15px; color:#ef4444; margin-top:4px;"><b>Due Amount:</b> {due_amount:.2f} Tk</div>
+<div class="summary-text" style="font-size:17px; color:#ef4444; margin-top:6px;"><b>Due Amount:</b> {due_amount:.2f} Tk</div>
 </div>
-<div style="text-align:center; margin-top:25px; font-size:12px; color:#64748b; font-style:italic;">
+<div style="text-align:center; margin-top:40px; font-size:13px; color:#64748b; font-style:italic;">
 Thank you for trusting us with your care.
 </div>
 </div>"""
