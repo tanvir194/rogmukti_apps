@@ -76,16 +76,18 @@ for t_name, t_price in tests_found:
 # ------------------- Full HTML, CSS and Print Logic -------------------
 full_html_page = """
 <style>
+/* রিসিট বক্সের বর্ডার স্টাইল */
 .receipt-box {
     max-width: 550px;
     margin: 20px auto;
     padding: 25px;
-    border: 2px solid #1a365d;
+    border: 2px solid #1a365d !important;
     border-radius: 12px;
     background-color: white;
     color: black;
     font-family: 'Arial', sans-serif;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    box-sizing: border-box;
 }
 .header {
     text-align: center;
@@ -104,7 +106,7 @@ full_html_page = """
 .total-section { text-align: right; font-size: 15px; line-height: 1.6; }
 .total-section b { color: #1a365d; }
 
-/* MONEY RECEIPT সেন্ট্রাল পয়েন্ট স্টাইল (রোগীর নামের উপরে) */
+/* MONEY RECEIPT সেন্ট্রাল পয়েন্ট স্টাইল */
 .money-receipt-title {
     text-align: center;
     font-size: 22px;
@@ -117,6 +119,22 @@ full_html_page = """
     padding-bottom: 5px;
 }
 
+/* সিগনেচার সেকশন স্টাইল */
+.signature-section {
+    margin-top: 50px;
+    text-align: right;
+}
+.signature-line {
+    display: inline-block;
+    width: 180px;
+    border-top: 1.5px solid #000;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: #1a365d;
+    padding-top: 5px;
+}
+
 @media print {
     header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, div.stWrite {
         display: none !important;
@@ -127,13 +145,13 @@ full_html_page = """
         max-width: 100% !important;
     }
     .receipt-box {
-        border: none !important;
         box-shadow: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
+        padding: 20px !important;
+        margin: 0 auto !important;
         width: 100% !important;
-        max-width: 100% !important;
+        max-width: 600px !important;
         display: block !important;
+        border: 2px solid #1a365d !important;
     }
     @page {
         size: A4 portrait;
@@ -150,7 +168,7 @@ full_html_page = """
         <p style="font-size: 13px;">📞 Mobile: 01711867637</p>
     </div>
     
-    <!-- রোগীর নামের ঠিক উপরে MONEY RECEIPT টাইটেল -->
+    <!-- MONEY RECEIPT টাইটেল -->
     <div class="money-receipt-title">MONEY RECEIPT</div>
     
     <!-- Patient Info Section in English -->
@@ -193,7 +211,12 @@ full_html_page = """
         </p>
     </div>
     
-    <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #eee; padding-top: 10px;">
+    <!-- অফিশিয়াল সিগনেচার এরিয়া -->
+    <div class="signature-section">
+        <div class="signature-line">Authorized Signature</div>
+    </div>
+    
+    <div style="margin-top: 20px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #eee; padding-top: 10px;">
         <p>Thank you for trusting us with your care.</p>
     </div>
 </div>
