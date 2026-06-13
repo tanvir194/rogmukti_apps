@@ -98,7 +98,7 @@ st.markdown("""
             left: 00% !important;
             top: 50% !important;
             width: 100% !important;
-            max-width: 100% !important;
+            max-width: 0% !important;
             box-shadow: none !important;
             border: 1px solid #000000 !important;
             padding: 10px !important;
