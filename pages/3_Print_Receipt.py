@@ -115,18 +115,26 @@ if record:
         if not test_item:
             continue
             
-        if ":" in test_item and ")" in test_item:
+        t_name = test_item
+        t_price_formatted = "0.00"
+        
+        # ব্র্যাকেটের ভেতর থেকে দাম আলাদা করার লজিক ফিক্স (যেমন: Test Name(500.0))
+        if "(" in test_item and ")" in test_item:
+            try:
+                start_idx = test_item.rfind("(")
+                end_idx = test_item.rfind(")")
+                price_val = test_item[start_idx+1:end_idx].strip()
+                t_price_formatted = f"{float(price_val):.2f}"
+                t_name = test_item[:start_idx].strip()
+            except:
+                pass
+        elif ":" in test_item:
             try:
                 parts = test_item.split(":")
                 t_name = parts[0].strip()
-                t_price = parts[1].replace(")", "").strip()
-                t_price_formatted = f"{float(t_price):.2f}"
+                t_price_formatted = f"{float(parts[1].strip()):.2f}"
             except:
-                t_name = test_item
-                t_price_formatted = "0.00"
-        else:
-            t_name = test_item
-            t_price_formatted = "0.00"
+                pass
             
         receipt_html += f"""
                 <tr>
@@ -183,6 +191,7 @@ if record:
     </style>
     """
 
+    # এই মেথডটি কোড রেন্ডার না করে সুন্দর ওয়েবসাইট হিসেবে পেজটি দেখাবে
     st.markdown(receipt_html, unsafe_allow_html=True)
 
 else:
