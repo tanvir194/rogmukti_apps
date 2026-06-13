@@ -106,21 +106,23 @@ full_html_page = """
     white-space: nowrap;
 }
 
-/* রোগীর তথ্যের টেবিল সিস্টেম স্টাইল */
+/* রোগীর তথ্যের আপগ্রেডেড টেবিল সিস্টেম */
 .info-table { 
     width: 100%; 
     border-collapse: collapse; 
     margin-bottom: 25px; 
+    table-layout: fixed; /* কলামগুলোর সাইজ ফিক্সড লক করার জন্য */
 }
 .info-table td { 
     padding: 8px 12px; 
     font-size: 14px; 
     color: #000;
-    border: 1px solid #333; /* নিখুঁত ছক তৈরি করার বর্ডার */
+    border: 1px solid #333;
+    word-wrap: break-word;
 }
 .info-label {
     font-weight: bold;
-    background-color: #f9fafb; /* লেবেলের জন্য হালকা ব্যাকগ্রাউন্ড */
+    background-color: #f9fafb;
 }
 
 .test-table { 
@@ -233,13 +235,13 @@ full_html_page = """
     
     <div class="money-receipt-title">MONEY RECEIPT</div>
     
-    <!-- নতুন টেবিল সিস্টেম আকারে সাজানো রোগীর তথ্য -->
+    <!-- ডাক্তারের নাম লম্বা করার স্পেস এবং মোবাইল কলাম ডানে সরানোর নিখুঁত টেবিল লজিক -->
     <table class="info-table">
         <tr>
-            <td class="info-label" style="width: 20%;">Invoice ID:</td>
-            <td style="width: 30%;">#__INVOICE_ID__</td>
-            <td class="info-label" style="width: 20%;">Date:</td>
-            <td style="width: 30%;">__CURRENT_DATE__</td>
+            <td class="info-label" style="width: 15%;">Invoice ID:</td>
+            <td style="width: 45%;">#__INVOICE_ID__</td>
+            <td class="info-label" style="width: 13%;">Date:</td>
+            <td style="width: 27%;">__CURRENT_DATE__</td>
         </tr>
         <tr>
             <td class="info-label">Patient Name:</td>
@@ -249,7 +251,7 @@ full_html_page = """
         </tr>
         <tr>
             <td class="info-label">Ref. By:</td>
-            <td>__DOCTOR__</td>
+            <td style="font-weight: bold; font-size: 14.5px;">__DOCTOR__</td> <!-- বড় নামের জায়গা বাড়ানোর জন্য চওড়া ৪৫% লকড -->
             <td class="info-label">Mobile No:</td>
             <td>__PHONE__</td>
         </tr>
