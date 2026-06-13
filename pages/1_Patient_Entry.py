@@ -77,7 +77,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 🔔 [নতুন আপডেট] লাল মার্ক করা ফাঁকা জায়গার জন্য বড় লাল স্বাগতম টেক্সট ও বড় স্ক্রলিং নোটিশ (Marquee)
+# 🔔 লাল মার্ক করা ফাঁকা জায়গার জন্য বড় লাল স্বাগতম টেক্সট ও বড় স্ক্রলিং নোটিশ (Marquee)
 st.markdown(
     """
     <div style='text-align: center; margin-bottom: 15px;'>
@@ -272,5 +272,3 @@ if submit_button:
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
             (patient_name, int(age), str(phone), str(doctor), str(tests_data_str), float(total_fee), float(discount_amount), float(advance_paid), float(due_amount), str(current_date)))
             conn.commit()
-            
-            st.session_state.last_invoice_id = c.lastrowid
