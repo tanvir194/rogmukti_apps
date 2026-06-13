@@ -67,15 +67,16 @@ for t_name, t_price in tests_found:
     except:
         t_price_val = 0.00
         
-    table_rows += f"<tr><td style='text-align: center; border: 1px solid #333;'>{index}</td><td style='border: 1px solid #333; padding-left: 10px;'>{t_name_clean}</td><td style='text-align: right; border: 1px solid #333; padding-right: 10px;'>{t_price_val:.2f} Tk</td></tr>"
+    table_rows += f"<tr><td style='text-align: center; border: 1px solid #333;'>{index}</td><td style='border: 1px solid #333; padding-left: 10px; font-weight: bold;'>{t_name_clean}</td><td style='text-align: right; border: 1px solid #333; padding-right: 10px; font-weight: bold;'>{t_price_val:.2f} Tk</td></tr>"
     index += 1
 
 # ------------------- Full HTML, CSS and Print Logic -------------------
 full_html_page = """
 <style>
+/* রিসিটটি স্ক্রিনে ও প্রিন্টে যেন পুরো A4 চওড়া (Full Width) জুড়ে থাকে */
 .receipt-box {
-    max-width: 600px;
-    margin: 20px auto;
+    max-width: 100%; /* ১০০% চওড়া করার জন্য */
+    margin: 10px auto;
     padding: 30px;
     border: 2px solid #000000 !important;
     background-color: white;
@@ -89,30 +90,32 @@ full_html_page = """
     padding-bottom: 12px;
     margin-bottom: 15px;
 }
-.header h2 { margin: 0; font-size: 26px; font-weight: bold; text-transform: uppercase; color: #000; }
-.header p { margin: 4px 0 0 0; font-size: 14px; font-weight: 500; }
+.header h2 { margin: 0; font-size: 28px; font-weight: bold; text-transform: uppercase; color: #000; }
+.header p { margin: 4px 0 0 0; font-size: 15px; font-weight: 500; }
 
+/* MONEY RECEIPT টাইটেল যেন কখনোই এক লাইনের বেশি না ভাঙে */
 .money-receipt-title {
     text-align: center;
-    font-size: 20px;
+    font-size: 22px;
     font-weight: bold;
     letter-spacing: 3px;
-    margin: 10px auto 15px auto;
+    margin: 15px auto;
     color: #000;
     border: 1.5px solid #000;
-    width: 200px;
-    padding: 4px 0;
+    width: 280px; /* চওড়া বাড়ানো হলো যাতে এক লাইনে সুন্দর ধরে */
+    padding: 6px 0;
     text-transform: uppercase;
+    white-space: nowrap; /* লেখা ভাঙা বন্ধ করার জন্য */
 }
 
 .info-table { 
     width: 100%; 
     border-collapse: collapse; 
-    margin-bottom: 20px; 
+    margin-bottom: 25px; 
 }
 .info-table td { 
     padding: 6px 0; 
-    font-size: 14px; 
+    font-size: 15px; 
     color: #000;
 }
 
@@ -125,43 +128,52 @@ full_html_page = """
     border: 1px solid #333; 
     padding: 10px; 
     text-align: left; 
-    font-size: 14px; 
+    font-size: 15px; 
     background-color: #f5f5f5; 
     color: #000; 
     font-weight: bold; 
 }
 .test-table td { 
-    padding: 8px; 
-    font-size: 13px; 
+    padding: 10px; 
+    font-size: 14px; 
     color: #000;
 }
 
-.bill-container {
+.bill-footer-container {
     width: 100%;
-    margin-top: 15px;
+    margin-top: 20px;
+    display: block;
 }
 .total-section { 
-    float: right;
-    width: 250px;
-    font-size: 14px; 
+    margin-left: auto;
+    width: 280px;
+    font-size: 15px; 
     line-height: 1.8; 
     border: 1px solid #333;
-    padding: 10px;
+    padding: 12px;
     background-color: #fafafa;
 }
-.total-section p { margin: 0; display: flex; justify-content: space-between; }
+.total-section table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.total-section td {
+    padding: 3px 0;
+}
 
 .signature-section {
     margin-top: 60px;
-    text-align: right;
-    clear: both;
+    width: 100%;
+    display: block;
+}
+.signature-wrapper {
+    width: 200px;
+    margin-left: auto;
+    text-align: center;
 }
 .signature-line {
-    display: inline-block;
-    width: 180px;
     border-top: 1.5px solid #000;
-    text-align: center;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: bold;
     padding-top: 5px;
     color: #000;
@@ -178,16 +190,24 @@ full_html_page = """
     }
     .receipt-box {
         box-shadow: none !important;
-        padding: 25px !important;
+        padding: 30px !important;
         margin: 0 auto !important;
         width: 100% !important;
-        max-width: 650px !important;
+        max-width: 100% !important; /* প্রিন্ট পেজেও ফুল উইডথ চওড়া থাকবে */
         display: block !important;
         border: 2px solid #000000 !important;
     }
+    .total-section {
+        margin-left: auto !important;
+        float: right !important;
+    }
+    .signature-wrapper {
+        margin-left: auto !important;
+        float: right !important;
+    }
     @page {
         size: A4 portrait;
-        margin: 5mm 10mm 10mm 10mm;
+        margin: 8mm 10mm 10mm 10mm; /* ওপরে হালকা পর্যাপ্ত মার্জিন */
     }
 }
 </style>
@@ -229,20 +249,36 @@ full_html_page = """
         </tbody>
     </table>
     
-    <div class="bill-container">
+    <div class="bill-footer-container">
         <div class="total-section">
-            <p><span>Total Bill:</span> <span>__TOTAL_AMOUNT__ Tk</span></p>
-            <p><span>Discount:</span> <span>__DISCOUNT_AMOUNT__ Tk</span></p>
-            <p style="border-bottom: 1px solid #333; padding-bottom: 4px; margin-bottom: 4px;"><span>Advance Paid:</span> <span><b>__ADVANCE_PAID__ Tk</b></span></p>
-            <p style="font-size: 15px; font-weight: bold;"><span>Due Amount:</span> <span style="color: red;">__DUE_AMOUNT__ Tk</span></p>
+            <table>
+                <tr>
+                    <td>Total Bill:</td>
+                    <td style="text-align: right;">__TOTAL_AMOUNT__ Tk</td>
+                </tr>
+                <tr>
+                    <td>Discount:</td>
+                    <td style="text-align: right;">__DISCOUNT_AMOUNT__ Tk</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #333;">
+                    <td style="padding-bottom: 4px;">Advance Paid:</td>
+                    <td style="text-align: right; padding-bottom: 4px;"><b>__ADVANCE_PAID__ Tk</b></td>
+                </tr>
+                <tr style="font-size: 16px; font-weight: bold;">
+                    <td style="padding-top: 4px;">Due Amount:</td>
+                    <td style="text-align: right; color: red; padding-top: 4px;">__DUE_AMOUNT__ Tk</td>
+                </tr>
+            </table>
         </div>
     </div>
     
     <div class="signature-section">
-        <div class="signature-line">Authorized Signature</div>
+        <div class="signature-wrapper">
+            <div class="signature-line">Authorized Signature</div>
+        </div>
     </div>
     
-    <div style="margin-top: 25px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #ddd; padding-top: 10px; clear: both;">
+    <div style="margin-top: 35px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #ddd; padding-top: 10px; clear: both;">
         <p>Thank you for trusting us with your care.</p>
     </div>
 </div>
