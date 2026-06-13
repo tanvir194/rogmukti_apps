@@ -1,6 +1,7 @@
 import streamlit as st
 import sqlite3
 import os
+import re
 
 # Security or login check
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
@@ -53,23 +54,24 @@ current_date = row[10]
 # Calculate Discount Amount
 discount_amount = (total_amount * discount_pct) / 100.0
 
-# Split selected tests by pipe '|' symbol
-tests_list = [item.strip() for item in selected_tests_data.split('|') if item.strip()]
+# --- নতুন লজিক: কমা দিয়ে যুক্ত টেস্ট এবং ব্র্যাকেটের রেট আলাদা করা ---
+tests_found = re.findall(r'([^,(\d]+)\s*(?:\(([\d.]+)\))?', selected_tests_data)
 
-# Create Dynamic HTML Table Rows for Tests (সিরিয়াল এবং প্রতিটা টেস্টের সামনে রেট আলাদা করার লজিক)
 table_rows = ""
-for index, item in enumerate(tests_list, start=1):
-    if ":" in item:
-        t_name, t_price = item.split(":", 1)
-    else:
-        t_name, t_price = item, "0.0"
-    
-    try:
-        t_price_val = float(t_price)
-    except:
-        t_price_val = 0.0
+index = 1
+for t_name, t_price in tests_found:
+    t_name_clean = t_name.strip()
+    if not t_name_clean:
+        continue
         
-    table_rows += f"<tr><td style='text-align: center;'>{index}</td><td>{t_name}</td><td style='text-align: right;'>{t_price_val:.2f} Tk</td></tr>"
+    t_price_clean = t_price.strip() if t_price else "0.00"
+    try:
+        t_price_val = float(t_price_clean)
+    except:
+        t_price_val = 0.00
+        
+    table_rows += f"<tr><td style='text-align: center;'>{index}</td><td>{t_name_clean}</td><td style='text-align: right;'>{t_price_val:.2f} Tk</td></tr>"
+    index += 1
 
 # ------------------- Full HTML, CSS and Print Logic -------------------
 full_html_page = """
@@ -91,7 +93,7 @@ full_html_page = """
     color: white;
     padding: 15px;
     border-radius: 8px 8px 0 0;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 .header h2 { margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; }
 .header p { margin: 5px 0 0 0; font-size: 13px; opacity: 0.9; }
@@ -102,17 +104,17 @@ full_html_page = """
 .total-section { text-align: right; font-size: 15px; line-height: 1.6; }
 .total-section b { color: #1a365d; }
 
-/* MONEY RECEIPT বড় লেখার জন্য স্টাইল */
+/* MONEY RECEIPT সেন্ট্রাল পয়েন্ট স্টাইল (রোগীর নামের উপরে) */
 .money-receipt-title {
     text-align: center;
-    font-size: 20px;
+    font-size: 22px;
     font-weight: bold;
     letter-spacing: 2px;
-    margin: 15px 0;
+    margin: 10px 0 20px 0;
     color: #1a365d;
-    border-top: 1px dashed #1a365d;
-    border-bottom: 1px dashed #1a365d;
-    padding: 5px 0;
+    text-transform: uppercase;
+    border-bottom: 2px solid #1a365d;
+    padding-bottom: 5px;
 }
 
 @media print {
@@ -148,6 +150,9 @@ full_html_page = """
         <p style="font-size: 13px;">📞 Mobile: 01711867637</p>
     </div>
     
+    <!-- রোগীর নামের ঠিক উপরে MONEY RECEIPT টাইটেল -->
+    <div class="money-receipt-title">MONEY RECEIPT</div>
+    
     <!-- Patient Info Section in English -->
     <table class="info-table">
         <tr>
@@ -164,10 +169,7 @@ full_html_page = """
         </tr>
     </table>
     
-    <!-- বড় করে বোল্ড MONEY RECEIPT টাইটেল -->
-    <div class="money-receipt-title">MONEY RECEIPT</div>
-    
-    <h3 style="color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 5px; font-size: 15px; margin-top: 10px;">Test Description & Rate</h3>
+    <h3 style="color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 5px; font-size: 15px; margin-top: 15px;">Test Description & Rate</h3>
     <table class="test-table">
         <thead>
             <tr>
