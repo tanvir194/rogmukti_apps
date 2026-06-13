@@ -106,7 +106,7 @@ full_html_page = """
     white-space: nowrap;
 }
 
-/* রোগীর তথ্যের টেবিল সিস্টেম (৫০%-৫০% সমান ভাগে ভাগ করা) */
+/* রোগীর তথ্যের টেবিল সিস্টেম */
 .info-table { 
     width: 100%; 
     border-collapse: collapse; 
@@ -123,6 +123,11 @@ full_html_page = """
 .info-label {
     font-weight: bold;
     background-color: #f9fafb;
+}
+
+/* ডান পাশের কলামের টেক্সটগুলোকে ডানে সরানোর জন্য বিশেষ ক্লাস */
+.align-right-content {
+    text-align: right !important;
 }
 
 .test-table { 
@@ -235,25 +240,25 @@ full_html_page = """
     
     <div class="money-receipt-title">MONEY RECEIPT</div>
     
-    <!-- কলামের উইডথ লেআউট ৫০%-৫০% ফিক্সড করে ডানে সরানো হলো -->
+    <!-- ডান পাশের ডাটাগুলো এখন সুন্দরভাবে ডানে এলাইন (Align Right) করা হয়েছে -->
     <table class="info-table">
         <tr>
             <td class="info-label" style="width: 18%;">Invoice ID:</td>
-            <td style="width: 32%;">#__INVOICE_ID__</td>
-            <td class="info-label" style="width: 18%;">Date:</td>
-            <td style="width: 32%;">__CURRENT_DATE__</td>
+            <td style="width: 37%;">#__INVOICE_ID__</td>
+            <td class="info-label" style="width: 15%;">Date:</td>
+            <td class="align-right-content" style="width: 30%;">__CURRENT_DATE__</td>
         </tr>
         <tr>
             <td class="info-label">Patient Name:</td>
             <td>__NAME__</td>
             <td class="info-label">Age / Sex:</td>
-            <td>__AGE__ Y</td>
+            <td class="align-right-content">__AGE__ Y</td>
         </tr>
         <tr>
             <td class="info-label">Ref. By:</td>
             <td style="font-weight: bold;">__DOCTOR__</td>
             <td class="info-label">Mobile No:</td>
-            <td style="font-weight: bold;">__PHONE__</td>
+            <td class="align-right-content" style="font-weight: bold;">__PHONE__</td>
         </tr>
     </table>
     
