@@ -6,7 +6,7 @@ import sqlite3
 # ১. পেজ কনফিগারেশন
 st.set_page_config(page_title="Money Receipt", layout="wide")
 
-# ২. কাস্টম ডার্ক মোড এবং রিসিটের প্রিমিয়াম ফুল-উইডথ ও ফ্রেম CSS
+# ২. কাস্টম ডার্ক মোড এবং রিসিটের ফুল-উইডথ ও ফ্রেম CSS
 st.markdown("""
     <style>
     .stApp {
@@ -66,12 +66,12 @@ st.markdown("""
         background-color: #f1f5f9 !important;
         color: #1e3a8a !important;
         border-bottom: 2px solid #cbd5e1 !important;
-        padding: 10px;
+        padding: 12px 10px;
         text-align: left;
     }
     .receipt-table td {
         border-bottom: 1px solid #e2e8f0 !important;
-        padding: 10px;
+        padding: 12px 10px;
         color: #334155 !important;
     }
     .summary-text {
@@ -90,7 +90,6 @@ st.markdown("""
             visibility: visible !important;
         }
         
-        /* পুরো এ৪ পেজ চওড়া এবং বর্ডার ফ্রেমে আবদ্ধ করার কাস্টম কোড */
         .receipt-container {
             position: absolute !important;
             left: 0 !important; 
@@ -98,7 +97,7 @@ st.markdown("""
             width: 100% !important;  
             max-width: 100% !important;
             box-shadow: none !important;
-            border: 2px solid #000000 !important; /* 👈 পুরো রিসিটটিকে কালো ফ্রেমে আবদ্ধ করবে */
+            border: 2px solid #000000 !important; /* চারদিকের ফ্রেম বা বর্ডার */
             padding: 30px !important;  
             margin: 0px !important;
             line-height: 1.5 !important;
@@ -133,7 +132,7 @@ st.markdown("""
         
         @page {
             size: A4;
-            margin: 0mm !important; /* চারপাশের বাড়তি জায়গা জিরো */
+            margin: 0mm !important; 
         }
     }
     </style>
@@ -156,7 +155,6 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
-    # ডাটাবেজ ইনডেক্সিং ফিক্স
     p_id = record[0]
     p_name = record[1]
     p_age = record[2]
@@ -218,7 +216,6 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
-            # পাইথন লিস্ট স্প্লিট মেথড একুরেট ফিক্স
             parts = test_item.split("(")
             t_name = parts[0].strip()
             t_price = parts[1].replace(")", "").strip()
