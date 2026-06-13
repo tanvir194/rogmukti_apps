@@ -23,14 +23,14 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
-    # ডাটাবেজের অরিজিনাল ইনডেক্সিং পুনরুদ্ধার করা হলো
+    # ডাটাবেজ ভেরিয়েবল ডিফাইন ও ইন্ডেক্সিং সুরক্ষিত করা হলো
     p_id = record[0] if len(record) > 0 else invoice_id
     p_name = record[1] if len(record) > 1 else "N/A"
     p_age = record[2] if len(record) > 2 else "N/A"
     p_phone = record[3] if len(record) > 3 else "N/A"
     p_doctor = record[4] if len(record) > 4 else "N/A"
     p_tests_str = record[5] if len(record) > 5 else ""
-    
+
     total_bill = record[6] if len(record) > 6 else 0.0
     discount_tk = record[7] if len(record) > 7 else 0.0
     advance_paid = record[8] if len(record) > 8 else 0.0
@@ -42,63 +42,63 @@ if record:
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-    # 📄 কাস্টম ফ্রি-সাইজ এ৪ প্রিন্ট সিএসএস স্টাইল ইনজেকশন (ওল্ড ব্রাউজার ফিক্স)
+    # প্রিন্ট সিএসএস এর প্রিন্ট অপ্টিমাইজড মিডিয়া ইনজেকশন (০% মার্জিনাল প্রিন্ট)
     st.markdown("""
-        <style>
-        @media print {
-            body * { visibility: hidden !important; }
-            .print-full-page, .print-full-page * { visibility: visible !important; }
-            .print-full-page {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                padding: 0mm !important;
-                margin: 0mm !important;
-                box-sizing: border-box !important;
-            }
-            @page { size: A4; margin: 0mm !important; }
+    <style>
+    @media print {
+        body * { visibility: hidden !important; }
+        .print-full-page, .print-full-page * { visibility: visible !important; }
+        .print-full-page {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 0mm !important;
+            margin: 0mm !important;
+            box-sizing: border-box !important;
         }
-        </style>
+        @page { size: A4; margin: 0mm !important; }
+    }
+    </style>
     """, unsafe_allow_html=True)
 
-    # HTML রিসিট জেনারেট করা (মোবাইল নম্বর ফিক্সড: 01711867637)
+    # HTML রিসিট ডিজাইন (মোবাইল নম্বর ফিক্সড: 01711367637)
     receipt_html = f"""
-    <div class="print-full-page" style="width:100%; max-width:100%; font-family:Arial, sans-serif; color:#000000; padding:15px; box-sizing:border-box;">
+    <div class="print-full-page" style="width: 100%; max-width: 100%; font-family: Arial, sans-serif; color: #111; padding: 10px;">
         
         <!-- ডায়াগনস্টিক সেন্টারের হেডার -->
-        <div style="text-align:center; border-bottom:3px double #000000; padding-bottom:15px; margin-bottom:20px;">
-            <h1 style="font-size:32px; font-weight:bold; margin:0; color:#000000;">ROGMUKTI DIAGNOSTIC CENTRE</h1>
-            <p style="font-size:15px; margin:5px 0 0 0;">Mollah stand, Auliapur, Patuakhali</p>
-            <p style="font-size:16px; font-weight:bold; margin:3px 0 0 0;">Mobile: 01711867637</p>
+        <div style="text-align: center; border-bottom: 2px double #000; padding-bottom: 15px; margin-bottom: 20px;">
+            <h1 style="font-size: 32px; font-weight: bold; margin: 0; color: #000;">ROGMUKTI DIAGNOSTIC CENTRE</h1>
+            <p style="font-size: 15px; margin: 5px 0 0 0;">Mallah stand, Auliapur, Patuakhali</p>
+            <p style="font-size: 15px; font-weight: bold; margin: 3px 0 0 0;">Mobile: 01711367637</p>
         </div>
         
-        <!-- পেশেন্ট ডিটেইলস টেবিল (পুরো এ৪ পেজ চওড়া) -->
-        <table style="width:100%; font-size:16px; margin-bottom:25px; line-height:1.8;">
+        <!-- পেশেন্ট ইনফরমেশন টেবিল (পুরো A4 এর জন্য চওড়া) -->
+        <table style="width: 100%; font-size: 16px; margin-bottom: 25px; line-height: 1.8;">
             <tr>
-                <td style="width:50%;"><b>Invoice ID:</b> #{p_id}</td>
-                <td style="text-align:right; width:50%;"><b>Date:</b> {billing_date}</td>
+                <td style="width: 50%;"><b>Invoice ID:</b> {p_id}</td>
+                <td style="text-align: right; width: 50%;"><b>Date:</b> {billing_date}</td>
             </tr>
             <tr>
                 <td><b>Patient Name:</b> {p_name}</td>
-                <td style="text-align:right;"><b>Age:</b> {p_age} Y</td>
+                <td style="text-align: right;"><b>Age:</b> {p_age} Y/M</td>
             </tr>
             <tr>
                 <td><b>Mobile No:</b> {p_phone}</td>
-                <td style="text-align:right;"><b>Ref. By:</b> {p_doctor}</td>
+                <td style="text-align: right;"><b>Ref. By:</b> {p_doctor}</td>
             </tr>
         </table>
-        
-        <div style="font-weight:bold; font-size:16px; border-bottom:2px solid #000000; padding-bottom:5px; margin-bottom:10px;">Test Description & Rate</div>
-        
-        <!-- মূল টেস্টের লিস্ট টেবিল -->
-        <table style="width:100%; border-collapse:collapse; font-size:16px;">
+
+        <div style="font-weight: bold; font-size: 16px; border-bottom: 2px solid #000000; padding-bottom: 5px; margin-bottom: 10px;"></div>
+
+        <!-- টেস্ট রিসিট লিস্ট টেবিল -->
+        <table style="width: 100%; border-collapse: collapse; font-size: 16px;">
             <thead>
-                <tr style="background-color:#f2f2f2;">
-                    <th style="width:10%; border:1px solid #000000; padding:10px; text-align:center;">SL</th>
-                    <th style="width:65%; border:1px solid #000000; padding:10px; text-align:left;">Test Name</th>
-                    <th style="width:25%; border:1px solid #000000; padding:10px; text-align:right;">Price</th>
+                <tr style="background-color: #f2f2f2;">
+                    <th style="width: 10%; border: 1px solid #000000; padding: 10px; text-align: center;">SL</th>
+                    <th style="width: 65%; border: 1px solid #000000; padding: 10px; text-align: left;">Test Name</th>
+                    <th style="width: 25%; border: 1px solid #000000; padding: 10px; text-align: right;">Price</th>
                 </tr>
             </thead>
             <tbody>
@@ -108,17 +108,16 @@ if record:
         tests_list = str(p_tests_str).split(",")
     else:
         tests_list = []
-        
+
     serial_no = 1
     for test_item in tests_list:
         test_item = test_item.strip()
         if not test_item:
             continue
             
-        if "(" in test_item and ")" in test_item:
+        if ":" in test_item and ")" in test_item:
             try:
-                # 🛠️ ফিক্সড: পাইথন লিস্ট অবজেক্ট এর ইনডেক্সিং এর ভুলগুলো পুরোপুরি ঠিক করা হলো
-                parts = test_item.split("(")
+                parts = test_item.split(":")
                 t_name = parts[0].strip()
                 t_price = parts[1].replace(")", "").strip()
                 t_price_formatted = f"{float(t_price):.2f}"
@@ -131,9 +130,9 @@ if record:
             
         receipt_html += f"""
                 <tr>
-                    <td style="border:1px solid #000000; padding:10px; text-align:center;">{serial_no}</td>
-                    <td style="border:1px solid #000000; padding:10px;">{t_name}</td>
-                    <td style="border:1px solid #000000; padding:10px; text-align:right;">{t_price_formatted} Tk</td>
+                    <td style="border: 1px solid #000000; padding: 10px; text-align: center;">{serial_no}</td>
+                    <td style="border: 1px solid #000000; padding: 10px;">{t_name}</td>
+                    <td style="border: 1px solid #000000; padding: 10px; text-align: right;">{t_price_formatted} Tk</td>
                 </tr>
         """
         serial_no += 1
@@ -151,15 +150,27 @@ if record:
         </table>
         
         <!-- ফাইনাল সামারি বক্স (ডান পাশে চওড়া বক্স আকারে) -->
-        <table style="margin-top:25px; float:right; width:45%; font-size:16px; border:1px solid #000000; padding:15px; background-color:#f9f9f9; line-height:1.8; border-collapse:collapse;">
-            <tr><td style="padding:5px;"><b>Total Bill:</b></td><td style="text-align:right; padding:5px;">{t_bill:.2f} Tk</td></tr>
-            <tr><td style="padding:5px;"><b>Discount:</b></td><td style="text-align:right; padding:5px;">{d_tk:.2f} Tk</td></tr>
-            <tr><td style="padding:5px;"><b>Advance Paid:</b></td><td style="text-align:right; padding:5px;">{a_paid:.2f} Tk</td></tr>
-            <tr style="border-top:1px solid #000000; font-size:18px; color:#ff0000;"><td style="padding:5px;"><b>Due Amount:</b></td><td style="text-align:right; padding:5px;"><b>{d_amt:.2f} Tk</b></td></tr>
+        <table style="margin-top: 25px; float: right; width: 45%; font-size: 16px; border: 1px solid #000000; padding: 5px; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #dddddd;">
+                <td style="padding: 5px;"><b>Total Bill:</b></td>
+                <td style="text-align: right; padding: 5px;">{t_bill:.2f} Tk</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #dddddd;">
+                <td style="padding: 5px;"><b>Discount:</b></td>
+                <td style="text-align: right; padding: 5px;">{d_tk:.2f} Tk</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #dddddd;">
+                <td style="padding: 5px;"><b>Advance Paid:</b></td>
+                <td style="text-align: right; padding: 5px;">{a_paid:.2f} Tk</td>
+            </tr>
+            <tr style="border-top: 1px solid #000000; font-size: 18px; color: #ff0000;">
+                <td style="padding: 5px;"><b>Due Amount:</b></td>
+                <td style="text-align: right; padding: 5px;"><b>{d_amt:.2f} Tk</b></td>
+            </tr>
         </table>
-        <div style="clear:both;"></div>
-        
-        <div style="text-align:center; margin-top:60px; font-size:14px; color:#555555; font-style:italic; border-top:1px dashed #000000; padding-top:15px;">
+        <div style="clear: both;"></div>
+
+        <div style="text-align: center; margin-top: 40px; font-size: 14px; color: #555555; font-style: italic;">
             Thank you for trusting us with your care.
         </div>
     </div>
@@ -171,13 +182,13 @@ if record:
     }
     </style>
     """
-    
+
     st.markdown(receipt_html, unsafe_allow_html=True)
 
 else:
     if invoice_id > 0:
-        st.error(f"🚨 দুঃখিত, #{invoice_id} নম্বরের কোনো বিল ডাটাবেজে খুঁজে পাওয়া যায়নি!")
+        st.error(f"🔍 দুঃখিত, #{invoice_id} নাম্বারের কোনো বিল ডাটাবেজে খুঁজে পাওয়া যায়নি।")
     else:
-        st.info("ℹ️ বিল প্রিন্ট করার জন্য উপরে সঠিক Invoice ID নম্বরটি ইনপুট দিন।")
+        st.info("ℹ️ বিল প্রিন্ট করার জন্য উপরে সঠিক Invoice ID বা ইনপুট দিন।")
 
 conn.close()
