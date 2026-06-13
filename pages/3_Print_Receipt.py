@@ -1,14 +1,10 @@
 import streamlit as st
 
 def app():
-    # পেজের শিরোনাম
-    st.title("🖨️ A4 Full Width Money Receipt")
-    
     # ইনভয়েস আইডি ইনপুট নেওয়ার বক্স
-    invoice_id = st.number_input("Enter Bill No / Invoice ID to Print:", min_value=1, value=1, step=1)
+    invoice_id = st.number_input("Enter Bill No / Invoice ID to Print:", min_value=1, value=11, step=1)
     
-    # --- রিসিটের ভেতরের HTML এবং প্রিন্ট বাটন কোড শুরু ---
-    # এখানে পাইথনের f""" ব্যবহার করা হয়েছে যাতে ডাইনামিক ডাটা ও জাভাস্ক্রিপ্ট একসাথে কাজ করে।
+    # সম্পূর্ণ HTML ডিজাইন একটি ভেরিয়েবলে রাখা হলো
     html_receipt = f"""
     <!-- ১. প্রিন্ট অ্যাকশন বাটন -->
     <div style="text-align: right; margin-bottom: 20px;">
@@ -21,8 +17,7 @@ def app():
             border-radius: 5px; 
             cursor: pointer;
             font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: 0.3s;">
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
             🖨️ রিসিটটি প্রিন্ট করুন
         </button>
     </div>
@@ -76,7 +71,7 @@ def app():
             </tbody>
         </table>
 
-        <!-- ফাইনাল বিলের হিসাব বক্স (ডান পাশে সাজানো) -->
+        <!-- ফাইনাল বিলের হিসাব বক্স -->
         <div style="margin-top: 25px; float: right; width: 45%; font-size: 16px;">
             <table style="width: 100%; border-collapse: collapse;">
                 <tr>
@@ -104,7 +99,7 @@ def app():
     <!-- ৩. শুধুমাত্র প্রিন্ট ফরম্যাটের জন্য বিশেষ সিএসএস (CSS) -->
     <style>
     @media print {{
-        /* প্রিন্ট করার সময় বামের সাইডবার, নেভিগেশন এবং প্রিন্ট বাটন সম্পূর্ণ হাইড হবে */
+        /* প্রিন্ট করার সময় সাইডবার ও বাটন হাইড করার জন্য */
         [data-testid="stSidebar"], 
         header, 
         footer, 
@@ -113,25 +108,17 @@ def app():
             display: none !important;
         }}
         
-        /* প্রিন্ট এরিয়াকে পুরো পাতায় (A4 Full Width) রূপান্তর */
         .main .block-container {{
             max-width: 100% !important;
             padding: 0 !important;
             margin: 0 !important;
         }}
-        
-        /* মানি রিসিটের বর্ডার বা ব্যাকগ্রাউন্ড প্রিন্টে ঠিক রাখার জন্য */
-        #receipt-body {{
-            border: none !important;
-            padding: 0 !important;
-        }}
     }}
     </style>
     """
     
-    # Streamlit-এ HTML ও CSS রেন্ডার করার কমান্ড
+    # রিসিটটিকে ব্রাউজারে কোড হিসেবে না দেখিয়ে ওয়েবপেজ হিসেবে রেন্ডার করার কমান্ড
     st.markdown(html_receipt, unsafe_allow_html=True)
 
-# মাল্টি-পেজ রাউটিং এর মাধ্যমে রান করার জন্য
 if __name__ == "__main__":
     app()
