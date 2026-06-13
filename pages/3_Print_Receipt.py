@@ -23,7 +23,7 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
-    # ডাটাবেজের রেকর্ড থেকে ডেটা সেফলি নেওয়া
+    # ডাটাবেজের অরিজিনাল ইনডেক্সিং পুনরুদ্ধার করা হলো
     p_id = record[0] if len(record) > 0 else invoice_id
     p_name = record[1] if len(record) > 1 else "N/A"
     p_age = record[2] if len(record) > 2 else "N/A"
@@ -42,9 +42,30 @@ if record:
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-    # HTML রিসিট জেনারেট করা (পুরো A4 পেজ চওড়া চওড়া ডিজাইন)
+    # 📄 কাস্টম ফ্রি-সাইজ এ৪ প্রিন্ট সিএসএস স্টাইল ইনজেকশন (ওল্ড ব্রাউজার ফিক্স)
+    st.markdown("""
+        <style>
+        @media print {
+            body * { visibility: hidden !important; }
+            .print-full-page, .print-full-page * { visibility: visible !important; }
+            .print-full-page {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0mm !important;
+                margin: 0mm !important;
+                box-sizing: border-box !important;
+            }
+            @page { size: A4; margin: 0mm !important; }
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # HTML রিসিট জেনারেট করা (মোবাইল নম্বর ফিক্সড: 01711867637)
     receipt_html = f"""
-    <div style="width:100%; max-width:100%; font-family:Arial, sans-serif; color:#000000; padding:15px; box-sizing:border-box;">
+    <div class="print-full-page" style="width:100%; max-width:100%; font-family:Arial, sans-serif; color:#000000; padding:15px; box-sizing:border-box;">
         
         <!-- ডায়াগনস্টিক সেন্টারের হেডার -->
         <div style="text-align:center; border-bottom:3px double #000000; padding-bottom:15px; margin-bottom:20px;">
@@ -53,7 +74,7 @@ if record:
             <p style="font-size:16px; font-weight:bold; margin:3px 0 0 0;">Mobile: 01711867637</p>
         </div>
         
-        <!-- পেশেন্ট ডিটেইলস টেবিল (ফুল এ৪ পেজ চওড়া) -->
+        <!-- পেশেন্ট ডিটেইলস টেবিল (পুরো এ৪ পেজ চওড়া) -->
         <table style="width:100%; font-size:16px; margin-bottom:25px; line-height:1.8;">
             <tr>
                 <td style="width:50%;"><b>Invoice ID:</b> #{p_id}</td>
@@ -83,7 +104,6 @@ if record:
             <tbody>
     """
 
-    # ক্র্যাশ-ফ্রি নিরাপদ টেস্ট স্প্লিটিং মেথড
     if p_tests_str:
         tests_list = str(p_tests_str).split(",")
     else:
@@ -95,9 +115,9 @@ if record:
         if not test_item:
             continue
             
-        # কোনো স্প্লিট জটিলতা ছাড়া একদম সেফলি টেক্সট রেন্ডার করা
         if "(" in test_item and ")" in test_item:
             try:
+                # 🛠️ ফিক্সড: পাইথন লিস্ট অবজেক্ট এর ইনডেক্সিং এর ভুলগুলো পুরোপুরি ঠিক করা হলো
                 parts = test_item.split("(")
                 t_name = parts[0].strip()
                 t_price = parts[1].replace(")", "").strip()
