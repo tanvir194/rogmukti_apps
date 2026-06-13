@@ -3,8 +3,8 @@ import streamlit as st
 # ১. ইনভয়েস আইডি ইনপুট নেওয়ার বক্স
 invoice_id = st.number_input("Enter Bill No / Invoice ID to Print:", min_value=1, value=11, step=1)
 
-# ২. সম্পূর্ণ HTML ও CSS ডিজাইন একটি একক ভেরিয়েবলে রাখা হলো
-html_receipt = f"""
+# ২. সম্পূর্ণ HTML এবং CSS ডিজাইন কোনো f-string এর ঝামেলা ছাড়া সরাসরি রাখা হলো
+html_receipt = """
 <!-- প্রিন্ট অ্যাকশন বাটন -->
 <div style="text-align: right; margin-bottom: 20px;">
     <button onclick="window.print()" style="
@@ -34,7 +34,7 @@ html_receipt = f"""
     <!-- পেশেন্ট ইনফরমেশন টেবিল -->
     <table style="width: 100%; font-size: 16px; margin-top: 25px; margin-bottom: 25px; line-height: 1.6; border-collapse: collapse;">
         <tr>
-            <td style="width: 50%;"><b>Invoice ID:</b> {invoice_id}</td>
+            <td style="width: 50%;"><b>Invoice ID:</b> """ + str(invoice_id) + """</td>
             <td style="text-align: right; width: 50%;"><b>Date:</b> 2026-06-13</td>
         </tr>
         <tr>
@@ -98,16 +98,13 @@ html_receipt = f"""
 <!-- ৩. শুধুমাত্র প্রিন্ট ফরম্যাটের জন্য বিশেষ সিএসএস (CSS) -->
 <style>
 @media print {
-    /* প্রিন্ট করার সময় বামের সাইডবার, নেভিগেশন হেডার এবং প্রিন্ট বাটন হাইড হবে */
     [data-testid="stSidebar"], 
     header, 
     footer, 
-    button,
-    .stMarkdown div div button {
+    button {
         display: none !important;
     }
     
-    /* প্রিন্ট এরিয়াকে পুরো পাতায় (A4 Full Width) রূপান্তর */
     .main .block-container {
         max-width: 100% !important;
         padding: 0 !important;
