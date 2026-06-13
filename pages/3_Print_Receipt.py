@@ -39,7 +39,7 @@ st.markdown("""
         color: #000000 !important;
         border-radius: 12px;
         padding: 30px;
-        max-width: 900px;
+        max-width: 950px;
         margin: 0 auto;
         font-family: 'Segoe UI', Arial, sans-serif;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
@@ -53,7 +53,7 @@ st.markdown("""
     }
     .receipt-title {
         color: #1e3a8a !important;
-        font-size: 26px;
+        font-size: 28px;
         font-weight: bold;
         margin: 0;
     }
@@ -76,12 +76,12 @@ st.markdown("""
     }
     .summary-text {
         text-align: right;
-        font-size: 15px;
+        font-size: 16px;
         margin-top: 6px;
         color: #1e293b !important;
     }
     
-    /* 🖨️ প্রিন্ট স্ক্রিপ্ট (A4 ফুল স্ক্রিন চওড়া করার জন্য) */
+    /* 🖨️ প্রিন্ট স্ক্রিপ্ট (A4 ফুল স্ক্রিন চওড়া এবং আনলিমিটেড পেজ ফিক্স) */
     @media print {
         body * {
             visibility: hidden !important;
@@ -90,29 +90,31 @@ st.markdown("""
             visibility: visible !important;
         }
         
-        /* চারপাশের সাদা বর্ডার উধাও করে পুরো এ৪ পেজ চওড়া করার ফিক্স */
+        /* চারপাশের সাদা মার্জিন উধাও করে পুরো এ৪ পেজ চওড়া করার ফিক্স */
         .receipt-container {
             position: absolute !important;
-            left: -100 !important; 
-            top: -100 !important;
-            width: -100% !important;  
-            max-width: -100% !important;
+            left: 0 !important; 
+            top: 0 !important;
+            width: 100% !important;  
+            max-width: 100% !important;
             box-shadow: none !important;
-            border: true !important;  
+            border: none !important;  
             padding: 0px !important;  
             margin: 0px !important;
-            line-height: 1.5 !important;
+            line-height: 1.6 !important;
+            display: block !important;
+            height: auto !important; /* লেখা কেটে যাওয়া রোধ করবে */
         }
         
         .receipt-header {
-            margin-bottom: 25px !important;
-            padding-bottom: 12px !important;
+            margin-bottom: 30px !important;
+            padding-bottom: 15px !important;
             border-bottom: 2px solid #1e3a8a !important;
         }
         
         .receipt-table th {
             padding: 12px 10px !important;
-            font-size: 14px !important;
+            font-size: 15px !important;
             background-color: #f1f5f9 !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
@@ -120,17 +122,17 @@ st.markdown("""
         }
         .receipt-table td {
             padding: 12px 10px !important; 
-            font-size: 14px !important;
+            font-size: 15px !important;
             border-bottom: 1px solid #cbd5e1 !important;
         }
         .summary-text {
-            margin-top: 6px !important;
-            font-size: 15px !important;
+            margin-top: 8px !important;
+            font-size: 16px !important;
         }
         
         @page {
             size: A4;
-            margin: 0mm !important; 
+            margin: 10mm 0mm !important; /* উপর-নিচে সামান্য সেফটি মার্জিন, ডানে-বামে ০ */
         }
     }
     </style>
@@ -153,7 +155,7 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
-    # 🛠️ ফিক্সড: ডাটাবেজের সঠিক ইনডেক্স নম্বরগুলো বসানো হলো
+    # 🛠️ ফিক্সড: ডাটাবেজের সঠিক ইণ্ডেক্সিং নম্বর ম্যাপ করা হলো যাতে ডেটা ক্র্যাশ না করে
     p_id = record[0]
     p_name = record[1]
     p_age = record[2]
@@ -175,10 +177,10 @@ if record:
     receipt_html = f"""<div class="receipt-container">
 <div class="receipt-header">
 <div class="receipt-title">ROGMUKTI DIAGNOSTIC CENTRE</div>
-<div style="font-size:14px; color:#475569; margin-top:4px;">Mollah stand, Auliapur, Patuakhali</div>
+<div style="font-size:14px; color:#475569; margin-top:6px;">Mollah stand, Auliapur, Patuakhali</div>
 <div style="font-size:14px; color:#1e3a8a; font-weight: bold; margin-top:2px;">Mobile: 01711867637</div>
 </div>
-<table style="width:100%; font-size:15px; margin-bottom:20px; color:#1e293b; line-height: 1.6;">
+<table style="width:100%; font-size:15px; margin-bottom:25px; color:#1e293b; line-height: 1.6;">
 <tr>
 <td style="width:50%;"><b>Invoice ID:</b> #{p_id}</td>
 <td style="text-align:right; width:50%;"><b>Date:</b> {billing_date}</td>
@@ -192,7 +194,7 @@ if record:
 <td style="text-align:right;"><b>Ref. By:</b> {p_doctor}</td>
 </tr>
 </table>
-<div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:6px; font-size:15px;">Test Description & Rate</div>
+<div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:6px; font-size:16px;">Test Description & Rate</div>
 <table class="receipt-table">
 <thead>
 <tr>
@@ -215,7 +217,7 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
-            # 🛠️ ফিক্সড: পাইথন লিস্ট স্প্লিট মেথড পুরোপুরি সংশোধন করা হয়েছে
+            # 🛠️ ফিক্সড: পাইথন লিস্ট স্প্লিট মেথডের ইনডেক্সিং এর মারাত্মক ভুলটি সংশোধন করা হলো
             parts = test_item.split("(")
             t_name = parts[0].strip()
             t_price = parts[1].replace(")", "").strip()
@@ -234,15 +236,24 @@ if record:
 </tr>"""
         serial_no += 1
 
+    # ফ্লোট কনভার্সন সেফটি চেক
+    try:
+        t_bill = float(total_bill)
+        d_tk = float(discount_tk)
+        a_paid = float(advance_paid)
+        d_amt = float(due_amount)
+    except:
+        t_bill, d_tk, a_paid, d_amt = 0.0, 0.0, 0.0, 0.0
+
     receipt_html += f"""</tbody>
 </table>
-<div style="margin-top:20px; border-top:1px dashed #cbd5e1; padding-top:10px;">
-<div class="summary-text"><b>Total Bill:</b> {total_bill:.2f} Tk</div>
-<div class="summary-text"><b>Discount:</b> {discount_tk:.2f} Tk</div>
-<div class="summary-text"><b>Advance Paid:</b> {advance_paid:.2f} Tk</div>
-<div class="summary-text" style="font-size:17px; color:#ef4444; margin-top:6px;"><b>Due Amount:</b> {due_amount:.2f} Tk</div>
+<div style="margin-top:25px; border-top:1px dashed #cbd5e1; padding-top:12px;">
+<div class="summary-text"><b>Total Bill:</b> {t_bill:.2f} Tk</div>
+<div class="summary-text"><b>Discount:</b> {d_tk:.2f} Tk</div>
+<div class="summary-text"><b>Advance Paid:</b> {a_paid:.2f} Tk</div>
+<div class="summary-text" style="font-size:18px; color:#ef4444; margin-top:6px;"><b>Due Amount:</b> {d_amt:.2f} Tk</div>
 </div>
-<div style="text-align:center; margin-top:40px; font-size:13px; color:#64748b; font-style:italic;">
+<div style="text-align:center; margin-top:50px; font-size:14px; color:#64748b; font-style:italic;">
 Thank you for trusting us with your care.
 </div>
 </div>"""
