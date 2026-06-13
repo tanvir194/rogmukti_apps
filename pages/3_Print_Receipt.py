@@ -106,12 +106,12 @@ full_html_page = """
     white-space: nowrap;
 }
 
-/* রোগীর তথ্যের আপগ্রেডেড টেবিল সিস্টেম */
+/* রোগীর তথ্যের টেবিল সিস্টেম (৫০%-৫০% সমান ভাগে ভাগ করা) */
 .info-table { 
     width: 100%; 
     border-collapse: collapse; 
     margin-bottom: 25px; 
-    table-layout: fixed; /* কলামগুলোর সাইজ ফিক্সড লক করার জন্য */
+    table-layout: fixed;
 }
 .info-table td { 
     padding: 8px 12px; 
@@ -235,13 +235,13 @@ full_html_page = """
     
     <div class="money-receipt-title">MONEY RECEIPT</div>
     
-    <!-- ডাক্তারের নাম লম্বা করার স্পেস এবং মোবাইল কলাম ডানে সরানোর নিখুঁত টেবিল লজিক -->
+    <!-- কলামের উইডথ লেআউট ৫০%-৫০% ফিক্সড করে ডানে সরানো হলো -->
     <table class="info-table">
         <tr>
-            <td class="info-label" style="width: 15%;">Invoice ID:</td>
-            <td style="width: 45%;">#__INVOICE_ID__</td>
-            <td class="info-label" style="width: 13%;">Date:</td>
-            <td style="width: 27%;">__CURRENT_DATE__</td>
+            <td class="info-label" style="width: 18%;">Invoice ID:</td>
+            <td style="width: 32%;">#__INVOICE_ID__</td>
+            <td class="info-label" style="width: 18%;">Date:</td>
+            <td style="width: 32%;">__CURRENT_DATE__</td>
         </tr>
         <tr>
             <td class="info-label">Patient Name:</td>
@@ -251,9 +251,9 @@ full_html_page = """
         </tr>
         <tr>
             <td class="info-label">Ref. By:</td>
-            <td style="font-weight: bold; font-size: 14.5px;">__DOCTOR__</td> <!-- বড় নামের জায়গা বাড়ানোর জন্য চওড়া ৪৫% লকড -->
+            <td style="font-weight: bold;">__DOCTOR__</td>
             <td class="info-label">Mobile No:</td>
-            <td>__PHONE__</td>
+            <td style="font-weight: bold;">__PHONE__</td>
         </tr>
     </table>
     
