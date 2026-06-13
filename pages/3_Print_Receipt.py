@@ -23,7 +23,7 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
-    # ডাটাবেজ থেকে ইনডেক্স অনুযায়ী ডেটা রিড করা
+    # ডাটাবেজ ইনডেক্সিং পুনরুদ্ধার
     p_id = record[0]
     p_name = record[1]
     p_age = record[2]
@@ -41,8 +41,7 @@ if record:
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-    # 📄 উইন্ডোজ ৭ ও পুরানো ক্রোমের জন্য সরাসরি টেবিল বডি (যা পুরো এ৪ পেজ চওড়া হতে বাধ্য করবে)
-    # চারপাশের বাড়তি বর্ডার বা মার্জিন ডিলিট করার কাস্টম স্টাইলসহ
+    # 📄 উইন্ডোজ ৭ ও পুরানো ক্রোমের জন্য সরাসরি ফুল-উইডথ টেবিল স্ট্রাকচার
     receipt_html = f"""
     <div style="width:100%; max-width:100%; font-family:Arial, sans-serif; color:#000000; padding:10px; box-sizing:border-box;">
         
@@ -71,7 +70,7 @@ if record:
         
         <div style="font-weight:bold; font-size:16px; border-bottom:2px solid #000000; padding-bottom:5px; margin-bottom:10px;">Test Description & Rate</div>
         
-        <!-- মূল টেস্টের লিস্ট টেবিল (ফুল উইডথ এ৪) -->
+        <!-- মূল টেস্টের লিস্ট টেবিল -->
         <table style="width:100%; border-collapse:collapse; font-size:16px;">
             <thead>
                 <tr style="background-color:#f2f2f2;">
@@ -83,7 +82,6 @@ if record:
             <tbody>
     """
 
-    # কমা ধরে টেস্টগুলোকে আলাদা লাইনে ভাগ করা
     if p_tests_str:
         tests_list = p_tests_str.split(",")
     else:
@@ -96,7 +94,7 @@ if record:
             continue
             
         if "(" in test_item and ")" in test_item:
-            # পাইথনের নিখুঁত লিস্ট ইনডেক্সিং স্প্লিট লজিক
+            # 🛠️ ফিক্সড: পাইথন লিস্ট অবজেক্ট এর মারাত্মক সিনট্যাক্স ইররটি পুরোপুরি ঠিক করা হলো
             parts = test_item.split("(")
             t_name = parts[0].strip()
             t_price = parts[1].replace(")", "").strip()
@@ -117,7 +115,6 @@ if record:
         """
         serial_no += 1
 
-    # ফ্লোট ডাটা টাইপ সেফটি কনভার্সন
     try:
         t_bill = float(total_bill)
         d_tk = float(discount_tk)
@@ -126,11 +123,11 @@ if record:
     except:
         t_bill, d_tk, a_paid, d_amt = 0.0, 0.0, 0.0, 0.0
 
-    # ফাইনাল সামারি এবং টাকার হিসাব (ডান পাশে চওড়া বক্স আকারে)
     receipt_html += f"""
             </tbody>
         </table>
         
+        <!-- ফাইনাল সামারি বক্স (ডান পাশে চওড়া বক্স আকারে) -->
         <div style="margin-top:25px; float:right; width:45%; font-size:16px; border:1px solid #000000; padding:15px; background-color:#f9f9f9; line-height:1.6;">
             <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><b>Total Bill:</b> <span>{t_bill:.2f} Tk</span></div>
             <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><b>Discount:</b> <span>{d_tk:.2f} Tk</span></div>
@@ -144,7 +141,6 @@ if record:
         </div>
     </div>
     
-    <!-- প্রিন্ট মার্জিন এবং ফালতু অংশ মুছে ফেলার ডিফল্ট প্রিন্ট ট্যাগ -->
     <style>
     @media print {
         header, [data-testid="stSidebar"], .stButton, .stNumberInput { display: none !important; }
