@@ -75,6 +75,18 @@ st.markdown("""
         box-shadow: 0 0 15px rgba(2, 132, 199, 0.6) !important;
     }
     </style>
+    # লাল মার্ক করা ফাঁকা জায়গার জন্য স্ক্রলিং নোটিশ (Marquee)
+st.markdown(
+    """
+    <div style='background-color: #16253b; padding: 10px; border-radius: 8px; border: 1px solid #1f172a; margin-bottom: 20px;'>
+        <marquee style='color: #f1f72a; font-size: 16px; font-weight: bold; font-family: "Kalpurush", "Siyam Rupali", sans-serif;'>
+            👋 রোগমুক্তি ডায়াগনস্টিক অ্যান্ড ডিজিটাল ল্যাবে স্বাগতম! ⚠️ সতর্কর্তা: নতুন পেশেন্ট এন্ট্রি ও বিল তৈরি করার সময় তথ্যগুলো অনুগ্রহ করে ডাবল চেক করে নিন।
+        </marquee>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+
 """, unsafe_allow_html=True)
 
 # ৫. ডাটাবেজ কানেকশন
