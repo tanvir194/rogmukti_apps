@@ -23,7 +23,7 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
-    # ডাটাবেজ ভেরিয়েবল ডিফাইন ও ইন্ডেক্সিং সুরক্ষিত করা হলো
+    # টাপল ইনডেক্সিং ফিক্স করা হলো (ডাটা ফিল্ড সুরক্ষিত উপায়ে আলাদা করা)
     p_id = record[0] if len(record) > 0 else invoice_id
     p_name = record[1] if len(record) > 1 else "N/A"
     p_age = record[2] if len(record) > 2 else "N/A"
@@ -42,7 +42,7 @@ if record:
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-    # প্রিন্ট সিএসএস এর প্রিন্ট অপ্টিমাইজড মিডিয়া ইনজেকশন (০% মার্জিনাল প্রিন্ট)
+    # প্রিন্ট সিএসএস এর প্রিন্ট অপ্টিমাইজড মিডিয়া ইনজেকশন
     st.markdown("""
     <style>
     @media print {
@@ -63,7 +63,7 @@ if record:
     </style>
     """, unsafe_allow_html=True)
 
-    # HTML রিসিট ডিজাইন (মোবাইল নম্বর ফিক্সড: 01711367637)
+    # HTML রিসিট ডিজাইন 
     receipt_html = f"""
     <div class="print-full-page" style="width: 100%; max-width: 100%; font-family: Arial, sans-serif; color: #111; padding: 10px;">
         
@@ -74,7 +74,7 @@ if record:
             <p style="font-size: 15px; font-weight: bold; margin: 3px 0 0 0;">Mobile: 01711367637</p>
         </div>
         
-        <!-- পেশেন্ট ইনফরমেশন টেবিল (পুরো A4 এর জন্য চওড়া) -->
+        <!-- পেশেন্ট ইনফরমেশন টেবিল -->
         <table style="width: 100%; font-size: 16px; margin-bottom: 25px; line-height: 1.8;">
             <tr>
                 <td style="width: 50%;"><b>Invoice ID:</b> {p_id}</td>
@@ -157,7 +157,7 @@ if record:
             </tbody>
         </table>
         
-        <!-- ফাইনাল সামারি বক্স (ডান পাশে চওড়া বক্স আকারে) -->
+        <!-- ফাইনাল সামারি বক্স -->
         <table style="margin-top: 25px; float: right; width: 45%; font-size: 16px; border: 1px solid #000000; padding: 5px; border-collapse: collapse;">
             <tr style="border-bottom: 1px solid #dddddd;">
                 <td style="padding: 5px;"><b>Total Bill:</b></td>
