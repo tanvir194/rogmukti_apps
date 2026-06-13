@@ -118,6 +118,7 @@ if record:
         t_name = test_item
         t_price_formatted = "0.00"
         
+        # ব্র্যাকেটের ভেতর থেকে দাম আলাদা করার লজিক ফিক্স
         if "(" in test_item and ")" in test_item:
             try:
                 start_idx = test_item.rfind("(")
