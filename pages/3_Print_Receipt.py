@@ -162,23 +162,6 @@ if record:
             <tr style="border-bottom: 1px solid #dddddd;">
                 <td style="padding: 5px;"><b>Advance Paid:</b></td>
                 <td style="text-align: right; padding: 5px;">{a_paid:.2f} Tk</td>
-                receipt_html += f"""
-            </tbody>
-        </table>
-        
-        <!-- ফাইনাল সামারি বক্স (ডান পাশে চওড়া বক্স আকারে) -->
-        <table style="margin-top: 25px; float: right; width: 45%; font-size: 16px; border: 1px solid #000000; padding: 5px; border-collapse: collapse;">
-            <tr style="border-bottom: 1px solid #dddddd;">
-                <td style="padding: 5px;"><b>Total Bill:</b></td>
-                <td style="text-align: right; padding: 5px;">{t_bill:.2f} Tk</td>
-            </tr>
-            <tr style="border-bottom: 1px solid #dddddd;">
-                <td style="padding: 5px;"><b>Discount:</b></td>
-                <td style="text-align: right; padding: 5px;">{d_tk:.2f} Tk</td>
-            </tr>
-            <tr style="border-bottom: 1px solid #dddddd;">
-                <td style="padding: 5px;"><b>Advance Paid:</b></td>
-                <td style="text-align: right; padding: 5px;">{a_paid:.2f} Tk</td>
             </tr>
             <tr style="border-top: 1px solid #000000; font-size: 18px; color: #ff0000;">
                 <td style="padding: 5px;"><b>Due Amount:</b></td>
