@@ -46,12 +46,12 @@ phone = row[3]
 doctor = row[4]
 selected_tests_data = row[5] 
 total_amount = float(row[6])
-discount_amount = float(row[7]) # ডেটাবেজ থেকে সরাসরি ডিসকাউন্টের মোট টাকা নেওয়া হলো
+discount_amount = float(row[7])
 advance_paid = float(row[8])
 due_amount = float(row[9])
 current_date = row[10]
 
-# --- নতুন লজিক: কমা দিয়ে যুক্ত টেস্ট এবং ব্র্যাকেটের রেট আলাদা করা ---
+# --- কমা দিয়ে যুক্ত টেস্ট এবং ব্র্যাকেটের রেট আলাদা করা ---
 tests_found = re.findall(r'([^,(\d]+)\s*(?:\(([\d.]+)\))?', selected_tests_data)
 
 table_rows = ""
@@ -67,95 +67,127 @@ for t_name, t_price in tests_found:
     except:
         t_price_val = 0.00
         
-    table_rows += f"<tr><td style='text-align: center;'>{index}</td><td>{t_name_clean}</td><td style='text-align: right;'>{t_price_val:.2f} Tk</td></tr>"
+    table_rows += f"<tr><td style='text-align: center; border: 1px solid #333;'>{index}</td><td style='border: 1px solid #333; padding-left: 10px;'>{t_name_clean}</td><td style='text-align: right; border: 1px solid #333; padding-right: 10px;'>{t_price_val:.2f} Tk</td></tr>"
     index += 1
 
 # ------------------- Full HTML, CSS and Print Logic -------------------
 full_html_page = """
 <style>
 .receipt-box {
-    max-width: 550px;
+    max-width: 600px;
     margin: 20px auto;
-    padding: 25px;
-    border: 2px solid #1a365d !important;
-    border-radius: 12px;
+    padding: 30px;
+    border: 2px solid #000000 !important;
     background-color: white;
     color: black;
     font-family: 'Arial', sans-serif;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     box-sizing: border-box;
 }
 .header {
     text-align: center;
-    background-color: #1a365d;
-    color: white;
-    padding: 15px;
-    border-radius: 8px 8px 0 0;
+    border-bottom: 3px double #000000;
+    padding-bottom: 12px;
     margin-bottom: 15px;
 }
-.header h2 { margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; }
-.header p { margin: 5px 0 0 0; font-size: 13px; opacity: 0.9; }
-.info-table, .test-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; color: black; }
-.info-table td { padding: 5px 0; font-size: 14px; }
-.test-table th, .test-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
-.test-table th { background-color: #f2f2f2; color: #1a365d; font-weight: bold; }
-.total-section { text-align: right; font-size: 15px; line-height: 1.6; }
-.total-section b { color: #1a365d; }
+.header h2 { margin: 0; font-size: 26px; font-weight: bold; text-transform: uppercase; color: #000; }
+.header p { margin: 4px 0 0 0; font-size: 14px; font-weight: 500; }
 
 .money-receipt-title {
     text-align: center;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: bold;
-    letter-spacing: 2px;
-    margin: 10px 0 20px 0;
-    color: #1a365d;
+    letter-spacing: 3px;
+    margin: 10px auto 15px auto;
+    color: #000;
+    border: 1.5px solid #000;
+    width: 200px;
+    padding: 4px 0;
     text-transform: uppercase;
-    border-bottom: 2px solid #1a365d;
-    padding-bottom: 5px;
 }
 
+.info-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-bottom: 20px; 
+}
+.info-table td { 
+    padding: 6px 0; 
+    font-size: 14px; 
+    color: #000;
+}
+
+.test-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-bottom: 20px; 
+}
+.test-table th { 
+    border: 1px solid #333; 
+    padding: 10px; 
+    text-align: left; 
+    font-size: 14px; 
+    background-color: #f5f5f5; 
+    color: #000; 
+    font-weight: bold; 
+}
+.test-table td { 
+    padding: 8px; 
+    font-size: 13px; 
+    color: #000;
+}
+
+.bill-container {
+    width: 100%;
+    margin-top: 15px;
+}
+.total-section { 
+    float: right;
+    width: 250px;
+    font-size: 14px; 
+    line-height: 1.8; 
+    border: 1px solid #333;
+    padding: 10px;
+    background-color: #fafafa;
+}
+.total-section p { margin: 0; display: flex; justify-content: space-between; }
+
 .signature-section {
-    margin-top: 50px;
+    margin-top: 60px;
     text-align: right;
+    clear: both;
 }
 .signature-line {
     display: inline-block;
     width: 180px;
     border-top: 1.5px solid #000;
     text-align: center;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
-    color: #1a365d;
     padding-top: 5px;
+    color: #000;
 }
 
 @media print {
     header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], .stButton, h1, div.stWrite {
         display: none !important;
     }
-    
-    /* প্রিন্টের সময় মেইন উইন্ডোর অতিরিক্ত টপ মার্জিন ও প্যাডিং শূন্য করা */
-    .main, .main .block-container {
+    .main .block-container {
         padding: 0 !important;
         margin: 0 !important;
         max-width: 100% !important;
-        top: 0 !important;
     }
-    
     .receipt-box {
         box-shadow: none !important;
-        padding: 20px !important;
+        padding: 25px !important;
         margin: 0 auto !important;
         width: 100% !important;
-        max-width: 600px !important;
+        max-width: 650px !important;
         display: block !important;
-        border: 2px solid #1a365d !important;
+        border: 2px solid #000000 !important;
     }
-    
-    /* কাগজের ওপরের সাদা মার্জিন (Top Margin) একদম কমিয়ে ০ করা */
     @page {
         size: A4 portrait;
-        margin: 0mm 10mm 10mm 10mm; /* প্রথম মানটি (0mm) ওপরের মার্জিন শুন্য করে */
+        margin: 5mm 10mm 10mm 10mm;
     }
 }
 </style>
@@ -163,16 +195,16 @@ full_html_page = """
 <div class="receipt-box">
     <div class="header">
         <h2>Rogmukti Diagnostic Centre</h2>
-        <p style="font-size: 15px; font-weight: bold; margin-top: 3px;">Mollah stand, Auliapur, Patuakhali</p>
-        <p style="font-size: 13px;">📞 Mobile: 01711867637</p>
+        <p>Mollah stand, Auliapur, Patuakhali</p>
+        <p>📞 Mobile: 01711867637</p>
     </div>
     
     <div class="money-receipt-title">MONEY RECEIPT</div>
     
     <table class="info-table">
         <tr>
-            <td><b>Invoice ID:</b> #__INVOICE_ID__</td>
-            <td style="text-align: right;"><b>Date:</b> __CURRENT_DATE__</td>
+            <td style="width: 55%;"><b>Invoice ID:</b> #__INVOICE_ID__</td>
+            <td style="width: 45%; text-align: right;"><b>Date:</b> __CURRENT_DATE__</td>
         </tr>
         <tr>
             <td><b>Patient Name:</b> __NAME__</td>
@@ -184,13 +216,12 @@ full_html_page = """
         </tr>
     </table>
     
-    <h3 style="color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 5px; font-size: 15px; margin-top: 15px;">Test Description & Rate</h3>
     <table class="test-table">
         <thead>
             <tr>
                 <th style="width: 10%; text-align: center;">SL</th>
-                <th style="width: 65%;">Test Name</th>
-                <th style="width: 25%; text-align: right;">Price</th>
+                <th style="width: 65%; padding-left: 10px;">Test Name</th>
+                <th style="width: 25%; text-align: right; padding-right: 10px;">Price</th>
             </tr>
         </thead>
         <tbody>
@@ -198,20 +229,20 @@ full_html_page = """
         </tbody>
     </table>
     
-    <div class="total-section">
-        <p>Total Bill: __TOTAL_AMOUNT__ Tk</p>
-        <p>Discount: __DISCOUNT_AMOUNT__ Tk</p>
-        <p>Advance Paid: <b>__ADVANCE_PAID__ Tk</b></p>
-        <p style="font-size: 16px; border-top: 1px dashed #1a365d; padding-top: 5px; margin-top: 5px;">
-            <b>Due Amount: <span style="color: red;">__DUE_AMOUNT__ Tk</span></b>
-        </p>
+    <div class="bill-container">
+        <div class="total-section">
+            <p><span>Total Bill:</span> <span>__TOTAL_AMOUNT__ Tk</span></p>
+            <p><span>Discount:</span> <span>__DISCOUNT_AMOUNT__ Tk</span></p>
+            <p style="border-bottom: 1px solid #333; padding-bottom: 4px; margin-bottom: 4px;"><span>Advance Paid:</span> <span><b>__ADVANCE_PAID__ Tk</b></span></p>
+            <p style="font-size: 15px; font-weight: bold;"><span>Due Amount:</span> <span style="color: red;">__DUE_AMOUNT__ Tk</span></p>
+        </div>
     </div>
     
     <div class="signature-section">
         <div class="signature-line">Authorized Signature</div>
     </div>
     
-    <div style="margin-top: 20px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #eee; padding-top: 10px;">
+    <div style="margin-top: 25px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #ddd; padding-top: 10px; clear: both;">
         <p>Thank you for trusting us with your care.</p>
     </div>
 </div>
