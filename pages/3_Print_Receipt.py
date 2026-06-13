@@ -92,24 +92,24 @@ st.markdown("""
         
         .receipt-container {
             position: absolute !important;
-            left: 0 !important; 
-            top: 0 !important;
-            width: 100% !important;  
+            left: -50 !important; 
+            top: -50 !important;
+            width: -125% !important;  
             max-width: 100% !important;
             box-shadow: none !important;
-            border: 2px solid #000000 !important; /* চারদিকের ফ্রেম বা বর্ডার */
+            border: 3px solid #000000 !important; /* চারদিকের ফ্রেম বা বর্ডার */
             padding: 30px !important;  
-            margin: 0px !important;
-            line-height: 1.5 !important;
+            margin: -10px !important;
+            line-height: 2.5 !important;
             display: block !important;
             height: auto !important; 
             box-sizing: border-box !important;
         }
         
         .receipt-header {
-            margin-bottom: 20px !important;
-            padding-bottom: 12px !important;
-            border-bottom: 2px solid #1e3a8a !important;
+            margin-bottom: 30px !important;
+            padding-bottom: 152px !important;
+            border-bottom: 3px solid #1e3a8a !important;
         }
         
         .receipt-table th {
@@ -122,17 +122,17 @@ st.markdown("""
         }
         .receipt-table td {
             padding: 10px !important; 
-            font-size: 15px !important;
+            font-size: 25px !important;
             border-bottom: 1px solid #cbd5e1 !important;
         }
         .summary-text {
-            margin-top: 6px !important;
-            font-size: 16px !important;
+            margin-top: 8px !important;
+            font-size: 20px !important;
         }
         
         @page {
             size: A4;
-            margin: 0mm !important; 
+            margin: 5mm !important; 
         }
     }
     </style>
