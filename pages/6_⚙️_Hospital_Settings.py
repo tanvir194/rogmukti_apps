@@ -1,44 +1,42 @@
+import sys
+import os
 import streamlit as st
 import sqlite3
 
-conn = sqlite3.connect('rogmukti.db')
+# আগের সিস্টেম ঠিক রাখা (কোনো কোড না পাল্টিয়ে)
+sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from sidebar_monitor import show_live_sidebar
+
+show_live_sidebar()
+
+if 'logged_in' not in st.session_state or not st.session_state.logged_in:
+    st.warning("⚠️ অননুমোদিত প্রবেশাধিকার! দয়া করে ড্যাশবোর্ড থেকে লগইন করুন।")
+    st.stop()
+
+st.title("⚙️ হাসপাতাল সেটিংস")
+
+conn = sqlite3.connect('rogmukti_clinic_fix.db')
 c = conn.cursor()
 c.execute('''
-    CREATE TABLE IF NOT EXISTS settings (
+    CREATE TABLE IF NOT EXISTS hospital_settings (
         id INTEGER PRIMARY KEY,
         hospital_name TEXT,
         address TEXT,
-        phone TEXT,
-        email TEXT
+        phone TEXT
     )
 ''')
 conn.commit()
 
-st.title("⚙️ হাসপাতাল সেটিংস")
-
-# বর্তমান ডাটা লোড করা
-c.execute("SELECT hospital_name, address, phone, email FROM settings WHERE id = 1")
-current_settings = c.fetchone()
-
-if current_settings:
-    default_name, default_address, default_phone, default_email = current_settings
-else:
-    default_name, default_address, default_phone, default_email = "রোগমুক্তি হাসপাতাল", "", "", ""
-
-# আপডেট ফর্ম
 with st.form("settings_form"):
-    hospital_name = st.text_input("হাসপাতালের নাম", default_name)
-    address = st.text_input("ঠিকানা", default_address)
-    phone = st.text_input("মোবাইল/ফোন নম্বর", default_phone)
-    email = st.text_input("ইমেইল অ্যাড্রেস", default_email)
-    
-    save_settings = st.form_submit_button("কনফিগারেশন সেভ করুন")
+    h_name = st.text_input("হাসপাতালের নাম", "রোগমুক্তি ডায়াগনস্টিক")
+    h_address = st.text_input("ঠিকানা")
+    h_phone = st.text_input("মোবাইল নম্বর")
+    save = st.form_submit_button("কনফিগারেশন সেভ করুন")
 
-if save_settings:
-    c.execute("INSERT OR REPLACE INTO settings (id, hospital_name, address, phone, email) VALUES (1, ?, ?, ?, ?)",
-              (hospital_name, address, phone, email))
+if save:
+    c.execute("INSERT OR REPLACE INTO hospital_settings (id, hospital_name, address, phone) VALUES (1, ?, ?, ?)",
+              (h_name, h_address, h_phone))
     conn.commit()
-    st.success("⚙️ হাসপাতালের প্রোফাইল সফলভাবে আপডেট করা হয়েছে!")
-    st.rerun()
+    st.success("⚙️ সেটিংস সফলভাবে আপডেট করা হয়েছে!")
 
 conn.close()
