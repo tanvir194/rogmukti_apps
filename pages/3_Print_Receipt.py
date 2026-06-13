@@ -95,7 +95,7 @@ st.markdown("""
         /* ৩. রিসিটটিকে এ৪ কাগজের একদম টপে এবং ফুল স্ক্রিনে সেট করার জন্য রিসেট */
         .receipt-container {
             position: absolute !important;
-            left: 00% !important;
+            left: -15% !important;
             top: 40% !important;
             width: 100% !important;
             max-width: 105% !important;
