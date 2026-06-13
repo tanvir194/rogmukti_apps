@@ -23,25 +23,26 @@ c.execute("SELECT * FROM billing_records WHERE id=?", (invoice_id,))
 record = c.fetchone()
 
 if record:
-    # 🛠️ ডাটাবেজের ইনডেক্স নম্বরগুলো সঠিকভাবে ঠিক করা হলো
-    p_id = record[0]
-    p_name = record[1]
-    p_age = record[2]
-    p_phone = record[3]
-    p_doctor = record[4]
-    p_tests_str = record[5]      
-    total_bill = record[6]
-    discount_tk = record[7]     
-    advance_paid = record[8]
-    due_amount = record[9]
-    billing_date = record[10]
+    # ডাটাবেজের রেকর্ড থেকে ডেটা সেফলি নেওয়া
+    p_id = record[0] if len(record) > 0 else invoice_id
+    p_name = record[1] if len(record) > 1 else "N/A"
+    p_age = record[2] if len(record) > 2 else "N/A"
+    p_phone = record[3] if len(record) > 3 else "N/A"
+    p_doctor = record[4] if len(record) > 4 else "N/A"
+    p_tests_str = record[5] if len(record) > 5 else ""
+    
+    total_bill = record[6] if len(record) > 6 else 0.0
+    discount_tk = record[7] if len(record) > 7 else 0.0
+    advance_paid = record[8] if len(record) > 8 else 0.0
+    due_amount = record[9] if len(record) > 9 else 0.0
+    billing_date = record[10] if len(record) > 10 else "N/A"
 
     st.write("")
     if st.button("🖨️ Print Money Receipt Now"):
         st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
     st.write("")
 
-    # 📄 পুরো A4 পেজ জুড়ে ছড়িয়ে আসার জন্য টেবিল স্ট্রাকচার
+    # HTML রিসিট জেনারেট করা (পুরো A4 পেজ চওড়া চওড়া ডিজাইন)
     receipt_html = f"""
     <div style="width:100%; max-width:100%; font-family:Arial, sans-serif; color:#000000; padding:15px; box-sizing:border-box;">
         
@@ -82,8 +83,9 @@ if record:
             <tbody>
     """
 
+    # ক্র্যাশ-ফ্রি নিরাপদ টেস্ট স্প্লিটিং মেথড
     if p_tests_str:
-        tests_list = p_tests_str.split(",")
+        tests_list = str(p_tests_str).split(",")
     else:
         tests_list = []
         
@@ -93,15 +95,16 @@ if record:
         if not test_item:
             continue
             
+        # কোনো স্প্লিট জটিলতা ছাড়া একদম সেফলি টেক্সট রেন্ডার করা
         if "(" in test_item and ")" in test_item:
-            # 🛠️ পাইথন লিস্ট ইনডেক্সিং এবার সম্পূর্ণ নির্ভুল করা হয়েছে
-            parts = test_item.split("(")
-            t_name = parts[0].strip()
-            t_price = parts[1].replace(")", "").strip()
             try:
+                parts = test_item.split("(")
+                t_name = parts[0].strip()
+                t_price = parts[1].replace(")", "").strip()
                 t_price_formatted = f"{float(t_price):.2f}"
             except:
-                t_price_formatted = t_price
+                t_name = test_item
+                t_price_formatted = "0.00"
         else:
             t_name = test_item
             t_price_formatted = "0.00"
