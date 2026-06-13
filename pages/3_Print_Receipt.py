@@ -40,18 +40,18 @@ if not row:
     st.stop()
 
 # Assign variables from database row index
-name = row[1]
-age = row[2]
-phone = row[3]
-doctor = row[4]
-selected_tests_data = row[5] 
-total_amount = float(row[6])
-discount_amount = float(row[7])
-advance_paid = float(row[8])
-due_amount = float(row[9])
-current_date = row[10]
+name = row
+age = row
+phone = row
+doctor = row
+selected_tests_data = row 
+total_amount = float(row)
+discount_amount = float(row)
+advance_paid = float(row)
+due_amount = float(row)
+current_date = row
 
-# --- কমা দিয়ে যুক্ত টেস্ট এবং ব্র্যাকেটের রেট আলাদা করা ---
+# --- কমা দিয়ে যুক্ত协同 টেস্ট এবং ব্র্যাকেটের রেট আলাদা করা ---
 tests_found = re.findall(r'([^,(\d]+)\s*(?:\(([\d.]+)\))?', selected_tests_data)
 
 table_rows = ""
@@ -106,28 +106,23 @@ full_html_page = """
     white-space: nowrap;
 }
 
-/* রোগীর তথ্যের টেবিল সিস্টেম */
+/* রোগীর তথ্যের টেবিলকে উন্মুক্ত (Free) এবং ১০০% এক লাইনে রাখার জন্য সিএসএস */
 .info-table { 
     width: 100%; 
     border-collapse: collapse; 
     margin-bottom: 25px; 
-    table-layout: fixed;
 }
 .info-table td { 
     padding: 8px 12px; 
     font-size: 14px; 
     color: #000;
     border: 1px solid #333;
-    word-wrap: break-word;
+    /* এই প্রোপার্টিটির কারণে নাম যত বড়ই হোক, কখনো দুই লাইন হবে না, সবসময় এক লাইনে সোজা থাকবে */
+    white-space: nowrap !important; 
 }
 .info-label {
     font-weight: bold;
     background-color: #f9fafb;
-}
-
-/* ডান পাশের কলামের টেক্সটগুলোকে ডানে সরানোর জন্য বিশেষ ক্লাস */
-.align-right-content {
-    text-align: right !important;
 }
 
 .test-table { 
@@ -240,25 +235,25 @@ full_html_page = """
     
     <div class="money-receipt-title">MONEY RECEIPT</div>
     
-    <!-- ডান পাশের ডাটাগুলো এখন সুন্দরভাবে ডানে এলাইন (Align Right) করা হয়েছে -->
+    <!-- সম্পূর্ণ ফ্রি টেবিল লেআউট (সব ডাটা বাধ্যতামূলক এক লাইনে থাকবে) -->
     <table class="info-table">
         <tr>
-            <td class="info-label" style="width: 18%;">Invoice ID:</td>
-            <td style="width: 37%;">#__INVOICE_ID__</td>
-            <td class="info-label" style="width: 15%;">Date:</td>
-            <td class="align-right-content" style="width: 30%;">__CURRENT_DATE__</td>
+            <td class="info-label">Invoice ID:</td>
+            <td>#__INVOICE_ID__</td>
+            <td class="info-label">Date:</td>
+            <td>__CURRENT_DATE__</td>
         </tr>
         <tr>
             <td class="info-label">Patient Name:</td>
             <td>__NAME__</td>
             <td class="info-label">Age / Sex:</td>
-            <td class="align-right-content">__AGE__ Y</td>
+            <td>__AGE__ Y</td>
         </tr>
         <tr>
             <td class="info-label">Ref. By:</td>
             <td style="font-weight: bold;">__DOCTOR__</td>
             <td class="info-label">Mobile No:</td>
-            <td class="align-right-content" style="font-weight: bold;">__PHONE__</td>
+            <td style="font-weight: bold;">__PHONE__</td>
         </tr>
     </table>
     
