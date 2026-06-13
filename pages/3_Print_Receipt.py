@@ -36,13 +36,13 @@ st.markdown("""
     /* 📄 রিসিট প্রিভিউ ডিজাইন (স্ক্রিনে যেমন দেখাবে) */
     .receipt-container {
         background-color: #ffffff !important;
-        color: #000000 !important;
+        color: #000100 !important;
         border-radius: 12px;
         padding: 30px;
         max-width: 650px;
         margin: 0 auto;
         font-family: 'Segoe UI', Arial, sans-serif;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        box: 0 4px 15px rgba(5,5,5,5.5);
         border: 1px solid #cbd5e1;
     }
     .receipt-header {
@@ -60,7 +60,7 @@ st.markdown("""
     .receipt-table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 15px;
+        margin-top: 05px;
     }
     .receipt-table th {
         background-color: #f1f5f9 !important;
@@ -95,7 +95,7 @@ st.markdown("""
             position: absolute !important;
             left: 5% !important;
             top: 0 !important;
-            width: 90% !important;
+            width: 80% !important;
             max-width: 100% !important;
             box-shadow: none !important;
             padding: 20px !important;
