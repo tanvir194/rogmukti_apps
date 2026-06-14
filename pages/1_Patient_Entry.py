@@ -125,7 +125,7 @@ except:
     available_tests = []
 
 # ল্যাবরেটরির সব আসল টেস্টের নাম ব্যাকআপ তালিকা (যাতে একটি টেস্টও বাদ না পড়ে)
-    default_laboratory_tests = [
+default_laboratory_tests = [
         "(CBC). ESR", "2hr. After 75gm Glucose", "2hr. After Breakfast", "Abdomen A/P",
         "Amylase", "Aso Titre", "Bilirubin Direct/Indirect", "Bilirubin Total",
         "Blood Urea", "Breast", "BT/CT", "C/E Count",
@@ -147,8 +147,7 @@ except:
         "TSH", "Upper Abdomen", "Uric Acid", "Urine Pregnancy Test (PT)",
         "Urine R/E", "USG color doppler", "VDRL", "Widal",
         "Whole Abdomen", "X-ray Foot B/V"
-    ]
-
+]
 # ডাটাবেজের রিপোর্টের সাথে ব্যাকআপ তালিকা মার্জ করা
 for t_name in default_laboratory_tests:
     if t_name not in available_tests:
