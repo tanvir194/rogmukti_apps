@@ -49,7 +49,6 @@ c.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin
 conn.commit()
 
 # --- ২. সিকিউর লগইন সিস্টেম ---
-# এখানে ইউজারনেম চেক করা হচ্ছে যেন আগের কোনো সেশনের কারণে ক্র্যাশ না করে
 if 'logged_in' not in st.session_state or not st.session_state.logged_in or 'username' not in st.session_state:
     st.markdown("<h2 style='text-align: center; color: #ff4b4b;'>🔑 রিসিট কাউন্টার লগইন</h2>", unsafe_allow_html=True)
     
@@ -92,26 +91,28 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# এখানে .get() ব্যবহার করা হয়েছে যেন কোনো অবস্থাতেই এরর না আসে
+# লগইন ইউজারের নাম ও মারকুই প্রদর্শন
 current_user = st.session_state.get('username', 'Unknown')
 st.markdown(f"<div style='text-align: right; color: #8b949e; font-weight: bold;'>👤 বর্তমান ইউজার: <span style='color: #58a6ff;'>{current_user}</span></div>", unsafe_allow_html=True)
-
 st.markdown("<marquee style='color: #ff7b72; font-weight: bold;'>⚠️ সতর্কতা: নতুন পেশেন্ট এন্ট্রি ও বিল তৈরি করার সময় তথ্যগুলো সতর্কতার সাথে যাচাই করে সাবমিট করুন।</marquee>", unsafe_allow_html=True)
 
+# ডাক্তার লিস্ট লোড করা
 c.execute("SELECT doc_name FROM doctors_list")
-db_doctors = [row for row in c.fetchall()]
+db_doctors = [row[0] for row in c.fetchall() if row[0]]
 doctor_options = db_doctors + ["অন্যান্য"]
+
+# --- টেস্ট লিস্ট লোড করার ফিক্সড মেকানিজম ---
+default_laboratory_tests = ["CBC", "ESR", "TC.DC", "Hgb", "Platelet Count", "MP", "BT/CT", "C/E Count", "Widal", "Aslo Titre"]
+available_tests = list(default_laboratory_tests)
 
 try:
     c.execute("SELECT test_name FROM custom_tests_list")
-    available_tests = [row for row in c.fetchall() if row]
+    db_tests = c.fetchall()
+    for row in db_tests:
+        if row[0] and row[0] not in available_tests:
+            available_tests.append(row[0])
 except Exception:
-    available_tests = []
-
-default_laboratory_tests = ["CBC", "ESR", "TC.DC", "Hgb", "Platelet Count", "MP", "BT/CT", "C/E Count", "Widal", "Aslo Titre"]
-for t_name in default_laboratory_tests:
-    if t_name not in available_tests:
-        available_tests.append(t_name)
+    pass
 available_tests.sort()
 
 # --- ৪. ফরম ডিজাইন ও ইনপুট সেকশন ---
@@ -121,7 +122,7 @@ st.subheader("📋 পেশেন্ট ইনফরমেশন")
 col1, col2 = st.columns(2)
 with col1:
     patient_name = st.text_input("পেশেন্টের নাম (Name of the PT) *")
-    phone = st.text_input("মোবাইল নাম্বার (Phone) *")
+    phone = st.text_input("মোবলই নাম্বার (Phone) *")
 with col2:
     age = st.number_input("বয়স (Age)", min_value=1, max_value=120, value=25)
     selected_doctor_setup = st.selectbox("রেফারেন্স ডাক্তার (Refd By)*", doctor_options)
