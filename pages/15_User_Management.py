@@ -32,11 +32,12 @@ tab1, tab2 = st.tabs(["➕ নতুন স্টাফ যোগ করুন",
 # ট্যাব ১: নতুন স্টাফ তৈরি
 with tab1:
     st.subheader("নতুন স্টাফ অ্যাকাউন্ট রেজিস্টার")
-    new_user = st.text_input("নতুন ইউজারনেম (Username)", key="reg_u").strip()
+    new_user_input = st.text_input("নতুন ইউজারনেম (Username)", key="reg_u")
     new_pass = st.text_input("পাসওয়ার্ড (Password)", type="password", key="reg_p")
     user_role = st.selectbox("রোল/পদবী", ["staff", "admin"], key="reg_r")
     
     if st.button("➕ স্টাফ অ্যাকাউন্ট তৈরি করুন", use_container_width=True):
+        new_user = new_user_input.strip() # এখানে ডট স্ট্রিপ (.strip) আলাদাভাবে করা হয়েছে যেন এরর না আসে
         if new_user and new_pass:
             try:
                 c.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (new_user, new_pass, user_role))
@@ -52,7 +53,7 @@ with tab1:
 with tab2:
     st.subheader("বর্তমান ইউজারদের পাসওয়ার্ড পরিবর্তন")
     c.execute("SELECT username FROM users")
-    all_users = [row[0] for row in c.fetchall()]
+    all_users = [row[0] for row in c.fetchall() if row and row[0]]
     
     if all_users:
         selected_user = st.selectbox("কোন ইউজারের পাসওয়ার্ড মডিফাই করবেন?", all_users)
