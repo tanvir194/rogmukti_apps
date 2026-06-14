@@ -11,18 +11,6 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 st.title("🏥 Medical Receipt Print")
 st.write("---------------------- Invoice ID Info ----------------------")
 
-invoice_id = None
-
-# Read invoice ID from query parameters or session state
-if "invoice_id" in st.query_params:
-    invoice_id = st.query_params.get("invoice_id")
-elif "last_invoice_id" in st.session_state:
-    invoice_id = st.session_state.last_invoice_id
-
-if not invoice_id:
-    st.info("ℹ️ No Invoice ID found. Please submit data from 'Patient Entry' page.")
-    st.stop()
-
 # Fix Directory Path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
@@ -31,7 +19,29 @@ DB_PATH = os.path.join(BASE_DIR, "rogmukti_clinic_fix.db")
 conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
 
-# কলামের নামের অমিলজনিত এরর এড়াতে সুনির্দিষ্ট নামে কুয়েরি করা হলো
+invoice_id = None
+
+# Read invoice ID from query parameters or session state
+if "invoice_id" in st.query_params:
+    invoice_id = st.query_params.get("invoice_id")
+elif "last_invoice_id" in st.session_state and st.session_state.last_invoice_id:
+    invoice_id = st.session_state.last_invoice_id
+else:
+    # 💡 সেশন রিসেট হয়ে গেলে অটোমেটিক ডাটাবেজের সর্বশেষ ইনভয়েস আইডিটি খুঁজে নেবে
+    try:
+        c.execute("SELECT id FROM billing_records ORDER BY id DESC LIMIT 1")
+        last_row = c.fetchone()
+        if last_row:
+            invoice_id = last_row[0]
+    except Exception:
+        pass
+
+if not invoice_id:
+    st.error("❌ No Invoice ID found in system. Please entry a patient first.")
+    conn.close()
+    st.stop()
+
+# কলামের সুনির্দিষ্ট নাম উল্লেখ করে কুয়েরি
 c.execute("""SELECT patient_name, age, phone, doctor_name, selected_tests, 
                     total_amount, discount, advance, due, date 
              FROM billing_records WHERE id = ?""", (invoice_id,))
@@ -39,10 +49,10 @@ row = c.fetchone()
 conn.close()
 
 if not row:
-    st.error(f"❌ No record found for ID #{invoice_id}")
+    st.error(f"❌ No record found in database for Invoice ID #{invoice_id}")
     st.stop()
 
-# ডাটাবেজ ইনডেক্স ফিক্সিং (কলামগুলোর সিরিয়াল নম্বর একদম সঠিক নিয়মে মেলানো হলো)
+# ডাটাবেজ ভ্যারিয়েবল অ্যাসাইন
 name = row[0]
 age = row[1]
 phone = row[2]
@@ -72,9 +82,9 @@ for t_name, t_price in tests_found:
         
     table_rows += f"""
     <tr>
-        <td style='border:1px solid #333; padding:8px; text-align:center;'>{index}</td>
-        <td style='border:1px solid #333; padding:8px; padding-left:10px;'>{t_name_clean}</td>
-        <td style='border:1px solid #333; padding:8px; text-align:right; padding-right:10px;'>{t_price_val:.2f} Tk</td>
+        <td style='border:1px solid #333; padding:8px; text-align:center; color: black !important;'>{index}</td>
+        <td style='border:1px solid #333; padding:8px; padding-left:10px; color: black !important;'>{t_name_clean}</td>
+        <td style='border:1px solid #333; padding:8px; text-align:right; padding-right:10px; color: black !important;'>{t_price_val:.2f} Tk</td>
     </tr>
     """
     index += 1
@@ -87,10 +97,13 @@ full_html_page = """
         margin: 10px auto;
         padding: 30px;
         border: 2px solid #000000 !important;
-        background-color: white;
-        color: black;
+        background-color: white !important;
+        color: black !important;
         font-family: 'Arial', sans-serif;
         box-sizing: border-box;
+    }
+    .receipt-box * {
+        color: black !important;
     }
     .header {
         text-align: center;
@@ -98,7 +111,7 @@ full_html_page = """
         padding-bottom: 12px;
         margin-bottom: 15px;
     }
-    .header h2 { margin: 0; font-size: 28px; font-weight: bold; text-transform: uppercase; color: #000; }
+    .header h2 { margin: 0; font-size: 28px; font-weight: bold; text-transform: uppercase; }
     .header p { margin: 4px 0 0 0; font-size: 15px; font-weight: 500; }
     
     .money-receipt-title {
@@ -107,7 +120,6 @@ full_html_page = """
         font-weight: bold;
         letter-spacing: 3px;
         margin: 15px auto;
-        color: #000;
         border: 1.5px solid #000;
         width: 280px;
         padding: 6px 0;
@@ -122,7 +134,6 @@ full_html_page = """
     .info-table td {
         padding: 8px 12px;
         font-size: 14px;
-        color: #000;
         border: 1px solid #333;
         white-space: nowrap !important;
     }
@@ -141,7 +152,6 @@ full_html_page = """
         text-align: left;
         font-size: 15px;
         background-color: #f5f5f5;
-        color: #000;
         font-weight: bold;
     }
     .bill-footer-container {
@@ -165,7 +175,6 @@ full_html_page = """
     }
     .total-section td {
         padding: 2px 0;
-        color: #000;
     }
     .due-row {
         font-size: 17px;
@@ -189,7 +198,6 @@ full_html_page = """
         font-size: 14px;
         font-weight: bold;
         padding-top: 5px;
-        color: #000;
     }
     @page {
         size: A4 portrait;
@@ -239,7 +247,7 @@ full_html_page = """
     <table class="info-table">
         <tr>
             <td class="info-label">Invoice ID:</td>
-            <td>__INVOICE_ID__</td>
+            <td>#__INVOICE_ID__</td>
             <td class="info-label">Date:</td>
             <td>__CURRENT_DATE__</td>
         </tr>
@@ -260,9 +268,9 @@ full_html_page = """
     <table class="test-table">
         <thead>
             <tr>
-                <th style="width: 10%; text-align: center;">SL</th>
-                <th style="width: 65%; padding-left: 10px;">Test Name</th>
-                <th style="width: 25%; text-align: right; padding-right: 10px;">Price</th>
+                <th style="width: 10%; text-align: center; color: black !important;">SL</th>
+                <th style="width: 65%; padding-left: 10px; color: black !important;">Test Name</th>
+                <th style="width: 25%; text-align: right; padding-right: 10px; color: black !important;">Price</th>
             </tr>
         </thead>
         <tbody>
@@ -299,7 +307,7 @@ full_html_page = """
         </div>
     </div>
     
-    <div style="margin-top: 35px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #ccc; padding-top: 10px;">
+    <div style="margin-top: 35px; text-align: center; font-size: 12px; border-top: 1px solid #ccc; padding-top: 10px;">
         <p>Thank you for trusting us with your care.</p>
     </div>
 </div>
@@ -310,9 +318,3 @@ full_html_page = full_html_page.replace("__INVOICE_ID__", str(invoice_id))
 full_html_page = full_html_page.replace("__CURRENT_DATE__", str(current_date))
 full_html_page = full_html_page.replace("__NAME__", str(name))
 full_html_page = full_html_page.replace("__AGE__", str(age))
-full_html_page = full_html_page.replace("__DOCTOR__", str(doctor))
-full_html_page = full_html_page.replace("__PHONE__", str(phone))
-full_html_page = full_html_page.replace("__TABLE_ROWS__", table_rows)
-full_html_page = full_html_page.replace("__TOTAL_AMOUNT__", f"{total_amount:.2f}")
-full_html_page = full_html_page.replace("__DISCOUNT_AMOUNT__", f"{discount_amount:.2f}")
-full_html_page = full_html_page.replace("__ADVANCE_PAID__", f"{advance_paid:.2f}")
