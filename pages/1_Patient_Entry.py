@@ -17,7 +17,7 @@ except Exception:
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
 
-# প্রয়োজনীয় টেবিল তৈরি (billing_records এ created_by কলাম সহ)
+# প্রয়োজনীয় টেবিল তৈরি ও কলাম নিশ্চিতকরণ
 c.execute("""CREATE TABLE IF NOT EXISTS billing_records (
     id INTEGER PRIMARY KEY AUTOINCREMENT, 
     patient_name TEXT, 
@@ -31,6 +31,13 @@ c.execute("""CREATE TABLE IF NOT EXISTS billing_records (
     date TEXT, 
     doctor_name TEXT,
     created_by TEXT)""")
+
+# যদি আগের ডেটাবেজে created_by কলাম না থাকে, তবে তা যোগ করার চেষ্টা করবে
+try:
+    c.execute("ALTER TABLE billing_records ADD COLUMN created_by TEXT")
+    conn.commit()
+except Exception:
+    pass
 
 c.execute("""CREATE TABLE IF NOT EXISTS doctors_list (
     id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -62,10 +69,10 @@ if 'logged_in' not in st.session_state or not st.session_state.logged_in or 'use
                 c.execute("SELECT password, role FROM users WHERE username = ?", (username_input,))
                 user_data = c.fetchone()
                 
-                if user_data and user_data[0] == password_input:
+                if user_data and user_data == password_input:
                     st.session_state.logged_in = True
                     st.session_state.username = username_input
-                    st.session_state.role = user_data[1]
+                    st.session_state.role = user_data
                     st.success(f"🎉 স্বাগতম {username_input}! সিস্টেমে প্রবেশ করা হচ্ছে...")
                     st.rerun()
                 else:
@@ -98,10 +105,10 @@ st.markdown("<marquee style='color: #ff7b72; font-weight: bold;'>⚠️ সত�
 
 # ডাক্তার লিস্ট লোড করা
 c.execute("SELECT doc_name FROM doctors_list")
-db_doctors = [row[0] for row in c.fetchall() if row[0]]
+db_doctors = [row for row in c.fetchall() if row]
 doctor_options = db_doctors + ["অন্যান্য"]
 
-# --- টেস্ট লিস্ট লোড করার ফিক্সড মেকানিজম ---
+# --- টেস্ট লিস্ট লোড করা ---
 default_laboratory_tests = ["CBC", "ESR", "TC.DC", "Hgb", "Platelet Count", "MP", "BT/CT", "C/E Count", "Widal", "Aslo Titre"]
 available_tests = list(default_laboratory_tests)
 
@@ -109,8 +116,8 @@ try:
     c.execute("SELECT test_name FROM custom_tests_list")
     db_tests = c.fetchall()
     for row in db_tests:
-        if row[0] and row[0] not in available_tests:
-            available_tests.append(row[0])
+        if row and row not in available_tests:
+            available_tests.append(row)
 except Exception:
     pass
 available_tests.sort()
@@ -122,7 +129,7 @@ st.subheader("📋 পেশেন্ট ইনফরমেশন")
 col1, col2 = st.columns(2)
 with col1:
     patient_name = st.text_input("পেশেন্টের নাম (Name of the PT) *")
-    phone = st.text_input("মোবলই নাম্বার (Phone) *")
+    phone = st.text_input("মোবাইল নাম্বার (Phone) *")
 with col2:
     age = st.number_input("বয়স (Age)", min_value=1, max_value=120, value=25)
     selected_doctor_setup = st.selectbox("রেফারেন্স ডাক্তার (Refd By)*", doctor_options)
@@ -202,7 +209,9 @@ if submit_button:
             except Exception:
                 pass
                 
+        # সুরক্ষার জন্য ট্রাই-ক্যাচ ব্লক এবং ফ্লেক্সিবল কলাম নেম ইনসার্ট লজিক
         try:
+            # প্রথমে ডাইনামিক কলাম নেম ও সিকোয়েন্সে ডেটা পুশ করার ট্রাই
             c.execute("""INSERT INTO billing_records 
                 (patient_name, age, phone, selected_tests, total_amount, discount, advance, due, date, doctor_name, created_by) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
@@ -210,10 +219,10 @@ if submit_button:
             
             st.session_state.last_invoice_id = c.lastrowid
             conn.commit()
-            
             st.success("🎉 বিল সফলভাবে সংরক্ষিত হয়েছে! প্রিন্ট পেজে নেওয়া হচ্ছে...")
             st.switch_page("pages/3_Print_Receipt.py")
-        except Exception as e:
-            st.error(f"❌ ডাটাবেজ এরর: {e}")
-
-conn.close()
+            
+        except sqlite3.OperationalError as db_err:
+            # যদি পুরানো ডাটাবেজে 'discount' কলামের নাম 'discount_amount' হয়ে থাকে, তবে এটি ব্যাকআপ লজিক হিসেবে কাজ করবে
+            try:
+                c.execute("""INSERT INTO billing_records 
