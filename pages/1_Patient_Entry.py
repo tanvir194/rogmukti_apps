@@ -49,7 +49,8 @@ c.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin
 conn.commit()
 
 # --- ২. সিকিউর লগইন সিস্টেম ---
-if 'logged_in' not in st.session_state or not st.session_state.logged_in:
+# এখানে ইউজারনেম চেক করা হচ্ছে যেন আগের কোনো সেশনের কারণে ক্র্যাশ না করে
+if 'logged_in' not in st.session_state or not st.session_state.logged_in or 'username' not in st.session_state:
     st.markdown("<h2 style='text-align: center; color: #ff4b4b;'>🔑 রিসিট কাউন্টার লগইন</h2>", unsafe_allow_html=True)
     
     with st.form("login_form"):
@@ -91,16 +92,19 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown(f"<div style='text-align: right; color: #8b949e; font-weight: bold;'>👤 বর্তমান ইউজার: <span style='color: #58a6ff;'>{st.session_state.username}</span></div>", unsafe_allow_html=True)
+# এখানে .get() ব্যবহার করা হয়েছে যেন কোনো অবস্থাতেই এরর না আসে
+current_user = st.session_state.get('username', 'Unknown')
+st.markdown(f"<div style='text-align: right; color: #8b949e; font-weight: bold;'>👤 বর্তমান ইউজার: <span style='color: #58a6ff;'>{current_user}</span></div>", unsafe_allow_html=True)
+
 st.markdown("<marquee style='color: #ff7b72; font-weight: bold;'>⚠️ সতর্কতা: নতুন পেশেন্ট এন্ট্রি ও বিল তৈরি করার সময় তথ্যগুলো সতর্কতার সাথে যাচাই করে সাবমিট করুন।</marquee>", unsafe_allow_html=True)
 
 c.execute("SELECT doc_name FROM doctors_list")
-db_doctors = [row[0] for row in c.fetchall()]
+db_doctors = [row for row in c.fetchall()]
 doctor_options = db_doctors + ["অন্যান্য"]
 
 try:
     c.execute("SELECT test_name FROM custom_tests_list")
-    available_tests = [row[0] for row in c.fetchall() if row[0]]
+    available_tests = [row for row in c.fetchall() if row]
 except Exception:
     available_tests = []
 
@@ -116,7 +120,7 @@ st.subheader("📋 পেশেন্ট ইনফরমেশন")
 
 col1, col2 = st.columns(2)
 with col1:
-    patient_name = st.text_input("पেশেন্টের নাম (Name of the PT) *")
+    patient_name = st.text_input("পেশেন্টের নাম (Name of the PT) *")
     phone = st.text_input("মোবাইল নাম্বার (Phone) *")
 with col2:
     age = st.number_input("বয়স (Age)", min_value=1, max_value=120, value=25)
@@ -201,7 +205,7 @@ if submit_button:
             c.execute("""INSERT INTO billing_records 
                 (patient_name, age, phone, selected_tests, total_amount, discount, advance, due, date, doctor_name, created_by) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
-                (patient_name, age, phone, tests_data_str, total_fee, discount_amount, advance_paid, due_amount, current_date, selected_doctor_setup, st.session_state.username))
+                (patient_name, age, phone, tests_data_str, total_fee, discount_amount, advance_paid, due_amount, current_date, selected_doctor_setup, current_user))
             
             st.session_state.last_invoice_id = c.lastrowid
             conn.commit()
