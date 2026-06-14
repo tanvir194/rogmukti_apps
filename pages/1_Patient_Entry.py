@@ -125,17 +125,29 @@ except:
     available_tests = []
 
 # ল্যাবরেটরির সব আসল টেস্টের নাম ব্যাকআপ তালিকা (যাতে একটি টেস্টও বাদ না পড়ে)
-default_laboratory_tests = [
-    "CBC", "ESR", "TC.DC", "HB%", "Platelet Count", "MP", "BT/CT", "C/E Count",
-    "Widal", "Aso Titre", "CRP", "RA/RF", "HBs Ag (Screen Test)", "TPHA", "VDRL",
-    "Group & Rh Factor", "Mantoux-Test (M.T)", "Triple Antigen", "W.Fever", "HIV", "HCV",
-    "Random Blood Sugar (RBS)", "Fasting Blood Sugar (FBS)", "2hr. After Breakfast",
-    "Blood Urea", "Cholesterol", "TG (Triglycerides)", "S.GPT (ALT)", "S.GOT (AST)",
-    "Bilirubin Total", "Lipid Profile", "Serum Creatinine", "Uric Acid",
-    "Urine Pregnancy Test (PT)", "Urine R/E", "Stool R/E",
-    "USG Whole Abdomen", "USG Upper Abdomen", "USG Lower Abdomen", "USG KUB", "USG Pregnancy Profile",
-    "X-Ray Chest", "X-Ray PNS", "X-Ray Cervical Spine", "X-Ray L/S Spine", "X-Ray Knee B/V"
-]
+    default_laboratory_tests = [
+        "(CBC). ESR", "2hr. After 75gm Glucose", "2hr. After Breakfast", "Abdomen A/P",
+        "Amylase", "Aso Titre", "Bilirubin Direct/Indirect", "Bilirubin Total",
+        "Blood Urea", "Breast", "BT/CT", "C/E Count",
+        "Calcium", "Cervical Spine", "Chest", "Cholesterol",
+        "CRP", "D/S Spine", "Dengue NS1. IGG/IgM", "Elbow B/V",
+        "ESR", "Fasting", "Filaria (ICT)", "FT3",
+        "FT4", "Group & Rh Factor", "H. Pylori", "HbA1c",
+        "HB%", "HBs Ag (Screen Test)", "HCV", "HDL",
+        "Hip Joint", "HIV", "Knee B/V", "KUB",
+        "L/S Spine", "LDL", "Lipid Profile", "Lower Abdomen",
+        "Malaria. pf/pv", "Mandible B/V", "Mantaux-Test (M.T)", "Mastoid Towns View",
+        "Maxilla", "MP", "Nasopharynx", "O.G.T.T",
+        "Pelvic", "Plane X-Ray Abdomen", "Platelet Count", "PNS",
+        "Pregnancy Profile", "Prolactin", "R.Fever", "RA/RF",
+        "Random", "S, GOT(AST)", "S, GPT(ALT)", "S, IgE",
+        "Serum Creatinine", "Shoulder Joint B/V", "Skull", "Stool OBT",
+        "Stool R/E", "T3", "T4", "TB (ICT)",
+        "TC.DC", "TG", "TPHA", "Triple Antigen",
+        "TSH", "Upper Abdomen", "Uric Acid", "Urine Pregnancy Test (PT)",
+        "Urine R/E", "USG color doppler", "VDRL", "Widal",
+        "Whole Abdomen", "X-ray Foot B/V"
+    ]
 
 # ডাটাবেজের রিপোর্টের সাথে ব্যাকআপ তালিকা মার্জ করা
 for t_name in default_laboratory_tests:
