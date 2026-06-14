@@ -15,7 +15,7 @@ except Exception:
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
 
-# Create Required Tables
+# Create Tables
 c.execute("""CREATE TABLE IF NOT EXISTS billing_records (
     id INTEGER PRIMARY KEY AUTOINCREMENT, 
     patient_name TEXT, 
@@ -30,7 +30,19 @@ c.execute("""CREATE TABLE IF NOT EXISTS billing_records (
     doctor_name TEXT,
     created_by TEXT)""")
 
-# Safe Alter to add created_by column if not exists
+# Safe alter to guarantee columns exist
+try:
+    c.execute("ALTER TABLE billing_records ADD COLUMN discount REAL")
+    conn.commit()
+except Exception:
+    pass
+
+try:
+    c.execute("ALTER TABLE billing_records ADD COLUMN discount_amount REAL")
+    conn.commit()
+except Exception:
+    pass
+
 try:
     c.execute("ALTER TABLE billing_records ADD COLUMN created_by TEXT")
     conn.commit()
@@ -39,8 +51,6 @@ except Exception:
 
 c.execute("""CREATE TABLE IF NOT EXISTS doctors_list (id INTEGER PRIMARY KEY AUTOINCREMENT, doc_name TEXT UNIQUE)""")
 c.execute("""CREATE TABLE IF NOT EXISTS custom_tests_list (id INTEGER PRIMARY KEY AUTOINCREMENT, test_name TEXT UNIQUE)""")
-
-# Users Table and Default Admin Setup
 c.execute("""CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, role TEXT DEFAULT 'staff')""")
 c.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')")
 conn.commit()
@@ -48,7 +58,6 @@ conn.commit()
 # --- 2. Secure Login System ---
 if 'logged_in' not in st.session_state or not st.session_state.logged_in or 'username' not in st.session_state:
     st.markdown("<h2 style='text-align: center; color: #ff4b4b;'>🔑 Counter Login Panel</h2>", unsafe_allow_html=True)
-    
     with st.form("login_form"):
         username_input = st.text_input("Username").strip()
         password_input = st.text_input("Password", type="password")
@@ -58,7 +67,6 @@ if 'logged_in' not in st.session_state or not st.session_state.logged_in or 'use
             if username_input and password_input:
                 c.execute("SELECT password, role FROM users WHERE username = ?", (username_input,))
                 user_data = c.fetchone()
-                
                 if user_data and user_data[0] == password_input:
                     st.session_state.logged_in = True
                     st.session_state.username = username_input
@@ -88,12 +96,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Top Bar Information
 current_user = st.session_state.get('username', 'Unknown')
 st.markdown(f"<div style='text-align: right; color: #8b949e; font-weight: bold;'>👤 Current Operator: <span style='color: #58a6ff;'>{current_user}</span></div>", unsafe_allow_html=True)
 st.markdown("<marquee style='color: #ff7b72; font-weight: bold;'>⚠️ Warning: Please double check all data before submitting the billing form.</marquee>", unsafe_allow_html=True)
 
-# Fetch Doctors and Test Lists
+# Fetch Lists
 c.execute("SELECT doc_name FROM doctors_list")
 db_doctors = [row[0] for row in c.fetchall() if row and row[0]]
 doctor_options = db_doctors + ["Other"]
@@ -111,7 +118,7 @@ except Exception:
     pass
 available_tests.sort()
 
-# --- 4. Form Layout & Entry Section ---
+# --- 4. Form Layout ---
 st.title("🏥 Rogmukti X-Ray & Digital Lab")
 st.subheader("📋 Patient Entry Form")
 
@@ -161,7 +168,6 @@ col3, col4 = st.columns(2)
 with col3:
     discount_amount_input = st.number_input("Discount Amount (৳)", min_value=0.0, value=None, placeholder="0.00")
     discount_amount = discount_amount_input if discount_amount_input is not None else 0.0
-    
     advance_paid_input = st.number_input("Advance Paid (৳)", min_value=0.0, value=None, placeholder="0.00")
     advance_paid = advance_paid_input if advance_paid_input is not None else 0.0
 
@@ -172,7 +178,7 @@ with col4:
     st.metric("Discount Applied", f"{discount_amount} ৳")
     st.metric("Total Due Amount", f"{due_amount} ৳")
 
-# --- 5. Data Save & Database Submission ---
+# --- 5. Database Save & Auto Redirect ---
 submit_button = st.button("💾 Save Bill and Go to Print", use_container_width=True)
 
 if submit_button:
@@ -197,17 +203,16 @@ if submit_button:
             except Exception:
                 pass
                 
+        # কলাম সাপোর্ট এরর এড়াতে ট্রাই-ক্যাচ দিয়ে ফ্লেক্সিবল সেভ মেথড
+        success_save = False
         try:
             c.execute("""INSERT INTO billing_records 
                 (patient_name, age, phone, selected_tests, total_amount, discount, advance, due, date, doctor_name, created_by) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, date('now'), ?, ?)""", 
                 (patient_name, age, phone, tests_data_str, total_fee, discount_amount, advance_paid, due_amount, selected_doctor_setup, current_user))
-            
             st.session_state.last_invoice_id = c.lastrowid
             conn.commit()
-            st.success("🎉 Bill saved successfully! Redirecting to print page...")
-            st.switch_page("pages/3_Print_Receipt.py")
-            
+            success_save = True
         except sqlite3.OperationalError:
             try:
                 c.execute("""INSERT INTO billing_records 
@@ -216,11 +221,10 @@ if submit_button:
                     (patient_name, age, phone, tests_data_str, total_fee, discount_amount, advance_paid, due_amount, selected_doctor_setup, current_user))
                 st.session_state.last_invoice_id = c.lastrowid
                 conn.commit()
-                st.success("🎉 Bill saved successfully! Redirecting to print page...")
-                st.switch_page("pages/3_Print_Receipt.py")
+                success_save = True
             except Exception as final_err:
                 st.error(f"❌ Database Error: {final_err}")
         except Exception as e:
             st.error(f"❌ Database Error: {e}")
 
-conn.close()
+        if success_save:
