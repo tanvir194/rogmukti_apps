@@ -16,7 +16,7 @@ except Exception:
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
 
-# প্রয়োজনীয় টেবিল তৈরি ও কলাম নিশ্চিতকরণ
+# প্রয়োজনীয় টেবিল তৈরি
 c.execute("""CREATE TABLE IF NOT EXISTS billing_records (
     id INTEGER PRIMARY KEY AUTOINCREMENT, 
     patient_name TEXT, 
@@ -31,30 +31,22 @@ c.execute("""CREATE TABLE IF NOT EXISTS billing_records (
     doctor_name TEXT,
     created_by TEXT)""")
 
-# যদি আগের ডেটাবেজে created_by কলাম না থাকে, তবে তা যোগ করার চেষ্টা করবে
+# নতুন কলামটি ডাটাবেজে যুক্ত করার সেফ ট্রাই
 try:
     c.execute("ALTER TABLE billing_records ADD COLUMN created_by TEXT")
     conn.commit()
 except Exception:
     pass
 
-c.execute("""CREATE TABLE IF NOT EXISTS doctors_list (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, 
-    doc_name TEXT UNIQUE)""")
+c.execute("""CREATE TABLE IF NOT EXISTS doctors_list (id INTEGER PRIMARY KEY AUTOINCREMENT, doc_name TEXT UNIQUE)""")
+c.execute("""CREATE TABLE IF NOT EXISTS custom_tests_list (id INTEGER PRIMARY KEY AUTOINCREMENT, test_name TEXT UNIQUE)""")
 
-c.execute("""CREATE TABLE IF NOT EXISTS custom_tests_list (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, 
-    test_name TEXT UNIQUE)""")
-
-# ইউজার টেবিল (যদি না থাকে) এবং ডিফল্ট অ্যাডমিন ক্রিয়েশন
-c.execute("""CREATE TABLE IF NOT EXISTS users (
-    username TEXT PRIMARY KEY, 
-    password TEXT,
-    role TEXT DEFAULT 'staff')""")
+# ইউজার টেবিল তৈরি ও ডিফল্ট অ্যাডমিন সেটআপ
+c.execute("""CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, role TEXT DEFAULT 'staff')""")
 c.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')")
 conn.commit()
 
-# --- ২. সিকিউর লগইন সিস্টেম ---
+# --- ২. লগইন সিস্টেম ---
 if 'logged_in' not in st.session_state or not st.session_state.logged_in or 'username' not in st.session_state:
     st.markdown("<h2 style='text-align: center; color: #ff4b4b;'>🔑 রিসিট কাউন্টার লগইন</h2>", unsafe_allow_html=True)
     
@@ -97,17 +89,16 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# লগইন ইউজারের নাম ও মারকুই প্রদর্শন
+# লগইন ইউজারের নাম প্রদর্শন
 current_user = st.session_state.get('username', 'Unknown')
 st.markdown(f"<div style='text-align: right; color: #8b949e; font-weight: bold;'>👤 বর্তমান ইউজার: <span style='color: #58a6ff;'>{current_user}</span></div>", unsafe_allow_html=True)
 st.markdown("<marquee style='color: #ff7b72; font-weight: bold;'>⚠️ সতর্কতা: নতুন পেশেন্ট এন্ট্রি ও বিল তৈরি করার সময় তথ্যগুলো সতর্কতার সাথে যাচাই করে সাবমিট করুন।</marquee>", unsafe_allow_html=True)
 
-# ডাক্তার লিস্ট লোড করা
+# ডাক্তার এবং টেস্ট লিস্ট লোড
 c.execute("SELECT doc_name FROM doctors_list")
 db_doctors = [row[0] for row in c.fetchall() if row]
 doctor_options = db_doctors + ["অন্যান্য"]
 
-# --- টেস্ট লিস্ট লোড করা ---
 default_laboratory_tests = ["CBC", "ESR", "TC.DC", "Hgb", "Platelet Count", "MP", "BT/CT", "C/E Count", "Widal", "Aslo Titre"]
 available_tests = list(default_laboratory_tests)
 
@@ -225,3 +216,6 @@ if submit_button:
                     (patient_name, age, phone, selected_tests, total_amount, discount_amount, advance, due, date, doctor_name, created_by) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
                     (patient_name, age, phone, tests_data_str, total_fee, discount_amount, advance_paid, due_amount, current_date, selected_doctor_setup, current_user))
+                st.session_state.last_invoice_id = c.lastrowid
+                conn.commit()
+Use code with caution.st.success("🎉 বিল সফলভাবে সংরক্ষিত হয়েছে! প্রিন্ট পেজে নেওয়া হচ্ছে...")st.switch_page("pages/3_Print_Receipt.py")except Exception as final_err:st.error(f"❌ ডাটাবেজ এরর: {final_err}")except Exception as e:st.error(f"❌ ডাটাবেজ এরর: {e}")conn.close()
