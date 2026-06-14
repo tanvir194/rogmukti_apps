@@ -15,7 +15,7 @@ except Exception:
 
 # ২. সিকিউরিটি চেক
 if 'logged_in' not in st.session_state or not st.session_state.logged_in:
-    st.warning("⚠️ অননুমোদিত প্রবেশাধিকার! দয়া করে ড্যাশবোর্ড থেকে লগইন করুন।")
+    st.warning("⚠️ অননুমোদিত প্রবেশাধিকার! দয়া করে ড্যাশবোর্ড থেকে লগইন করুন তানভীর ভাই।")
     st.stop()
 
 # ৩. কাস্টম CSS ডিজাইন
@@ -40,6 +40,7 @@ st.markdown("""
 <div style='text-align: center; margin-bottom: 15px;'>
     <h1 style='color: #ff3333; font-size: 38px; font-weight: 900; font-family: sans-serif; margin: 0;'>
         মো: তানভীর আহমেদ আপনাকে স্বাগতম
+        দয়া করে সফটওয়ারে কোন সমস্যা হলে সাথে সাথে তানভীর ভাইকে কল করুন অন্য কোন চেষ্টা করবেন না।
     </h1>
 </div>
 <div style='background-color: #16253b; padding: 15px; border-radius: 8px; border: 2px solid #0ea5e9; margin-bottom: 25px;'>
