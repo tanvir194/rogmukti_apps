@@ -3,7 +3,7 @@ import os
 import streamlit as st
 import sqlite3
 import datetime
-from datetime import import datetime
+from datetime import datetime
 
 # ১. গ্লোবাল পাথ সেটআপ ও সাইডবার লোড
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -30,7 +30,7 @@ c.execute("""CREATE TABLE IF NOT EXISTS billing_records (
     due REAL, 
     date TEXT, 
     doctor_name TEXT,
-    created_by TEXT)""") # অটো নাম ট্র্যাকিং এর জন্য কলাম
+    created_by TEXT)""")
 
 c.execute("""CREATE TABLE IF NOT EXISTS doctors_list (
     id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -72,7 +72,7 @@ if 'logged_in' not in st.session_state or not st.session_state.logged_in:
                     st.error("❌ ভুল ইউজারনেম অথবা পাসওয়ার্ড!")
             else:
                 st.warning("⚠️ দয়া করে ইউজারনেম এবং পাসওয়ার্ড দুটিই লিখুন।")
-    st.stop()  # লগইন না হওয়া পর্যন্ত নিচের কোনো কোড রান হবে না
+    st.stop()
 
 # --- ৩. কাস্টম CSS ডিজাইন ---
 st.markdown("""
@@ -91,13 +91,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# লগইন করা ইউজারের নাম টপে প্রদর্শন
 st.markdown(f"<div style='text-align: right; color: #8b949e; font-weight: bold;'>👤 বর্তমান ইউজার: <span style='color: #58a6ff;'>{st.session_state.username}</span></div>", unsafe_allow_html=True)
-
-# মারকুই (Scrolling Text)
 st.markdown("<marquee style='color: #ff7b72; font-weight: bold;'>⚠️ সতর্কতা: নতুন পেশেন্ট এন্ট্রি ও বিল তৈরি করার সময় তথ্যগুলো সতর্কতার সাথে যাচাই করে সাবমিট করুন।</marquee>", unsafe_allow_html=True)
 
-# ডাটা লোড (ডাক্তার এবং টেস্টের তালিকা)
 c.execute("SELECT doc_name FROM doctors_list")
 db_doctors = [row[0] for row in c.fetchall()]
 doctor_options = db_doctors + ["অন্যান্য"]
@@ -120,7 +116,7 @@ st.subheader("📋 পেশেন্ট ইনফরমেশন")
 
 col1, col2 = st.columns(2)
 with col1:
-    patient_name = st.text_input("পেশেন্টের নাম (Name of the PT) *")
+    patient_name = st.text_input("पেশেন্টের নাম (Name of the PT) *")
     phone = st.text_input("মোবাইল নাম্বার (Phone) *")
 with col2:
     age = st.number_input("বয়স (Age)", min_value=1, max_value=120, value=25)
@@ -145,7 +141,6 @@ if selected_tests:
         total_fee += price
         test_with_prices.append(f"{test}({price})")
 
-# কাস্টম কোনো টেস্ট ও ফি যোগ করার অপশন
 st.markdown("##### ➕ তালিকায় না থাকা কোনো এক্সট্রা টেস্ট (ঐচ্ছিক):")
 col_c1, col_c2 = st.columns(2)
 with col_c1:
@@ -188,7 +183,6 @@ if submit_button:
         current_date = datetime.now().strftime("%Y-%m-%d")
         tests_data_str = ", ".join(test_with_prices)
         
-        # নতুন ডাক্তার ডাটাবেজে অটো সেভ করা
         if "doctor_text" in locals() and doctor_text.strip():
             try:
                 c.execute("INSERT OR IGNORE INTO doctors_list (doc_name) VALUES (?)", (doctor_text.strip(),))
@@ -196,7 +190,6 @@ if submit_button:
             except Exception:
                 pass
                 
-        # নতুন কাস্টম টেস্ট ডাটাবেজে অটো সেভ করা
         if custom_name.strip():
             try:
                 c.execute("INSERT OR IGNORE INTO custom_tests_list (test_name) VALUES (?)", (custom_name.strip(),))
@@ -204,14 +197,12 @@ if submit_button:
             except Exception:
                 pass
                 
-        # বিলিং রেকর্ড টেবিলে অটো 'created_by' নামসহ ডেটা ইনসার্ট
         try:
             c.execute("""INSERT INTO billing_records 
                 (patient_name, age, phone, selected_tests, total_amount, discount, advance, due, date, doctor_name, created_by) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
                 (patient_name, age, phone, tests_data_str, total_fee, discount_amount, advance_paid, due_amount, current_date, selected_doctor_setup, st.session_state.username))
             
-            # প্রিন্ট পেজে পাঠানোর আইডি পাসিং
             st.session_state.last_invoice_id = c.lastrowid
             conn.commit()
             
