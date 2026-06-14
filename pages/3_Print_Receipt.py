@@ -254,8 +254,8 @@ Thank you for trusting us with your care.
     
     with col_btn1:
         if st.button("🖨️ Print Receipt (For PC)"):
-            st.markdown("<script>setTimeout(function() { window.print(); }, 200);</script>", unsafe_allow_html=True)
-            
+    st.markdown("<script>setTimeout(function() { window.parent.print(); }, 200);</script>", unsafe_allow_html=True)
+    
     with col_btn2:
         st.download_button(
             label="💾 Save Receipt (For Mobile)",
