@@ -15,7 +15,7 @@ except Exception:
 conn = sqlite3.connect("rogmukti_clinic_fix.db")
 c = conn.cursor()
 
-# প্রয়োজনীয় টেবিল তৈরি
+# প্রয়োজনীয় টেবিল তৈরি ও কলাম নিশ্চিতকরণ
 c.execute("""CREATE TABLE IF NOT EXISTS billing_records (
     id INTEGER PRIMARY KEY AUTOINCREMENT, 
     patient_name TEXT, 
@@ -45,7 +45,7 @@ c.execute("""CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, passwo
 c.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')")
 conn.commit()
 
-# --- ২. লগইন সিস্টেম ---
+# --- ২. সিকিউর লগইন সিস্টেম ---
 if 'logged_in' not in st.session_state or not st.session_state.logged_in or 'username' not in st.session_state:
     st.markdown("<h2 style='text-align: center; color: #ff4b4b;'>🔑 রিসিট কাউন্টার লগইন</h2>", unsafe_allow_html=True)
     
@@ -88,16 +88,17 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# লগইন ইউজারের নাম প্রদর্শন
+# লগইন ইউজারের নাম ও মারকুই প্রদর্শন
 current_user = st.session_state.get('username', 'Unknown')
 st.markdown(f"<div style='text-align: right; color: #8b949e; font-weight: bold;'>👤 বর্তমান ইউজার: <span style='color: #58a6ff;'>{current_user}</span></div>", unsafe_allow_html=True)
 st.markdown("<marquee style='color: #ff7b72; font-weight: bold;'>⚠️ সতর্কতা: নতুন পেশেন্ট এন্ট্রি ও বিল তৈরি করার সময় তথ্যগুলো সতর্কতার সাথে যাচাই করে সাবমিট করুন।</marquee>", unsafe_allow_html=True)
 
-# ডাক্তার এবং টেস্ট লিস্ট লোড
+# ডাক্তার লিস্ট লোড করা
 c.execute("SELECT doc_name FROM doctors_list")
 db_doctors = [row[0] for row in c.fetchall() if row and row[0]]
 doctor_options = db_doctors + ["অন্যান্য"]
 
+# --- টেস্ট লিস্ট লোড করা ---
 default_laboratory_tests = ["CBC", "ESR", "TC.DC", "Hgb", "Platelet Count", "MP", "BT/CT", "C/E Count", "Widal", "Aslo Titre"]
 available_tests = list(default_laboratory_tests)
 
@@ -177,11 +178,10 @@ submit_button = st.button("💾 Save Bill and Go to Print (বিল সেভ �
 
 if submit_button:
     if not patient_name or not test_with_prices:
-        st.error("❌ পেশেন্টের নাম এবং অন্তত একটি টেস্টের ফি দেওয়া বাধ্যতামুলক!")
+        st.error("❌ পেশেন্টের নাম এবং অন্তত একটি টেস্টের ফি দেওয়া বাধ্যতামূলক!")
     elif selected_doctor_setup == "অন্যান্য" and not doctor_text:
         st.error("❌ দয়া করে নতুন ডাক্তারের নাম ও ডিগ্রীটি উল্লেখ করুন!")
     else:
-        # মেইন পার্সিং এরর এড়াতে পাইথনের নিজস্ব ডাটাবেজ টাইমস্ট্যাম্প ফাংশন ব্যবহার করা হলো
         tests_data_str = ", ".join(test_with_prices)
         
         if "doctor_text" in locals() and doctor_text.strip():
