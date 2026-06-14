@@ -2,7 +2,6 @@ import sys
 import os
 import streamlit as st
 import sqlite3
-from datetime import datetime
 
 # ১. গ্লোবাল পাথ সেটআপ ও সাইডবার লোড
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -96,7 +95,7 @@ st.markdown("<marquee style='color: #ff7b72; font-weight: bold;'>⚠️ সত�
 
 # ডাক্তার এবং টেস্ট লিস্ট লোড
 c.execute("SELECT doc_name FROM doctors_list")
-db_doctors = [row[0] for row in c.fetchall() if row]
+db_doctors = [row[0] for row in c.fetchall() if row and row[0]]
 doctor_options = db_doctors + ["অন্যান্য"]
 
 default_laboratory_tests = ["CBC", "ESR", "TC.DC", "Hgb", "Platelet Count", "MP", "BT/CT", "C/E Count", "Widal", "Aslo Titre"]
@@ -106,7 +105,7 @@ try:
     c.execute("SELECT test_name FROM custom_tests_list")
     db_tests = c.fetchall()
     for row in db_tests:
-        if row and row[0] not in available_tests:
+        if row and row[0] and row[0] not in available_tests:
             available_tests.append(row[0])
 except Exception:
     pass
@@ -178,11 +177,11 @@ submit_button = st.button("💾 Save Bill and Go to Print (বিল সেভ �
 
 if submit_button:
     if not patient_name or not test_with_prices:
-        st.error("❌ পেশেন্টের নাম এবং অন্তত একটি টেস্টের ফি দেওয়া বাধ্যতামূলক!")
+        st.error("❌ পেশেন্টের নাম এবং অন্তত একটি টেস্টের ফি দেওয়া বাধ্যতামুলক!")
     elif selected_doctor_setup == "অন্যান্য" and not doctor_text:
         st.error("❌ দয়া করে নতুন ডাক্তারের নাম ও ডিগ্রীটি উল্লেখ করুন!")
     else:
-        current_date = datetime.now().strftime("%Y-%m-%d")
+        # মেইন পার্সিং এরর এড়াতে পাইথনের নিজস্ব ডাটাবেজ টাইমস্ট্যাম্প ফাংশন ব্যবহার করা হলো
         tests_data_str = ", ".join(test_with_prices)
         
         if "doctor_text" in locals() and doctor_text.strip():
@@ -202,8 +201,8 @@ if submit_button:
         try:
             c.execute("""INSERT INTO billing_records 
                 (patient_name, age, phone, selected_tests, total_amount, discount, advance, due, date, doctor_name, created_by) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
-                (patient_name, age, phone, tests_data_str, total_fee, discount_amount, advance_paid, due_amount, current_date, selected_doctor_setup, current_user))
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, date('now'), ?, ?)""", 
+                (patient_name, age, phone, tests_data_str, total_fee, discount_amount, advance_paid, due_amount, selected_doctor_setup, current_user))
             
             st.session_state.last_invoice_id = c.lastrowid
             conn.commit()
@@ -214,8 +213,7 @@ if submit_button:
             try:
                 c.execute("""INSERT INTO billing_records 
                     (patient_name, age, phone, selected_tests, total_amount, discount_amount, advance, due, date, doctor_name, created_by) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
-                    (patient_name, age, phone, tests_data_str, total_fee, discount_amount, advance_paid, due_amount, current_date, selected_doctor_setup, current_user))
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, date('now'), ?, ?)""", 
+                    (patient_name, age, phone, tests_data_str, total_fee, discount_amount, advance_paid, due_amount, selected_doctor_setup, current_user))
                 st.session_state.last_invoice_id = c.lastrowid
                 conn.commit()
-Use code with caution.st.success("🎉 বিল সফলভাবে সংরক্ষিত হয়েছে! প্রিন্ট পেজে নেওয়া হচ্ছে...")st.switch_page("pages/3_Print_Receipt.py")except Exception as final_err:st.error(f"❌ ডাটাবেজ এরর: {final_err}")except Exception as e:st.error(f"❌ ডাটাবেজ এরর: {e}")conn.close()
