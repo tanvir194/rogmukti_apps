@@ -38,8 +38,8 @@ st.markdown("""
 # ৪. স্বাগতম টেক্সট ও বড় স্ক্রলিং নোটিশ (Marquee)
 st.markdown("""
 <div style='text-align: center; margin-bottom: 15px;'>
-    <h1 style='color: #ff3333; font-size: 38px; font-weight: 900; font-family: sans-serif; margin: 0;'>
-        মো: তানভীর আহমেদ আপনাকে স্বাগতম
+    <h1 style='color: #ff5555; font-size: 38px; font-weight: 900; font-family: sans-serif; margin: 0;'>
+        মো: তানভীর আহমেদ আপনাকে স্বাগতম।
         দয়া করে সফটওয়ারে কোন সমস্যা হলে সাথে সাথে তানভীর ভাইকে কল করুন অন্য কোন চেষ্টা করবেন না।
     </h1>
 </div>
