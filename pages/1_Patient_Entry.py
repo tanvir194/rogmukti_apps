@@ -43,8 +43,8 @@ st.markdown("""
     </h1>
 </div>
 <div style='background-color: #16253b; padding: 15px; border-radius: 8px; border: 2px solid #0ea5e9; margin-bottom: 25px;'>
-    <marquee style='color: #f1f72a; font-size: 24px; font-weight: bold;'>
-        👋 রোগমুক্তি ডায়াগনস্টিক অ্যান্ড ডিজিটাল ল্যাবে স্বাগতম! ⚠️ সতর্কর্তা: নতুন পেশেন্ট এন্ট্রি ও বিল তৈরি করার সময় তথ্যগুলো অনুগ্রহ করে ডাবল চেক করে নিন।
+    <marquee style='color: #f1f72a; font-size: 34px; font-weight: bold;'>
+        👋 রোগমুক্তি ডায়াগনস্টিক অ্যান্ড ডিজিটাল ল্যাবে স্বাগতম! ⚠️ সতর্কর্তা: নতুন পেশেন্ট এন্ট্রি ও বিল তৈরি করার সময় তথ্যগুলো অনুগ্রহ করে বার বার চেক করে নিন যাতে কোন ভুল না হয়।
     </marquee>
 </div>
 """, unsafe_allow_html=True)
